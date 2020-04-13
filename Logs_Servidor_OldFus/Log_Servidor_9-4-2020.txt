@@ -1,0 +1,12 @@
+---------- INICIO DEL SERVER ----------
+[Thu Apr 09 05:40:46 CLT 2020]   ######## INICIANDO CIERRE DEL SERVIDOR  ########
+[Thu Apr 09 05:40:47 CLT 2020]   ########  IMPRIMIENDO LOGS PLAYERS  ########
+[Thu Apr 09 05:40:47 CLT 2020]   ########  SERVIDOR CERRO CON EXITO  ########
+---------- INICIO DEL SERVER ----------
+[Thu Apr 09 05:53:36 CLT 2020]   ######## INICIANDO CIERRE DEL SERVIDOR  ########
+[Thu Apr 09 05:53:37 CLT 2020]   ########  IMPRIMIENDO LOGS PLAYERS  ########
+[Thu Apr 09 05:53:37 CLT 2020]   ########  SERVIDOR CERRO CON EXITO  ########
+---------- INICIO DEL SERVER ----------
+---------- INICIO DEL SERVER ----------
+---------- INICIO DEL SERVER ----------
+---------- INICIO DEL SERVER ----------

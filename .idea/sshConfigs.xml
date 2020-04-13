@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="d-oldschool.sytes.net" id="20451250-e729-46ec-bcc3-583bc39f71c9" port="22" customName="oldfus" nameFormat="CUSTOM" username="root" />
+      <sshConfig authType="PASSWORD" host="62.171.181.229" id="d13e8a68-0371-450f-81ac-c77893b43b31" port="22" customName="Arrendado 1" nameFormat="CUSTOM" username="root" />
+      <sshConfig authType="PASSWORD" host="62.171.183.69" id="f057d754-65f5-4128-b366-55c2f61686ef" port="22" customName="Arrendado 2" nameFormat="CUSTOM" username="root" />
+      <sshConfig authType="PASSWORD" host="62.171.183.69" id="36948f20-43de-4f89-af7b-1fef9d96488a" port="22" customName="Arrendado 2" nameFormat="CUSTOM" username="root" />
+    </configs>
+  </component>
+</project>

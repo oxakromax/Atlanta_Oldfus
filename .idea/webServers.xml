@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="9d1579f9-88dd-4d3f-ae0b-4575974a30bb" name="oldfus" url="http://d-oldschool.sytes.net">
+        <fileTransfer host="d-oldschool.sytes.net" port="22" rootFolder="/root" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+      <webServer id="ed81c743-8a1e-4104-97ad-b80bc66bb80f" name="Arrendado 1" url="http://62.171.181.229">
+        <fileTransfer host="62.171.181.229" port="22" rootFolder="/root" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+      <webServer id="8e986bc9-e818-40ff-bcd8-6d2b9f343721" name="Arrendado 2" url="http://62.171.183.69">
+        <fileTransfer host="62.171.183.69" port="22" rootFolder="/root" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
