@@ -26,6 +26,7 @@ import java.util.regex.Pattern
 
 object Constantes {
     const val VERSION_EMULADOR = "1.0 Kotlin Version"
+
     // public static final String SUBVERSION_EMULADOR = ".2";
     const val CREADOR = "SLIMES"
     const val ZAAPI_BONTA =
@@ -35,6 +36,7 @@ object Constantes {
     const val ESTATUAS_FENIX =
         "12;12;270|-1;33;1399|10;19;268|5;-9;7796|2;-12;8534|-30;-54;4285|-26;35;4551|-23;38;12169|-11;-54;3360|-43;0;10430|-10;13;9227|-41;-17;9539|36;5;1118|24;-43;7910|27;-33;8054|-60;-3;10672|-58;18;10590|-14;31;5717|25;-4;844|"
     const val x0char = (0x00.toChar()).toString()
+
     // CREA TU ITEM
     val tipos = ArrayList<Int>()
     val GFX_CREA_TU_ITEM_CAPAS = ArrayList<Int>()
@@ -47,14 +49,17 @@ object Constantes {
     val GFX_CREA_TU_ITEM_DOFUS = ArrayList<Int>()
     val GFXS_CREA_TU_ITEM: MutableMap<Int, ArrayList<Int>> =
         TreeMap()
+
     // CORPULENCIA
     const val CORPULENCIA_NORMAL: Byte = 0
     const val CORPULENCIA_OBESO: Byte = 1
     const val CORPULENCIA_DELGADO: Byte = 2
+
     // ESTADOS SERVIDOR
     const val SERVIDOR_SALVANDO: Byte = 2
     const val SERVIDOR_ONLINE: Byte = 1
     const val SERVIDOR_OFFLINE: Byte = 0
+
     // DERECHOS GREMIO
     const val G_TODOS_LOS_DERECHOS = 1
     const val G_MODIF_BOOST = 2 // Modificar los boost
@@ -69,6 +74,7 @@ object Constantes {
     const val G_USAR_CERCADOS = 4096 // Utilizar los cercados
     const val G_MEJORAR_CERCADOS = 8192 // Mejorar los cercados
     const val G_OTRAS_MONTURAS = 16384 // Modidicar las monturas de otros miembros
+
     // DERECHOS CASA
     const val C_VISIBLE_PARA_GREMIO = 1 // casa visible para el gremio
     const val C_ESCUDO_VISIBLE_MIEMBROS = 2 // escudo visible solo para gremio
@@ -76,10 +82,12 @@ object Constantes {
     const val C_ACCESOS_MIEMBROS_SIN_CODIGO = 8 // Entrar sin codigo para el gremio
     const val C_ACCESO_PROHIBIDO_NO_MIEMBROS = 16 // Acceso prohibido no miembros
     const val C_ACCESOS_COFRES_MIEMBROS_SIN_CODIGO = 32 // Cofres sin codigo para el
+
     // gremio
     const val C_ACCESO_PROHIBIDO_COFRES_NO_MIEMBROS = 64 // Cofre imposible para los q
     const val C_TELEPORT_GREMIO = 128 // Gremio derecho a teleport
     const val C_DESCANSO_GREMIO = 256 // Gremio derecho a descanso
+
     // COLORES
     const val COLOR_AMARILLO = "FFFF00"
     const val COLOR_ROJO = "FF0000"
@@ -95,6 +103,7 @@ object Constantes {
     const val COLOR_CREMA = "FFCC00"
     const val COLOR_ROSADO = "FF99CC"
     const val COLOR_PLOMO = "666666"
+
     // ESTADO
     const val ESTADO_NEUTRAL: Byte = 0
     const val ESTADO_BORRACHO: Byte = 1
@@ -102,6 +111,7 @@ object Constantes {
     const val ESTADO_PORTADOR: Byte = 3
     const val ESTADO_TEMEROSO: Byte = 4
     const val ESTADO_DESORIENTADO: Byte = 5
+
     // Hace que su lanzador ya no sea empujado, ni intercambiado
 // Hace que su lanzador ya no sea placado.
 // Le impide placar a sus enemigos.
@@ -142,6 +152,7 @@ object Constantes {
     const val ESTADO_DE_MAL_HUMOR: Byte = 47
     const val ESTADO_DESCONCERTADO: Byte = 48
     const val ESTADO_GHULIFICADO: Byte = 49
+
     // Este estado hace que no se puedan usar hechizos de curación ni que pueda curarse de ninguna
 // forma.
     const val ESTADO_ALTRUISTA: Byte = 50
@@ -158,6 +169,7 @@ object Constantes {
     const val ESTADO_INDESPLAZABLE: Byte = 81
     const val ESTADO_PROTEGIDO: Byte = 82
     const val ESTADO_ESCARIFICADO: Byte = 83
+
     // OBJETOS INTERACTIVOS
     const val OI_ESTADO_LLENO: Byte = 1
     const val OI_ESTADO_ESPERA: Byte = 2
@@ -165,11 +177,13 @@ object Constantes {
     const val OI_ESTADO_VACIO: Byte = 4
     const val OI_ESTADO_LLENANDO: Byte = 5
     const val OI_ESTADO_PALANCA_ABAJO: Byte = 7
+
     // CELDAS INTERACTIVAS
     const val CI_ESTADO_LLENO: Byte = 1
     const val CI_ESTADO_VACIANDO: Byte = 2
     const val CI_ESTADO_VACIO: Byte = 3
     const val CI_ESTADO_LLENANDO: Byte = 4
+
     // INTERCAMBIO
     const val INTERCAMBIO_TIPO_NULO: Byte = -1
     const val INTERCAMBIO_TIPO_TIENDA_NPC: Byte = 0
@@ -189,6 +203,7 @@ object Constantes {
     const val INTERCAMBIO_TIPO_CERCADO: Byte = 16
     const val INTERCAMBIO_TIPO_RESUCITAR_MASCOTA: Byte = 17
     const val INTERCAMBIO_TIPO_BOUTIQUE: Byte = 20
+
     // TIPO DE PELEAS
     const val PELEA_TIPO_DESAFIO: Byte = 0 // Desafio
     const val PELEA_TIPO_PVP: Byte = 1 // Agresion PVP
@@ -198,122 +213,166 @@ object Constantes {
     const val PELEA_TIPO_RECAUDADOR: Byte = 5 // Recaudador
     const val PELEA_TIPO_KOLISEO: Byte = 6 // Coliseo
     const val PELEA_TIPO_CACERIA: Byte = 7
+
     // ESTADO DE PELEAS
     const val PELEA_FASE_INICIO: Byte = 1
     const val PELEA_FASE_POSICION: Byte = 2
     const val PELEA_FASE_COMBATE: Byte = 3
     const val PELEA_FASE_FINALIZADO: Byte = 4
+
     // RETOS
     const val RETO_ZOMBI: Byte = 1 // Utiliza sólo un punto de movimiento en cada turno.
     const val RETO_ESTATUA: Byte = 2 // Acaba tu turno en la misma casilla donde lo
+
     // empezaste, hasta que acabe el combate.
     const val RETO_ELEGIDO_VOLUNTARIO: Byte = 3 // Matar %1 el primero.
     const val RETO_APLAZAMIENTO: Byte = 4 // Matar %1 el último.
     const val RETO_AHORRADOR: Byte = 5 // Durante el tiempo que dure el combate, cada
+
     // personaje sólo debe utilizar la misma acción una
 // única vez.
     const val RETO_VERSATIL: Byte = 6 // Durante su turno, cada jugador sólo puede utilizar
+
     // una vez la misma acción.
     const val RETO_JARDINERO: Byte = 7 // Durante el tiempo que dure el combate, planta una
+
     // Zanahowia cada vez que el hechizo esté disponible.
     const val RETO_NOMADA: Byte = 8 // Durante el tiempo que dure el combate, utiliza todos
+
     // tus PM disponibles en cada turno.
     const val RETO_BARBARO: Byte = 9 // No utilices ningún hechizo durante el tiempo que dure
+
     // este combate.
     const val RETO_CRUEL: Byte = 10 // Debes matar a los adversarios en orden creciente de
+
     // nivel.
     const val RETO_MISTICO: Byte = 11 // Durante el tiempo que dure el combate, utiliza
+
     // solamente hechizos.
     const val RETO_SEPULTURERO: Byte = 12 // Durante el tiempo que dure el combate, invoca un
+
     // Chaferloko cada vez que el hechizo esté
 // disponible.
     const val RETO_CASINO_REAL: Byte = 14 // Durante el tiempo que dure el combate, lanzar el
+
     // hechizo Ruleta cada vez que se encuentre
 // disponible.
     const val RETO_ARACNOFILO: Byte = 15 // Invocar una arakna cada vez que el hechizo esté
+
     // disponible. Válido durante todo el combate.
     const val RETO_ENTOMOLOGO: Byte = 16 // Invocar una Llamita cada vez que el hechizo esté
+
     // disponible. Válido durante todo el combate.
     const val RETO_INTOCABLE: Byte = 17 // No perder puntos de vida durante el tiempo que
+
     // dure el combate.
     const val RETO_INCURABLE: Byte = 18 // No curar durante el tiempo que dure el combate.
     const val RETO_MANOS_LIMPIAS: Byte = 19 // Acabar con los monstruos sin ocasionarles
+
     // daños directos durante lo que dure el
 // combate. Se puede utilizar trampas, glifos,
 // venenos, daños ocasionados por desplazamiento
 // así como los ataques de invocaciones.
     const val RETO_ELEMENTAL: Byte = 20 // Utiliza el mismo elemento de ataque durante todo
+
     // el combate.
     const val RETO_CIRCULEN: Byte = 21 // No quitar PM a los adversarios mientras dure el
+
     // combate.
     const val RETO_EL_TIEMPO_PASA: Byte = 22 // No quitar PA a los adversarios durante el
+
     // tiempo que dure el combate.
     const val RETO_PERDIDO_DE_VISTA: Byte = 23 // No reducir el alcance de los adversarios
+
     // durante el tiempo que dure el combate.
     const val RETO_LIMITADO: Byte = 24 // Utilizar el mismo hechizo o el mismo ataque cuerpo
+
     // a cuerpo durante el tiempo que dure el combate.
     const val RETO_ORDENADO: Byte = 25 // Se debe acabar con los adversarios en orden
+
     // descendiente de nivel.
     const val RETO_NI_PIAS_NI_SUMISAS: Byte = 28 // Los personajes de sexo masculino deben
+
     // dejar que los de sexo femenino acaben con
 // los adversarios. Válido durante todo el
 // combate.
     const val RETO_NI_PIOS_NI_SUMISOS: Byte = 29 // Los personajes de sexo femenino deben
+
     // dejar que los de sexo masculino acaben
 // con los adversarios. Válido durante todo
 // el combate.
     const val RETO_LOS_PEQUEÑOS_ANTES: Byte = 30 // El personaje de menor nivel debe acabar
+
     // con los adversarios.
     const val RETO_FOCALIZACION: Byte = 31 // Cuando se ataca a un adversario, hay que
+
     // matarlo antes de atacar a otro adversario.
     const val RETO_ELITISTA: Byte = 32 // Todos los ataques deben ir dirigidos a %1 hasta que
+
     // muera.
     const val RETO_SUPERVIVIENTE: Byte = 33 // Ningún aliado debe morir.
     const val RETO_IMPREVISIBLE: Byte = 34 // Todos los ataques deben ir dirigidos a un mismo
+
     // objetivo que se designa en cada turno de un
 // personaje.
     const val RETO_ASESINO_A_SUELDO: Byte = 35 // Debes matar a los adversarios en el orden
+
     // indicado. Cada vez que mates a un objetivo,
 // obtendrás el nombre del próximo al que
 // tienes que matar
     const val RETO_AUDAZ: Byte = 36 // Acaba tu turno en una de las casillas pegadas a las de
+
     // uno de tus adversarios.
     const val RETO_PEGAJOSO: Byte = 37 // Acaba tu turno en una de las casillas pegadas a las
+
     // de uno de tus aliados.
     const val RETO_BLITZKRIEG: Byte = 38 // Cuando se ataca a un adversario, hay que matarlo
+
     // antes de que comience su turno.
     const val RETO_ANACORETA: Byte = 39 // No termines nunca tu turno en una casilla
+
     // adyacente a la de uno de tus aliados.
     const val RETO_PUSILANIME: Byte = 40 // No termines nunca tu turno en una casilla
+
     // adyacente a la de uno de tus adversarios.
     const val RETO_IMPETUOSO: Byte = 41 // Utiliza todos tus puntos de acción antes de acabar
+
     // tu turno.
 // Cuando un personaje mata a un adversario, tiene que matar obligatoriamente a un (y sólo a un)
 // segundo adversario durante su turno.
     const val RETO_EL_DOS_POR_UNO: Byte = 42
+
     // Nadie puede recibir curas durante su turno.
     const val RETO_ABNEGACION: Byte = 43
+
     // Cada personaje debe matar al menos a un adversario (que no sea una invocación) durante el
 // combate.
     const val RETO_REPARTO: Byte = 44
+
     // Cuando un personaje ataca a un adversario, ningún otro personaje debe atacar a ese mismo
 // adversario durante el tiempo que dure el combate.
     const val RETO_DUELO: Byte = 45
+
     // Cada personaje debe matar al menos a un adversario durante el combate. Cuando un personaje
 // ataca a un adversario, ningún otro personaje puede atacar a ese mismo adversario durante el
 // combate.
     const val RETO_CADA_UNO_CON_SU_MONSTRUO: Byte = 46
+
     // Cuando un aliado pierde puntos de vida, dispones de 3 turnos para rematar a tu aliado o ¡ganar
 // el combate!
     const val RETO_CONTAMINACION: Byte = 47
+
     // El personaje secundario de menor nivel tiene que matar a todos los adversarios (así aprenderás
 // a querer abusar como un puerkazo).
     const val RETO_LOS_PERSONAJES_SECUNDARIOS_PRIMERO: Byte = 48
+
     // Aliados y personajes secundarios deben acabar vivos el combate.
     const val RETO_PROTEJAN_A_SUS_PERSONAJES_SECUNDARIOS: Byte = 49
+
     // Acaba el combate, para ganar el desafío. Ya se sabe, los desarrolladores del juego son unos
 // tramposos...
     const val RETO_LA_TRAMPA_DE_LOS_DESARROLLADORES: Byte = 50
+
     // OFICIOS
     const val OFICIO_BASE = 1
     const val OFICIO_LEÑADOR = 2
@@ -351,6 +410,7 @@ object Constantes {
     const val OFICIO_MANITAS = 65
     const val OFICIO_BIJOYERO = 66
     const val OFICIO_JOYERO2 = 67
+
     // EMOTES
     const val EMOTE_NULO: Byte = 0
     const val EMOTE_SENTARSE: Byte = 1
@@ -375,8 +435,15 @@ object Constantes {
     const val EMOTE_CAMPEON: Byte = 21
     const val EMOTE_AURA_PODER: Byte = 22
     const val EMOTE_AURA_VAMPIRICA: Byte = 23
+
     // POSICION DE OBJETOS
     const val OBJETO_POS_NO_EQUIPADO: Byte = -1
+
+    @JvmField
+    val OBJETO_POS_EQUIPADOS = arrayListOf<Byte>(
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 20,
+        21, 22, 23, 24, 25
+    )
     const val OBJETO_POS_AMULETO: Byte = 0
     const val OBJETO_POS_ARMA: Byte = 1
     const val OBJETO_POS_ANILLO1: Byte = 2
@@ -401,10 +468,12 @@ object Constantes {
     const val OBJETO_POS_BENDICION: Byte = 23
     const val OBJETO_POS_ROLEPLAY: Byte = 24
     const val OBJETO_POS_PJ_SEGUIDOR: Byte = 25
+
     val POSICIONES_TODOS = byteArrayOf(
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 20, 21, 22,
         23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48
     )
+
     @JvmField
     val POSICIONES_EQUIPAMIENTO = byteArrayOf(
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 20,
@@ -415,6 +484,7 @@ object Constantes {
         OBJETO_POS_ESCUDO, OBJETO_POS_ARMA
     )
     val POSICIONES_BOOST = byteArrayOf(20, 21, 22, 23, 24, 25, 26, 27)
+
     // TIPOS DE OBJETOS
     const val OBJETO_TIPO_AMULETO = 1
     const val OBJETO_TIPO_ARCO = 2
@@ -535,12 +605,14 @@ object Constantes {
     const val OBJETO_TIPO_ESPECIALES = 150
     const val OBJETO_TIPO_TROFEO = 151
     const val OBJETO_TIPO_COMPAÑERO = 169
+
     // ALINEACION
     const val ALINEACION_NULL: Byte = -1
     const val ALINEACION_NEUTRAL: Byte = 0
     const val ALINEACION_BONTARIANO: Byte = 1
     const val ALINEACION_BRAKMARIANO: Byte = 2
     const val ALINEACION_MERCENARIO: Byte = 3
+
     // ELEMENTOS
     const val ELEMENTO_NULO: Byte = -1
     const val ELEMENTO_NEUTRAL: Byte = 0
@@ -548,6 +620,7 @@ object Constantes {
     const val ELEMENTO_FUEGO: Byte = 2 // terc
     const val ELEMENTO_AGUA: Byte = 3 // cuater
     const val ELEMENTO_AIRE: Byte = 4 // primer
+
     // SERVICIOS
     const val SERVICIO_CAMBIO_NOMBRE = 1
     const val SERVICIO_CAMBIO_COLOR = 2
@@ -581,6 +654,7 @@ object Constantes {
     const val SERVICIO_CAMBIO_TYMADOR = 113
     const val SERVICIO_CAMBIO_ZOBAL = 114
     const val SERVICIO_CAMBIO_STEAMER = 115
+
     // CLASES
     const val CLASE_FECA: Byte = 1
     const val CLASE_OSAMODAS: Byte = 2
@@ -598,6 +672,7 @@ object Constantes {
     const val CLASE_ZOBAL: Byte = 14
     const val CLASE_STREAM: Byte = 15
     const val CLASE_MULTIMAN: Byte = 19
+
     // public static final byte CLASE_ATORMENTADOR_GOTA = 20;
 // public static final byte CLASE_ATORMENTADOR_NUBE = 21;
 // public static final byte CLASE_ATORMENTADOR_HOJA = 22;
@@ -610,6 +685,7 @@ object Constantes {
 // SEXOS
     const val SEXO_MASCULINO: Byte = 0
     const val SEXO_FEMENINO: Byte = 1
+
     // CAPACIDADES DRAGOPAVOS
 // ID EFECTO MAXIMO
     const val BUFF_MAXIMO = 1500
@@ -619,11 +695,13 @@ object Constantes {
     )
     val NO_BOOST_CC_IDS = intArrayOf(101)
     val BUFF_ACCION_RESPUESTA = intArrayOf(9, 79, 788, 776)
+
     // 9 - Esquiva un #1% de los golpes retrocediendo de #2 casilla(s)", c: 0, o: ""
 // 79 - #3% de posibilidades de que sufras daños x#1, o de que te cure x#2", c: 0, o: ""
 // 788 - Castigo #2 durante #3 turno(s).", c: 0, o: "+"
 // 776 - +#1{~1~2 a }#2% de los daños incurables sufridos", c: 75, o: "-", j: true
     val BUFF_SET_CLASE = intArrayOf(281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292)
+
     // 281 Aumenta #3 casillas el alcance del hechizo #1", c: 0, o: "+"
 // 282 Vuelve modificable el alcance del hechizo #1", c: 0, o: "+"
 // 283 +#3 a los daños del hechizo #1", c: 0, o: "+"
@@ -721,6 +799,7 @@ object Constantes {
     const val STAT_REENVIA_DAÑOS = 220
     const val STAT_MAS_DAÑOS_TRAMPA = 225
     const val STAT_MAS_PORC_DAÑOS_TRAMPA = 226
+
     @JvmField
     val FUN_STATS_RESTRINGIDAS = intArrayOf(
         115,
@@ -766,6 +845,7 @@ object Constantes {
         STAT_MAS_SABIDURIA,
         STAT_MAS_PROSPECCION
     )
+
     @JvmField
     val FUN_STATS_RESTRINGIDAS_SOLO_OBJ =
         intArrayOf(STAT_MAS_PA, STAT_MAS_PA_2, STAT_MAS_PM, STAT_MAS_PM_2)
@@ -825,6 +905,7 @@ object Constantes {
     const val STAT_HECHIZO_CLASE_MAS_VECES_LANZAMIENTOS_POR_TURNO = 290
     const val STAT_HECHIZO_CLASE_MAS_VECES_LANZAMIENTOS_POR_OBJETIVO = 291
     const val STAT_HECHIZO_CLASE_FIJAR_TURNOS_VOLVER_A_LANZAR = 292
+
     // E[293] = {d: "Aumenta los daños de base del hechizo #1 en #3", c: 0, o: "+"};
 // E[294] = {d: "Disminuye el alcance del hechizo #1 de #3", c: 0, o: "-"};
     const val STAT_ROBA_ALCANCE = 320
@@ -1052,6 +1133,7 @@ object Constantes {
         998,
         999
     )
+
     // tipo de quests
 // Q.t[5] = "Descubre la zona: #1";
 // Q.t[0] = "#1";
@@ -1073,9 +1155,11 @@ object Constantes {
         0, 10, 21, 33, 46, 60, 75, 91, 108, 126, 145, 165, 186, 208, 231, 255,
         280, 306, 333, 361
     )
+
     // EXP OFICIO
     const val OFICIO_EXP_TIPO_RECOLECCION = 1
     const val OFICIO_EXP_TIPO_CRAFT = 2
+
     // ALMANAX
     const val ALMANAX_BONUS_EXP_PJ = 1
     const val ALMANAX_BONUS_KAMAS = 2
@@ -1084,27 +1168,37 @@ object Constantes {
     const val ALMANAX_BONUS_EXP_OFICIO_RECOLECCION = 5
     const val ALMANAX_BONUS_DROPS_RECOLECCION = 6
     const val ALMANAX_BONUS_HONOR = 7
+
     // CAPACIDADES DRAGOPAVOS
     const val HABILIDAD_INFATIGABLE: Byte = 1 // Una montura infatigable tiene mucha más
+
     // energía que una montura normal y también
 // recupera mucho más rápido
     const val HABILIDAD_PORTADORA: Byte = 2 // Una montura portadora puede llevar una mayor
+
     // cantidad de objetos que una montura normal
     const val HABILIDAD_REPRODUCTORA: Byte = 3 // Una montura reproductora trae al mundo más
+
     // monturitas que una montura normal
     const val HABILIDAD_SABIA: Byte = 4 // Una montura sabia evoluciona dos veces más rápido
+
     // que una montura normal
     const val HABILIDAD_RESISTENTE: Byte = 5 // Una montura resistente se vuelve resistente
+
     // más rápido que una montura normal
     const val HABILIDAD_ENAMORADA: Byte = 6 // Una montura enamorada se enamora más que una
+
     // montura normal
     const val HABILIDAD_PRECOZ: Byte = 7 // Una montura precoz se vuelve madura más rápido
+
     // que una montura normal
     const val HABILIDAD_PREDISPUESTA: Byte = 8 // Una montura predispuesta genéticamente
+
     // tiene más probabilidades de transmitir sus
 // características genéticas que una montura
 // normal
     const val HABILIDAD_CAMALEON: Byte = 9 // Una montura camaleónica cambia su apariencia
+
     // según el plumaje del aventurero que la monta
 // SKILLS
     const val SKILL_MAGUEAR_DAGA = 1
@@ -1256,11 +1350,13 @@ object Constantes {
                 + OFICIO_SASTREMAGO + ";" + OFICIO_ESCULTORMAGO_BASTONES + ";" + OFICIO_ESCULTORMAGO_VARITAS + ";"
                 + OFICIO_ESCULTORMAGO_ARCOS + ";" + OFICIO_FORJAMAGO_DAGAS + ";" + OFICIO_FORJAMAGO_ESPADAS + ";"
                 + OFICIO_FORJAMAGO_MARTILLOS + ";" + OFICIO_FORJAMAGO_PALAS + ";" + OFICIO_FORJAMAGO_HACHAS + ";" + OFICIO_MANITAS)
+
     // REPORTES
     const val REPORTE_BUGS: Byte = 0
     const val REPORTE_SUGERENCIAS: Byte = 1
     const val REPORTE_DENUNCIAS: Byte = 2
     const val REPORTE_OGRINAS: Byte = 3
+
     // MOBS
     const val MOB_TIPO_SIN_CLASIFICAR = -1
     const val MOB_TIPO_INVOCACIONES_DE_CLASE = 0
@@ -1351,6 +1447,7 @@ object Constantes {
     const val MOB_TIPO_MONSTRUOS_DEL_BOSQUE_PETRIFICADO = 89
     const val MOB_TIPO_MONSTRUOS_SE_BUSCA_DE_FRIGOST = 90
     const val MOB_TIPO_MONSTRUOS_DE_MISION_DE_FRIGOST = 91
+
     // MOB SUPER TIPO
     const val MOB_SUPER_TIPO_CRIATURAS_DIVERSAS = 1
     const val MOB_SUPER_TIPO_CRIATURAS_DE_LOS_CAMPOS = 2
@@ -1373,6 +1470,7 @@ object Constantes {
     const val MOB_SUPER_TIPO_CRIATURAS_DE_LA_ISLA_DE_OTOMAI = 19
     const val MOB_SUPER_TIPO_CRIATURAS_ARCHIMONSTRUO = 20
     const val MOB_SUPER_TIPO_NULL = 21
+
     // ARCHIMOBS
 // public static final int[] ARCHIMOBS = {31, 34, 36, 40, 41, 43, 44, 46, 47, 254, 48, 474, 52,
 // 255, 54, 55, 56, 57, 59,
@@ -2974,10 +3072,11 @@ object Constantes {
             7027 -> noRepetirEnArray(array, 156)
         }
     }
-    var iptoken="144.91.112.154"
-    var databasetoken="arriendos"
-    var usertoken="token"
-    var tokenpw="token52895390"
+
+    var iptoken = "144.91.112.154"
+    var databasetoken = "arriendos"
+    var usertoken = "token"
+    var tokenpw = "token52895390"
 
     private fun noRepetirEnArray(array: ArrayList<Int>, i: Int) {
         if (!array.contains(i)) {

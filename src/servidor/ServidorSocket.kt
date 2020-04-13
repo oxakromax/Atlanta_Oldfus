@@ -245,7 +245,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.io.IOException
 import java.net.InetSocketAddress
-import java.net.Socket
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -913,87 +912,92 @@ class ServidorSocket(val session: IoSession) {
 
     private fun cuenta_Acceder_Server(packet: String) {
         try {
-            cuenta = ServidorServer.getEsperandoCuenta(packet.substring(2).toInt()) ?: return
-            try {
-                if (cuenta != null && cuenta?.socket != null && cuenta?.socket != this) {
-                    cuenta?.socket?.cerrarSocket(true, "Forzado")
+            for (i in 0..12) {
+                cuenta = ServidorServer.getEsperandoCuenta(packet.substring(2).toInt()) ?: if (Mundo.getCuenta(
+                        packet.substring(2).toInt()
+                    )?.ultimaIP == actualIP
+                ) Mundo.getCuenta(packet.substring(2).toInt()) else null ?: continue
+                try {
+                    if (cuenta != null && cuenta?.socket != null && cuenta?.socket != this) {
+                        cuenta?.socket?.cerrarSocket(true, "Forzado")
+                        continue
+                    }
+                } catch (e: Exception) {
                 }
-            } catch (e: Exception) {
-            }
-            try {
-                if (cuenta != null) {
-                    try {
-                        if (_timerAcceso != null && _timerAcceso?.isRunning == true) {
-                            _timerAcceso?.stop()
+                try {
+                    if (cuenta != null) {
+                        try {
+                            if (_timerAcceso != null && _timerAcceso!!.isRunning) {
+                                _timerAcceso?.stop()
+                            }
+                            _timerAcceso = null
+                        } catch (ignored: Exception) {
                         }
-                        _timerAcceso = null
-                    } catch (ignored: Exception) {
-                    }
-                    ServidorServer.delEsperandoCuenta(cuenta)
-                    val cuentasPorIP = ServidorServer.getIPsClientes(actualIP)
-                    if (cuenta!!.admin <= 0 && cuentasPorIP >= AtlantaMain.MAX_CUENTAS_POR_IP) {
-                        ENVIAR_M0_MENSAJE_BASICOS_SVR_MUESTRA_DISCONNECT(
-                            this, "34", cuentasPorIP.toString() + ";"
-                                    + AtlantaMain.MAX_CUENTAS_POR_IP, ""
-                        )
-                        cerrarSocket(false, "cuenta_Acceder_Server(0)")
-                        return
-                    }
-                    if (cuenta?.admin ?: 0 < AtlantaMain.ACCESO_ADMIN_MINIMO) {
-                        ENVIAR_M0_MENSAJE_BASICOS_SVR_MUESTRA_DISCONNECT(this, "19", "", "")
-                        cerrarSocket(true, "cuenta_Acceder_Server(1)")
-                        return
-                    }
-                    try {
-                        if (ES_IP_BANEADA(actualIP!!)) {
-                            ENVIAR_AlEb_CUENTA_BANEADA_DEFINITIVO(this)
-                            cerrarSocket(true, "cuenta_Acceder_Server(2)")
+                        ServidorServer.delEsperandoCuenta(cuenta)
+                        val cuentasPorIP = ServidorServer.getIPsClientes(actualIP)
+                        if (cuenta!!.admin <= 0 && cuentasPorIP >= AtlantaMain.MAX_CUENTAS_POR_IP) {
+                            ENVIAR_M0_MENSAJE_BASICOS_SVR_MUESTRA_DISCONNECT(
+                                this, "34", cuentasPorIP.toString() + ";"
+                                        + AtlantaMain.MAX_CUENTAS_POR_IP, ""
+                            )
+                            cerrarSocket(false, "cuenta_Acceder_Server(0)")
                             return
                         }
-                    } catch (e: Exception) {
-                    }
-                    val tiempoBaneo = GET_BANEADO(cuenta!!.nombre)
-                    if (tiempoBaneo != 0L) {
-                        when {
-                            tiempoBaneo <= -1 -> {
+                        if (cuenta?.admin ?: 0 < AtlantaMain.ACCESO_ADMIN_MINIMO) {
+                            ENVIAR_M0_MENSAJE_BASICOS_SVR_MUESTRA_DISCONNECT(this, "19", "", "")
+                            cerrarSocket(true, "cuenta_Acceder_Server(1)")
+                            return
+                        }
+                        try {
+                            if (ES_IP_BANEADA(actualIP!!)) {
                                 ENVIAR_AlEb_CUENTA_BANEADA_DEFINITIVO(this)
-                                cerrarSocket(true, "cuenta_Acceder_Server(3)")
+                                cerrarSocket(true, "cuenta_Acceder_Server(2)")
                                 return
                             }
-                            tiempoBaneo > System.currentTimeMillis() -> {
-                                ENVIAR_AlEk_CUENTA_BANEADA_TIEMPO(this, tiempoBaneo)
-                                cerrarSocket(true, "cuenta_Acceder_Server(4)")
-                                return
-                            }
-                            else -> {
-                                SET_BANEADO(cuenta!!.nombre, 0)
+                        } catch (e: Exception) {
+                        }
+                        val tiempoBaneo = GET_BANEADO(cuenta!!.nombre)
+                        if (tiempoBaneo != 0L) {
+                            when {
+                                tiempoBaneo <= -1 -> {
+                                    ENVIAR_AlEb_CUENTA_BANEADA_DEFINITIVO(this)
+                                    cerrarSocket(true, "cuenta_Acceder_Server(3)")
+                                    return
+                                }
+                                tiempoBaneo > System.currentTimeMillis() -> {
+                                    ENVIAR_AlEk_CUENTA_BANEADA_TIEMPO(this, tiempoBaneo)
+                                    cerrarSocket(true, "cuenta_Acceder_Server(4)")
+                                    return
+                                }
+                                else -> {
+                                    SET_BANEADO(cuenta!!.nombre, 0)
+                                }
                             }
                         }
-                    }
-                    cuenta?.setEntradaPersonaje(this)
-                    cuenta?.actualIP = actualIP as String
-                    IpsVerificator.ipdiferente(cuenta)
-                    ENVIAR_ATK_TICKET_A_CUENTA(this, crearPacketKey())
-                    idioma = cuenta?.idioma ?: "es"
-                    if (AtlantaMain.MODO_HEROICO) {
-                        ENVIAR_ÑS_SERVER_HEROICO(this)
-                    }
-                    var c = cuenta ?: return
-                    for (perso in c.personajes) {
-                        if (perso != null) {
-                            if (perso.pelea == null) {
-                                continue
-                            }
+                        cuenta?.setEntradaPersonaje(this)
+                        cuenta?.actualIP = actualIP as String
+                        IpsVerificator.ipdiferente(cuenta)
+                        ENVIAR_ATK_TICKET_A_CUENTA(this, crearPacketKey())
+                        idioma = cuenta?.idioma ?: "es"
+                        if (AtlantaMain.MODO_HEROICO) {
+                            ENVIAR_ÑS_SERVER_HEROICO(this)
                         }
-                        personaje = perso
-                        personaje?.conectarse()
+                        val c = cuenta ?: continue
+                        this.logger = LoggerFactory.getLogger(cuenta!!.nombre)
+                        for (perso in c.personajes) {
+                            if (perso != null) {
+                                if (perso.pelea == null) {
+                                    continue
+                                }
+                            }
+                            personaje = perso
+                            personaje?.conectarse()
+                            return
+                        }
                         return
                     }
-                    this.logger = LoggerFactory.getLogger(cuenta!!.nombre)
-                    return
+                } catch (e: Exception) {
                 }
-            } catch (e: Exception) {
-                cerrarSocket(cuenta = true, n = "")
             }
         } catch (e: Exception) {
             redactarLogServidorln("EXCEPTION Packet: $packet SE INTENTA ACCEDER CON UNA CUENTA RARA")
@@ -3597,7 +3601,7 @@ class ServidorSocket(val session: IoSession) {
         if (Mundo.getCantCercadosGremio(personaje!!.gremio.id) >= ceil(
                 (personaje!!.gremio.nivel
                         / 10f).toDouble()
-            ).toByte()
+            ).toInt().toByte()
         ) {
             ENVIAR_Im_INFORMACION(personaje!!, "1103")
             return
@@ -3637,20 +3641,18 @@ class ServidorSocket(val session: IoSession) {
 
     private fun montura_Borrar_Objeto_Crianza(packet: String) {
         try {
-            val cercado = personaje!!.mapa.cercado
+            val cercado = personaje?.mapa?.cercado
             if (cercado == null) {
                 ENVIAR_BN_NADA(personaje)
                 return
             }
-            if (personaje!!.nombre != "Elbusta") {
-                if (personaje!!.gremio == null) {
-                    ENVIAR_BN_NADA(personaje)
-                    return
-                }
-                if (personaje!!.miembroGremio.puede(Constantes.G_MEJORAR_CERCADOS)) {
-                    ENVIAR_Im_INFORMACION(personaje!!, "193")
-                    return
-                }
+            if (personaje?.gremio == null) {
+                ENVIAR_BN_NADA(personaje)
+                return
+            }
+            if (personaje?.miembroGremio?.puede(Constantes.G_MEJORAR_CERCADOS) == true) {
+                ENVIAR_Im_INFORMACION(personaje!!, "193")
+                return
             }
             val celda = packet.substring(2).toShort()
             if (cercado.retirarObjCria(celda, personaje)) {
@@ -5926,10 +5928,10 @@ class ServidorSocket(val session: IoSession) {
                 }
                 'P' -> Mundo
                     .getObjetoModelo(packet.substring(3).toInt())?.precioPromedio?.let {
-                        ENVIAR_EHP_PRECIO_PROMEDIO_OBJ(
-                            personaje!!, packet.substring(3).toInt(), it
-                        )
-                    }
+                    ENVIAR_EHP_PRECIO_PROMEDIO_OBJ(
+                        personaje!!, packet.substring(3).toInt(), it
+                    )
+                }
                 'S' -> {
                     val splt = packet.substring(3).split(Pattern.quote("|").toRegex()).toTypedArray()
                     if (mercadillo.esTipoDeEsteMercadillo(splt[0].toInt())) {
@@ -8935,8 +8937,7 @@ class ServidorSocket(val session: IoSession) {
                                 personaje!!,
                                 "Instrucciones: debes otorgar tu numero a quienes invites\n" +
                                         "Para utilizar el comando debes hacerlo con la siguiente estructura" +
-                                        " .referido [codigo]\n"
-                                , Constantes.COLOR_NEGRO
+                                        " .referido [codigo]\n", Constantes.COLOR_NEGRO
                             )
                             personaje!!.enviarmensajeRojo(
                                 "Por ejemplo: \n.referido 1234567\n"

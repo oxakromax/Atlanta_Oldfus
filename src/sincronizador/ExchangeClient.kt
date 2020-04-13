@@ -13,6 +13,7 @@ import org.apache.mina.core.session.IoSession
 import org.apache.mina.transport.socket.nio.NioSocketConnector
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
+import java.nio.charset.StandardCharsets
 
 class ExchangeClient private constructor() {
     companion object {
@@ -115,7 +116,7 @@ class ExchangeClient private constructor() {
         try {
             ioSession?.write(
                 StringToIoBuffer(
-                    packet
+                    String(packet.toByteArray(), StandardCharsets.UTF_8)
                 )
             )
         } catch (e: Exception) {

@@ -136,16 +136,20 @@ class Cercado(
     }
 
     fun retirarObjCria(celda: Short, perso: Personaje?): Boolean {
-        if (!_objCrianza.containsKey(celda)) {
-            return false
-        }
+//        if (!_objCrianza.containsKey(celda)) {
+//            return false
+//        }
+        val objCrianza = _objCrianza[celda] ?: return false
         // si el jugador lo retira intencionalmente
-        perso?.addObjIdentAInventario(_objCrianza[celda], true) ?: // si se elimnia por desgaste
-        Mundo.eliminarObjeto(_objCrianza[celda]!!.id)
-        // _objCrianzaConDueño.remove(celda);
+        perso?.addObjIdentAInventario(objCrianza, false, 0) ?: // si se elimnia por desgaste
+        Mundo.eliminarObjeto(objCrianza.id)
         _objCrianza.remove(celda)
+//        if (perso != null) {
+//            GestorSalida.ENVIAR_OCK_ACTUALIZA_OBJETO(perso,objCrianza)
+//        }
         return true
     }
+
 
     val cantObjColocados: Int
         get() = _objCrianza.size

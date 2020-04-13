@@ -3028,6 +3028,29 @@ object Mundo {
         _OBJETOS.remove(id)
     }
 
+    fun ObjIdenticoPerso(objeto: Objeto?, prohibido: Objeto?, perso: Personaje?): Objeto? {
+        if (perso == null || objeto === null) {
+            return null
+        }
+        if (objeto.puedeTenerStatsIguales()) {
+            for (obj in perso.Objetos.values) {
+                if (obj.posicion != Constantes.OBJETO_POS_NO_EQUIPADO && Constantes.OBJETO_POS_EQUIPADOS.contains(obj.posicion)) {
+                    continue
+                }
+                if (objeto.id == obj.id) {
+                    continue
+                }
+                if (prohibido != null && prohibido.id == obj.id) {
+                    continue
+                }
+                if (obj.objModeloID == objeto.objModeloID && obj.sonStatsIguales(objeto)) {
+                    return obj
+                }
+            }
+        }
+        return null
+    }
+
     private fun eliminarObjetosPorArray(objetos: ArrayList<Objeto?>) {
         if (objetos.isEmpty()) {
             return

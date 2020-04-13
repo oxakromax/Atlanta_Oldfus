@@ -1,6 +1,5 @@
 package estaticos
 
-import ch.qos.logback.core.subst.Token
 import estaticos.GestorSQL.LOG_SQL
 import estaticos.GestorSQL.iniciarCommit
 import estaticos.GestorSQL.iniciarConexion
@@ -424,7 +423,7 @@ object AtlantaMain {
     var PARAM_PERMITIR_MULTICUENTA_PELEA_PVP = false
 
     @JvmField
-    var PARAM_SISTEMA_IP_ESPERA = false
+    var PARAM_SISTEMA_IP_ESPERA = true
 
     @JvmField
     var PARAM_BORRAR_CUENTAS_VIEJAS = false

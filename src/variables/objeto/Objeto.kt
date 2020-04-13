@@ -167,7 +167,7 @@ class Objeto {
         if (efectosNormales == null && otro.efectosNormales == null) { // nada
         } else if (efectosNormales == null && otro.efectosNormales != null || otro.efectosNormales == null || efectosNormales!!.isEmpty() && !otro.efectosNormales!!.isEmpty() || otro.efectosNormales!!.isEmpty() && !efectosNormales!!.isEmpty()) {
             return false
-        } else if (!efectosNormales!!.isEmpty()) {
+        } else if (efectosNormales?.isNotEmpty() == true) {
             val ePropios = ArrayList<String>()
             val eOtros = ArrayList<String>()
             for (eh in efectosNormales!!) {

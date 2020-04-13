@@ -2181,11 +2181,7 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
             }
             if (Pelea == null) {
                 if (Grupo != null) {
-                    if (Grupo.esLiderGrupo(this)) {
-                        Grupo.dejarGrupo(this, true);
-                    } else {
-                        Grupo.dejarGrupo(this, false);
-                    }
+                    Grupo.dejarGrupo(this, Grupo.esLiderGrupo(this));
                 }
                 if (Koliseo != null) {
                     Koliseo.dejarGrupo(this);
@@ -4021,16 +4017,6 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
                 if (objeto.getId() == obj.getId()) {
                     continue;
                 }
-                // boolean prohibido = false;
-                // for (Objeto o : prohibidos) {
-                // if (o.getID() == obj.getID()) {
-                // prohibido = true;
-                // break;
-                // }
-                // }
-                // if (prohibido) {
-                // continue;
-                // }
                 if (prohibido != null && prohibido.getId() == obj.getId()) {
                     continue;
                 }
@@ -4048,6 +4034,24 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
         }
         // tipo piedra de alma y mascota
         Objeto igual = getObjIdentInventario(objeto, null);
+        if (igual != null) {
+            igual.setCantidad(igual.getCantidad() + objeto.getCantidad());
+            GestorSalida.INSTANCE.ENVIAR_OQ_CAMBIA_CANTIDAD_DEL_OBJETO(this, igual);
+            if (eliminar && objeto.getId() > 0) {
+                Mundo.eliminarObjeto(objeto.getId());
+            }
+            return true;
+        }
+        addObjetoConOAKO(objeto, true);
+        return false;
+    }
+
+    public boolean addObjIdentAInventario(final Objeto objeto, final boolean eliminar, final int posicion) {
+        if (Objetos.containsKey(objeto.getId())) {
+            return false;
+        }
+        // tipo piedra de alma y mascota
+        Objeto igual = Mundo.INSTANCE.ObjIdenticoPerso(objeto, null, this);
         if (igual != null) {
             igual.setCantidad(igual.getCantidad() + objeto.getCantidad());
             GestorSalida.INSTANCE.ENVIAR_OQ_CAMBIA_CANTIDAD_DEL_OBJETO(this, igual);
