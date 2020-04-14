@@ -36,6 +36,11 @@ class ServidorHandler : IoHandler {
             arg0.closeNow()
             return
         }
+        if (AtlantaMain.TOKEN == "Testing") {
+            if (ServidorServer.nroJugadoresLinea() > 25) {
+                arg0.closeNow()
+            }
+        }
         try {
             thread(name = client.logger.name, isDaemon = true) {
                 for (str in s) {

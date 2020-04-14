@@ -76,7 +76,8 @@ class Consola : Thread() {
                     }
                     "MEMORY", "MEMORY_USE", "MEMORIA", "MEMORIA_USADA", "ESTADO_JVM" -> println(
                         "----- ESTADO JVM -----\nFreeMemory: " + Runtime.getRuntime().freeMemory() / 1048576f
-                                + " MB\nTotalMemory: " + Runtime.getRuntime().totalMemory() / 1048576f + " MB\nMaxMemory: "
+                                + " MB\nTotalMemory: " + Runtime.getRuntime()
+                            .totalMemory() / 1048576f + " MB\nMaxMemory: "
                                 + Runtime.getRuntime().maxMemory() / 1048576f + " MB\nProcesos: "
                                 + Runtime.getRuntime().availableProcessors()
                     )

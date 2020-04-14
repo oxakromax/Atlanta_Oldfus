@@ -1082,7 +1082,7 @@ object AtlantaMain {
     var DEVOLVER_ITEMS = false
     var PORCENTAJE_DEVOLVER_ITEMS = 60.0
     var encendido = System.currentTimeMillis()
-    var TOKEN = ""
+    var TOKEN = "Testing"
     var HECHIZOS_NO_DESHECHIZABLE = arrayListOf<Int>()
     var FACTOR_COMPRA = 1.3
     var FACTOR_VENTA = 0.9
@@ -1117,7 +1117,11 @@ object AtlantaMain {
                 break
             }
         }
-        if (!(IP_MULTISERVIDOR[0] == "127.0.0.1" || IP_MULTISERVIDOR[0] == "localhost")) {
+        if (!(IP_MULTISERVIDOR[0] == "127.0.0.1" || IP_MULTISERVIDOR[0] == "localhost" || TOKEN.equals(
+                "Testing",
+                ignoreCase = true
+            ))
+        ) {
             if ((!GestorSQL.conexionAlterna(
                     "slimes.sytes.net",
                     "clientes",

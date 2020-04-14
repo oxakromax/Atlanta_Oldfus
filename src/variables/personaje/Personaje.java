@@ -154,7 +154,7 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
     public boolean ComandoPasarTurno;
     public Oficio OficioActual = null;
     public int UnirsePrePeleaAlID;
-    public boolean Mostrardetallexp = false;
+    public boolean Mostrardetallexp = true;
     public boolean Salvando;
     public boolean Refrescarmobsautomatico = false;
     public String Busquedagrupo = "0";

@@ -5,6 +5,7 @@ import com.mysql.jdbc.PreparedStatement
 import estaticos.Mundo.Duo
 import estaticos.Mundo.Experiencia
 import servidor.ServidorServer
+import utilidades.comandosAccion
 import utilidades.economia.Economia
 import variables.casa.Casa
 import variables.casa.Cofre
@@ -220,7 +221,11 @@ object GestorSQL {
                 }
 
             }
-            _bdAlterna = DriverManager.getConnection("jdbc:mysql://${Constantes.iptoken}/${Constantes.databasetoken}", Constantes.usertoken, Constantes.tokenpw)
+            _bdAlterna = DriverManager.getConnection(
+                "jdbc:mysql://${Constantes.iptoken}/${Constantes.databasetoken}",
+                Constantes.usertoken,
+                Constantes.tokenpw
+            )
             _bdAlterna?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
             _bdAlterna?.isValid(5000) ?: false
         } catch (e: Exception) {
@@ -292,7 +297,7 @@ object GestorSQL {
 
     }
 
-    fun tokenInicio(str: String):Boolean{
+    fun tokenInicio(str: String): Boolean {
         var token = ""
         val resultado = _bdAlterna?.let {
             consultaSQL(
@@ -1436,6 +1441,23 @@ object GestorSQL {
 
     }
 
+    fun CARGAR_COMANDOS_ACCION() {
+        try {
+            val resultado = _bdEstatica?.let { consultaSQL("SELECT * FROM comandosaccion;", it) } ?: return
+            Mundo.COMANDOSACCION.clear()
+            while (resultado.next()) {
+                Mundo.COMANDOSACCION[resultado.getInt("id")] = comandosAccion(
+                    resultado.getInt("id"),
+                    resultado.getString("comando"), resultado.getInt("id_accion"), resultado.getString("arg"),
+                    resultado.getString("condicion"), resultado.getString("activo").equals("true", ignoreCase = true)
+                )
+            }
+            cerrarResultado(resultado)
+        } catch (e: Exception) {
+        }
+    }
+
+
     fun CARGAR_OBJETOS_SETS() {
         try {
             val resultado = consultaSQL("SELECT * FROM objetos_set;", _bdEstatica!!)
@@ -2262,7 +2284,8 @@ object GestorSQL {
             val resultado = consultaSQL("SELECT * FROM `mobs_fix`;", _bdEstatica!!)
             while (resultado.next()) {
                 val mapas = ArrayList<Mapa>()
-                for (m in resultado.getString("mapa").split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
+                for (m in resultado.getString("mapa").split(",".toRegex()).dropLastWhile { it.isEmpty() }
+                    .toTypedArray()) {
                     if (m.isEmpty()) {
                         continue
                     }

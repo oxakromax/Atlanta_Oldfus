@@ -124,6 +124,7 @@ import estaticos.GestorSalida.ENVIAR_hP_PROPIEDADES_CASA
 import estaticos.GestorSalida.ENVIAR_ÑL_BOTON_LOTERIA_TODOS
 import servidor.ServidorServer.Companion.clientes
 import sincronizador.ExchangeClient
+import utilidades.comandosAccion
 import variables.casa.Casa
 import variables.casa.Cofre
 import variables.encarnacion.EncarnacionModelo
@@ -160,6 +161,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.regex.Pattern
+import kotlin.collections.HashMap
 
 //import com.mysql.jdbc.PreparedStatement;
 //import variables.mob.GrupoMob;
@@ -169,6 +171,7 @@ object Mundo {
     val AREAS: MutableMap<Int, Area> = TreeMap()
     val SUPER_AREAS: MutableMap<Int, SuperArea> = TreeMap()
     val SUB_AREAS: MutableMap<Int, SubArea> = TreeMap()
+
     @JvmField
     val CERCADOS: MutableMap<Short, Cercado> = HashMap()
     val EXPERIENCIA: MutableMap<Int, Experiencia> = TreeMap()
@@ -187,6 +190,7 @@ object Mundo {
     val CASAS: MutableMap<Int, Casa> = HashMap()
     val MERCADILLOS: MutableMap<Int, Mercadillo> = HashMap()
     val ANIMACIONES: MutableMap<Int, Animacion> = HashMap()
+    val COMANDOSACCION: MutableMap<Int, comandosAccion> = HashMap()
     val COFRES: MutableMap<Int, Cofre> = HashMap()
     val TUTORIALES: MutableMap<Int, Tutorial> = HashMap()
     val OBJETIVOS_MODELOS: MutableMap<Int, MisionObjetivoModelo> =
@@ -208,8 +212,10 @@ object Mundo {
     val MOBS_EVENTOS: MutableMap<Byte, ArrayList<Duo<Int, Int>>> =
         HashMap()
     val ALMANAX: MutableMap<Int, Almanax> = HashMap()
+
     @JvmField
     val OTROS_INTERACTIVOS = CopyOnWriteArrayList<OtroInteractivo>()
+
     @JvmField
     val PERSONAJESONLINE = CopyOnWriteArrayList<Personaje>()
     val OBJETOS_INTERACTIVOS = ArrayList<ObjetoInteractivo>()
@@ -223,19 +229,23 @@ object Mundo {
     val RULETA: MutableMap<Int, String> = TreeMap()
     val ORNAMENTOS: MutableMap<Int, Ornamento> = TreeMap()
     val TITULOS: MutableMap<Int, Titulo> = TreeMap()
+
     //
 // concurrentes
 //
     val cuentas = ConcurrentHashMap<Int, Cuenta>()
     val _PERSONAJES = ConcurrentHashMap<Int, Personaje>()
     val _MONTURAS = ConcurrentHashMap<Int, Montura>()
+
     //
 // publicas
 //
     @JvmField
     val ZONAS: MutableMap<Short, Short> = HashMap()
+
     // public static ArrayList<Short> MAPAS_OBJETIVOS = new ArrayList<>();
     val CAPTCHAS = ArrayList<String>()
+
     @JvmField
     val CUENTAS_A_BORRAR = ArrayList<Cuenta>()
     const val LIDER_RANKING = "Ninguno"
@@ -246,6 +256,7 @@ object Mundo {
     private val _RECAUDADORES = ConcurrentHashMap<Int, Recaudador>()
     private val _RANKINGS_KOLISEO = ConcurrentHashMap<Int, RankingKoliseo>()
     private val _RANKINGS_PVP = ConcurrentHashMap<Int, RankingPVP>()
+
     // private static ConcurrentHashMap<Integer, Encarnacion> _ENCARNACIONES = new
 // ConcurrentHashMap<Integer, Encarnacion>();
     private val _INSCRITOS_KOLISEO = ConcurrentHashMap<Int, Personaje>()
@@ -254,11 +265,13 @@ object Mundo {
     private val _LADDER_NIVEL = CopyOnWriteArrayList<Personaje>()
     private val _LADDER_EXP_DIA = CopyOnWriteArrayList<Personaje>()
     private val _LADDER_GREMIO = CopyOnWriteArrayList<Gremio>()
+
     //
 // variables primitivas
 //
     var BLOQUEANDO = false
     var VENDER_BOLETOS = false
+
     @JvmField
     var SERVIDOR_ESTADO = Constantes.SERVIDOR_OFFLINE
     var LOTERIA_BOLETOS = IntArray(10000)
@@ -278,6 +291,7 @@ object Mundo {
     var MSJ_CUENTA_REGRESIVA = ""
     var LISTA_GFX = ""
     var LISTA_NIVEL = ""
+
     @JvmField
     var LISTA_ZONAS = ""
     var KAMAS_OBJ_CACERIA = ""
@@ -511,6 +525,9 @@ object Mundo {
         CARGAR_COFRES()
         RECARGAR_COFRES()
         println(COFRES.size.toString() + " cofres cargados")
+        print("Cargando los comandos personalizados: ")
+        GestorSQL.CARGAR_COMANDOS_ACCION()
+        println("${COMANDOSACCION.size} comandos personalizados cargados")
         SIG_ID_OBJETO = GET_SIG_ID_OBJETO()
         try {
             if (CUENTAS_A_BORRAR.isNotEmpty()) {
@@ -1759,6 +1776,7 @@ object Mundo {
                 e.printStackTrace()
             }
         }
+        GestorSQL.CARGAR_COMANDOS_ACCION()
     }
 
     fun salvarServidor(inclusoOffline: Boolean) {
@@ -1985,7 +2003,7 @@ object Mundo {
             if (SERVIDOR_ESTADO != Constantes.SERVIDOR_OFFLINE) {
                 setServidorEstado(Constantes.SERVIDOR_ONLINE)
             }
-            if (!AtlantaMain.URL_BACKUP_PHP.isEmpty()) {
+            if (AtlantaMain.URL_BACKUP_PHP.isNotEmpty()) {
                 try {
                     if (!AtlantaMain.PARAM_AUTO_COMMIT) {
                         Thread.sleep(20000)
@@ -2001,6 +2019,7 @@ object Mundo {
             imprimirLogCombates()
             SALVANDO = false
         }
+        GestorSQL.CARGAR_COMANDOS_ACCION()
     }
 
     @JvmStatic

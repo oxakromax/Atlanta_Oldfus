@@ -5,6 +5,7 @@ import estaticos.Inteligencia.EstadoLanzHechizo
 import estaticos.Mundo.Duo
 import servidor.ServidorSocket.AccionDeJuego
 import sprites.PreLuchador
+import utilidades.logdropeo
 import variables.gremio.Recaudador
 import variables.hechizo.EfectoHechizo
 import variables.hechizo.EfectoHechizo.TipoDaño
@@ -5267,6 +5268,7 @@ class Pelea {
                     luchGanador.addKamasLuchador()
                     // AQUI CONVIERTE LOS OBJ DROPS AL INVENTARIO DE CADA GANADOR
                     if (luchGanador.objDropeados != null) {
+                        val logdropeo = logdropeo(luchGanador)
                         for ((obj, value) in luchGanador.objDropeados!!) {
                             if (strDrops.isNotEmpty()) {
                                 strDrops.append(",")
@@ -5274,8 +5276,10 @@ class Pelea {
                             strDrops.append(obj.objModeloID).append("~").append(obj.cantidad)
                             if (value) {
                                 luchGanador.addObjetoAInventario(obj)
+                                logdropeo.addlogdrop(obj)
                             }
                         }
+                        logdropeo.imprimirlog()
                         var recibidor = pjGanador
                         if (luchGanador.esInvocacion()) {
                             recibidor = luchGanador.invocador?.personaje

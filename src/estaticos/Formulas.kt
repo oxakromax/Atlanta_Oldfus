@@ -297,18 +297,8 @@ object Formulas {
 
             if (luchador.personaje!!.detalleExp) {
                 luchador.personaje!!.enviarmensajeNegro("Xp Ganada: $xp")
-                if (!luchador.personaje!!.esAbonado()) {
-                    luchador.personaje!!.enviarmensajeNegro("Exp si usted fuera abonado: " + xp * AtlantaMain.RATE_XP_PVM_ABONADOS + "\nEl Rate de Abonados multiplica la exp por: " + AtlantaMain.RATE_XP_PVM_ABONADOS * 100 + "%")
-                }
-            }
-            //			if (ips.size()>1){
-            //				xp *= (1+(0.15*ips.size()));
-            //			}
-            if (luchador.personaje!!.detalleExp) {
-                //				luchador.getPersonaje().enviarmensajeNegro("Se detectaron: "+ips.size()+" ips diferentes en su equipo, se le ha otorgado un bonus de: "+(ips.size()*15)+"% de exp extra");
-                //				luchador.getPersonaje().enviarmensajeNegro("Xp Final extra por ips diferentes en pelea: "+xp);
-                if (!luchador.personaje!!.esAbonado()) {
-                    luchador.personaje!!.enviarmensajeNegro("Exp si usted fuera abonado: " + xp * AtlantaMain.RATE_XP_PVM_ABONADOS + "\nEl Rate de Abonados multiplica la exp por: " + AtlantaMain.RATE_XP_PVM_ABONADOS)
+                if (!luchador.personaje!!.esAbonado() && AtlantaMain.RATE_XP_PVM_ABONADOS > 1) {
+                    luchador.personaje!!.enviarmensajeNegro("Exp si usted fuera abonado: " + xp * AtlantaMain.RATE_XP_PVM_ABONADOS.toLong() + "\nEl Rate de Abonados multiplica la exp por: " + (AtlantaMain.RATE_XP_PVM_ABONADOS - 1) * 100 + "%")
                 }
             }
         } else {
@@ -319,7 +309,7 @@ object Formulas {
                 if (luchador.personaje!!.esAbonado()) {
                     xp *= AtlantaMain.RATE_XP_PVM_ABONADOS.toLong()
                     if (luchador.personaje!!.detalleExp) {
-                        luchador.personaje!!.enviarmensajeNegro("Bonus abonados: " + AtlantaMain.RATE_XP_PVM_ABONADOS * 100 + "%\nXp Final por Abono: " + xp)
+                        luchador.personaje!!.enviarmensajeNegro("Bonus abonados: " + (AtlantaMain.RATE_XP_PVM_ABONADOS - 1) * 100 + "%\nXp Final por Abono: " + xp)
                     }
                 }
             }

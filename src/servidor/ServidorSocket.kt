@@ -7080,6 +7080,13 @@ class ServidorSocket(val session: IoSession) {
             var split = msjChat.split(" ".toRegex()).toTypedArray()
             val cmd = split[0]
             val comando = cmd.substring(1).toLowerCase()
+            for (cmda in Mundo.COMANDOSACCION.values) {
+                if (cmda.comando.equals(comando, ignoreCase = true)) {
+                    if (cmda.realizarAccion(personaje)) {
+                        return true
+                    }
+                }
+            }
             if (AtlantaMain.COMANDOS_VIP.contains(comando)) {
                 if (!cuenta!!.esAbonado()) {
                     return false
@@ -9106,14 +9113,14 @@ class ServidorSocket(val session: IoSession) {
                         }
                         return true
                     }
-                    "detalle_xp", "det_xp" -> {
+                    "log_pelea", "log_p" -> {
                         try {
                             if (personaje!!.detalleExp) {
                                 personaje!!.detalleExp = false
-                                personaje!!.enviarmensajeNegro("Los detalles de XP se Desactivaron")
+                                personaje!!.enviarmensajeNegro("Los detalles de Pelea se Desactivaron")
                             } else {
                                 personaje!!.detalleExp = true
-                                personaje!!.enviarmensajeNegro("Los detalles de XP se Activaron")
+                                personaje!!.enviarmensajeNegro("Los detalles de Pelea se Activaron")
                             }
                             return true
                         } catch (ignored: Exception) {
