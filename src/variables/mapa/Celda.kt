@@ -48,9 +48,9 @@ class Celda(
     val mapa: Mapa, id: Short, activo: Boolean, movimiento: Byte, level: Byte,
     slope: Byte, lineaDeVista: Boolean, objID: Int
 ) {
-    val id: Short
+    val id: Short = id
     private val _mapaID: Short = mapa.id
-    val activo: Boolean
+    val activo: Boolean = activo
     private val _esCaminableLevel: Boolean
     val level: Byte
     val coordX: Byte
@@ -419,6 +419,8 @@ class Celda(
             } else {
                 true
             }
+        } else if (skillID == 153 && objetoInteractivo?.objIntModelo?.id == 85) { // Basura, como cofre
+            return true
         }
         redactarLogServidorln("Bug al verificar si se puede realizar el skill ID = $skillID")
         return false
@@ -675,8 +677,6 @@ class Celda(
 // }
 // }
     init {
-        this.id = id
-        this.activo = activo
         this.level = level
         this.movimiento = movimiento
         _lineaDeVista = lineaDeVista

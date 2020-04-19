@@ -4872,11 +4872,13 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
                 return inicioMovimiento(AJ);
             } else { // pelea
                 Luchador luch = Pelea.getLuchadorPorID(getId());
+                assert luch != null;
                 if (!luch.puedeJugar()) {
                     if (getCompañero() == null) {
                         return false;
                     }
                     luch = Pelea.getLuchadorPorID(getCompañero().getId());
+                    assert luch != null;
                     if (!luch.puedeJugar()) {
                         return false;
                     }
