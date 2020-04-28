@@ -224,6 +224,7 @@ import variables.gremio.Gremio
 import variables.gremio.Recaudador
 import variables.mapa.Cercado
 import variables.mapa.Mapa
+import variables.mapa.interactivo.ObjetoInteractivo
 import variables.mercadillo.Mercadillo
 import variables.mision.MisionObjetivoModelo
 import variables.montura.Montura
@@ -293,6 +294,7 @@ class ServidorSocket(val session: IoSession) {
     private var _iniciandoPerso = true
     var packetAnterior = ""
     var idioma = "es"
+    var ult10packets = arrayListOf<ObjetoInteractivo>()
 
     fun kick() {
         cerrarSocket(true, "Cerrado Forzado")
@@ -6077,7 +6079,11 @@ class ServidorSocket(val session: IoSession) {
                             ENVIAR_Im_INFORMACION(personaje!!, "1MOUNT_COLOR_NOT_EXIST")
                             return
                         }
-                        montura = Montura(color, personaje!!.Id, true, false)
+                        if (cuenta?.admin ?: 0 > 1) {
+                            montura = Montura(color, personaje!!.id, false, false)
+                        } else {
+                            montura = Montura(color, personaje!!.Id, true, false)
+                        }
                     }
                     if (obj.cantidad <= 1) {
                         personaje!!.borrarOEliminarConOR(id, true)

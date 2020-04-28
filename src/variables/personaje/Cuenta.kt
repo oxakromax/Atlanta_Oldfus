@@ -51,6 +51,7 @@ import variables.objeto.Objeto
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
+import kotlin.math.max
 
 class Cuenta(val id: Int, val nombre: String, ref: Int) {
     private val _idsAmigos = ArrayList<Int>()
@@ -414,7 +415,7 @@ class Cuenta(val id: Int, val nombre: String, ref: Int) {
     }
 
     val tiempoAbono: Long
-        get() = Math.max(0, GET_ABONO(nombre) - System.currentTimeMillis())
+        get() = max(0, GET_ABONO(nombre) - System.currentTimeMillis())
 
     fun crearPersonaje(
         nombre: String?, clase: Byte, sexo: Byte, color1: Int,

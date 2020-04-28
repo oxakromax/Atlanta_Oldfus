@@ -3,7 +3,7 @@
   <component name="FacetManager">
     <facet type="IntelliGuard" name="Obfuscation">
       <configuration>
-        <option name="yGuardJar" value="C:\Users\oxakr\Downloads\yguard-2.7.1\yguard-2.7.1\lib\yguard.jar" />
+        <option name="yGuardJar" value="H:\Basura acumulada\Downloads\yguard-2.7.1\yguard-2.7.1\lib\yguard.jar" />
         <option name="inFile" value="C:\Users\oxakr\IdeaProjects\Atlanta Oldfus\jar\server.jar" />
         <option name="outFile" value="C:\Users\oxakr\IdeaProjects\Atlanta Oldfus\Arrendado\server.jar" />
         <option name="mainclass" value="estaticos.AtlantaMain" />

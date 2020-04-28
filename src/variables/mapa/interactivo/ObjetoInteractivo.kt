@@ -11,7 +11,7 @@ import kotlin.math.max
 
 class ObjetoInteractivo(private val _mapa: Mapa, private val _celda: Celda, val gfxID: Int) {
     val objIntModelo: ObjetoInteractivoModelo? = Mundo.getObjIntModeloPorGfx(gfxID)
-    private var _esInteractivo: Boolean
+    var _esInteractivo: Boolean
     var estado = Constantes.OI_ESTADO_LLENO
         private set
     private var _bonusEstrellas = -1

@@ -267,9 +267,9 @@ class MobGradoModelo(
             }
             if (invocador.personaje != null) {
                 coefVita += if (AtlantaMain.RATE_RANDOM_ITEM != 1.0 && AtlantaMain.RATE_RANDOM_ITEM >= 2) {
-                    invocador.pdvConBuff / 1650f
+                    invocador.pdvMaxConBuff / 1650f
                 } else {
-                    invocador.pdvConBuff / 1000f
+                    invocador.pdvMaxConBuff / 1000f
                 }
                 coefStats += invocador.nivel / 10f
                 //				invocador.getTotalStats()
@@ -286,7 +286,7 @@ class MobGradoModelo(
                 Constantes.STAT_MAS_ESQUIVA_PERD_PM, Constantes.STAT_MAS_PLACAJE
             )
             var tipoPelea = invocador.pelea.tipoPelea.toByte()
-            if (invocador.personaje != null) {
+            if (invocador.personaje != null) { // Esquivas y placaje
                 for (i in o) {
                     if (stats.getStatParaMostrar(i) <= 30) {
                         stats.fijarStatID(
@@ -296,28 +296,16 @@ class MobGradoModelo(
                     }
                 }
             }
-            for (i in s) {
+            for (i in s) { // Escalado de stats
                 if (invocador.personaje != null && (tipoPelea == Constantes.PELEA_TIPO_PVM || tipoPelea == Constantes.PELEA_TIPO_PVM_NO_ESPADA)) {
-                    if (AtlantaMain.RATE_RANDOM_ITEM != 1.0 && AtlantaMain.RATE_RANDOM_ITEM >= 1.5) {
-                        stats.fijarStatID(
-                            i,
-                            (stats.getStatParaMostrar(i) * (1 + invocador.totalStats.getTotalStatParaMostrar(i) / (100f * (AtlantaMain.RATE_RANDOM_ITEM / 1.2)))).toInt()
-                        )
-                    } else if (AtlantaMain.RATE_RANDOM_ITEM != 1.0) {
-                        stats.fijarStatID(
-                            i,
-                            (stats.getStatParaMostrar(i) * (1 + invocador.totalStats.getTotalStatParaMostrar(i) / 100f)).toInt()
-                        )
-                    } else {
-                        stats.fijarStatID(
-                            i,
-                            (stats.getStatParaMostrar(i) * (1 + invocador.totalStats.getTotalStatParaMostrar(i) / 70f)).toInt()
-                        )
-                    }
+                    stats.fijarStatID(
+                        i,
+                        (stats.getStatParaMostrar(i) * (1 + (invocador.nivel / AtlantaMain.NIVEL_MAX_PERSONAJE)))
+                    )
                 } else if (invocador.personaje != null && (Constantes.PELEA_TIPO_CACERIA == tipoPelea || Constantes.PELEA_TIPO_DESAFIO == tipoPelea || Constantes.PELEA_TIPO_KOLISEO == tipoPelea || Constantes.PELEA_TIPO_PRISMA == tipoPelea || Constantes.PELEA_TIPO_PVP == tipoPelea || Constantes.PELEA_TIPO_RECAUDADOR == tipoPelea)) {
                     stats.fijarStatID(
                         i,
-                        (stats.getStatParaMostrar(i) * (1 + invocador.totalStats.getTotalStatParaMostrar(i) / 180f)).toInt()
+                        (stats.getStatParaMostrar(i) * (1 + (invocador.nivel / AtlantaMain.NIVEL_MAX_PERSONAJE)))
                     )
                 } else {
                     stats.fijarStatID(i, stats.getStatParaMostrar(i))

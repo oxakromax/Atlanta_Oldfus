@@ -535,6 +535,7 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
                     continue;
                 }
                 Objeto obj = Mundo.getObjeto(Integer.parseInt(idObjeto));
+                assert obj != null;
                 if (obj.getDueñoTemp() == 0) {
                     obj.setDueñoTemp(this.Id);
                     // se agrega el objeto al array _objPos
@@ -5282,6 +5283,9 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
     public void teleport(final short nuevoMapaID, final short nuevaCeldaID) {
         if (esMultiman()) {
             return;
+        }
+        if (getServidorSocket() != null) {
+            getServidorSocket().getUlt10packets().clear();
         }
         try {
             if (Tutorial != null || Inmovil || Calabozo) {

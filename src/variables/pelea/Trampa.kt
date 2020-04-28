@@ -23,14 +23,6 @@ class Trampa(
     val paramEquipoDueño: Int
         get() = _paramEquipoDueño.toInt()
 
-    // public void setObjetivos(ArrayList<Luchador> obj) {
-// _objetivos = obj;
-// }
-//
-// public ArrayList<Luchador> getObjetivos() {
-// return _objetivos;
-// }
-//
     fun esInvisiblePara(idMirador: Int): Boolean {
         return if (idMirador != 0) {
             !_visibles.contains(idMirador)
@@ -50,12 +42,9 @@ class Trampa(
             return
         }
         ENVIAR_GA_ACCION_PELEA(
-            _pelea, 7, 307, victima.id.toString() + "", _hechizoID.toString() + "," + celda.id
+            _pelea, 7, 306, victima.id.toString() + "", _hechizoID.toString() + "," + celda.id
                     + ",0,1,1," + lanzador.id
         )
-        // try {
-// Thread.sleep(100);
-// } catch (Exception e) {}
         if (!victima.estaMuerto()) {
             Hechizo.aplicaHechizoAPelea(_pelea, lanzador, celda, _trampaSH.efectosNormales, TipoDaño.TRAMPA, false)
             if (_pelea.luchadorTurno!!.ia != null) {

@@ -504,11 +504,17 @@ object GestorSalida {
     fun ENVIAR_GDM_MAPDATA_COMPLETO(perso: Personaje) {
         perso.setCargandoMapa(true, null)
         val mapa = perso.mapaGDM
-        val packet = ("GDM|" + mapa.id + "|" + mapa.fecha + "||" + mapa.ancho + "|" + mapa.alto
+        val packet = StringBuilder()
+        perso.servidorSocket.ult10packets.clear()
+        packet.append("GDM").append('|').append(mapa.id).append('|').append(mapa.fecha).append('|').append('|')
+            .append(mapa.ancho).append('|').append(mapa.alto).append('|').append(mapa.bgID).append('|')
+            .append(mapa.musicID).append('|').append(mapa.ambienteID).append('|').append(mapa.outDoor).append('|')
+            .append(mapa.capabilities).append('|').append(mapa.mapData).append('|').append('1')
+        ("GDM|" + mapa.id + "|" + mapa.fecha + "||" + mapa.ancho + "|" + mapa.alto
                 + "|" + mapa.bgID + "|" + mapa.musicID + "|" + mapa.ambienteID + "|" + mapa.outDoor + "|" + mapa
             .capabilities + "|" + mapa.mapData + "|1")
-        enviar(perso, packet)
-        imprimir("CAMBIO MAPA: PERSO", packet)
+        enviar(perso, packet.toString())
+        imprimir("CAMBIO MAPA: PERSO", packet.toString())
     }
 
     fun ENVIAR_GDE_FRAME_OBJECT_EXTERNAL(perso: Personaje, str: String) {
@@ -2333,6 +2339,7 @@ object GestorSalida {
     // }
     fun ENVIAR_GDF_ESTADO_OBJETO_INTERACTIVO(mapa: Mapa, celda: Celda) {
         var packet = "GDF|" + celda.id + ";"
+        val objint = celda.objetoInteractivo
         if (celda.objetoInteractivo == null) {
             packet += celda.estado
         } else {
@@ -2340,6 +2347,12 @@ object GestorSalida {
         }
         for (pj in mapa.arrayPersonajes!!) {
             if (pj.pelea == null) {
+                if (objint != null) {
+                    if (pj.servidorSocket.ult10packets.contains(objint) && objint._esInteractivo) continue
+                    if ((objint.realBonusEstrellas() == AtlantaMain.MAX_BONUS_ESTRELLAS_RECURSOS)) {
+                        pj.servidorSocket.ult10packets.add(objint)
+                    }
+                }
                 enviarEnCola(pj, packet, true)
             }
         }

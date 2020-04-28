@@ -1,3 +1,0 @@
----------- INICIO DEL SERVER ----------
----------- INICIO DEL SERVER ----------
-[Fri Apr 03 01:03:26 CLST 2020]  EL PERSONAJE Creador (603) CON CUENTA 16925 POSSE 9986997329
