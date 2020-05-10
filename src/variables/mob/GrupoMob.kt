@@ -184,15 +184,23 @@ class GrupoMob {
                 val infos = data.split(",".toRegex()).toTypedArray()
                 val idMobModelo = infos[0].toInt()
                 val mobModelo = Mundo.getMobModelo(idMobModelo)
-                var min = 0
-                var max = 0
-                try {
-                    min = infos[1].toInt()
-                } catch (ignored: Exception) {
+                var min: Int = 0
+                var max: Int = 100000
+                if (infos.size < 2) {
+                    min = mobModelo?.grados?.values?.first()?.nivel?.toInt() ?: 0
+                } else {
+                    try {
+                        min = infos[1].toInt()
+                    } catch (e: Exception) {
+                    }
                 }
-                try {
-                    max = infos[2].toInt()
-                } catch (ignored: Exception) {
+                if (infos.size < 3) {
+                    max = mobModelo?.grados?.values?.last()?.nivel?.toInt() ?: 100000
+                } else {
+                    try {
+                        max = infos[2].toInt()
+                    } catch (e: Exception) {
+                    }
                 }
                 grados.clear()
                 if (mobModelo != null) {

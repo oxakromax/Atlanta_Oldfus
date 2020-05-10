@@ -1087,6 +1087,9 @@ object AtlantaMain {
     var FACTOR_COMPRA = 1.3
     var FACTOR_VENTA = 0.9
     var ANUNCIO_NIVEL_MAX = true
+    var OBJETOS_PELEA_PRISMA = ""
+    var VALOR_RECAUDADOR = 1000
+
     @JvmStatic
     fun main(args: Array<String>) {
         Runtime.getRuntime().addShutdownHook(Thread(Runnable { cerrarServer() }))
@@ -2091,6 +2094,14 @@ object AtlantaMain {
                         "PARAM_SUPER_CRAFT_SPEED" -> {
                             PARAM_SUPER_CRAFT_SPEED = valor.equals("true", ignoreCase = true)
                             variable = "PARAM_SUPER_CRAFT_SPEED"
+                        }
+                        "OBJETOS_PELEA_PRISMA" -> {
+                            OBJETOS_PELEA_PRISMA = valor
+                            variable = "OBJETOS_PELEA_PRISMA"
+                        }
+                        "VALOR_RECAUDADOR" -> {
+                            VALOR_RECAUDADOR = valor.toInt()
+                            variable = "VALOR_RECAUDADOR"
                         }
                         "PARAM_CORREGIR_NOMBRE_JUGADOR" -> {
                             PARAM_CORREGIR_NOMBRE_JUGADOR = valor.equals("true", ignoreCase = true)

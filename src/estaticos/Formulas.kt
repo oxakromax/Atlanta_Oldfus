@@ -595,6 +595,6 @@ object Formulas {
     }
 
     fun getKamasKoliseo(nivel: Int): Int {
-        return (sqrt(nivel.toDouble()) * AtlantaMain.KOLISEO_PREMIO_KAMAS).toInt()
+        return AtlantaMain.KOLISEO_PREMIO_KAMAS
     }
 }

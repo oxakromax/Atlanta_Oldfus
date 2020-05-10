@@ -4068,7 +4068,29 @@ class Pelea {
             val initID = _idLuchInit1
             var tipoX: Byte = 0
             when (_tipo) {
-                Constantes.PELEA_TIPO_PVP, Constantes.PELEA_TIPO_PRISMA, Constantes.PELEA_TIPO_KOLISEO -> tipoX = 1
+                Constantes.PELEA_TIPO_PRISMA -> {
+                    if (AtlantaMain.OBJETOS_PELEA_PRISMA.isNotEmpty()) {
+                        val equipo = if (equipoGanador == 1) _equipo1 else _equipo2
+                        for (luchador in equipo.values) {
+                            val p = luchador.personaje ?: continue
+                            for (s in AtlantaMain.OBJETOS_PELEA_PRISMA.split(";")) {
+                                try {
+                                    val ss = s.split(",")
+                                    val idModelo = ss[0].toInt()
+                                    val cant = ss[1].toInt()
+                                    val condicion = ss[2]
+                                    if (!Condiciones.validaCondiciones(p, condicion)) continue // No cumplio condicion
+                                    val om = Mundo.getObjetoModelo(idModelo) ?: continue // No existe el modelo
+                                    val obj =
+                                        om.crearObjeto(cant, Constantes.OBJETO_POS_NO_EQUIPADO, CAPACIDAD_STATS.RANDOM)
+                                    luchador.addDropLuchador(obj, true)
+                                } catch (e: Exception) {
+                                }
+                            }
+                        }
+                    }
+                }
+                Constantes.PELEA_TIPO_PVP, Constantes.PELEA_TIPO_KOLISEO -> tipoX = 1
                 Constantes.PELEA_TIPO_RECAUDADOR -> if (equipoGanador == 1) {
                     _kamasRobadas += _luchInit2!!.recaudador!!.kamas
                     _expRobada += _luchInit2!!.recaudador!!.exp

@@ -30,6 +30,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="Arrendado 5">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/Emu" local="$PROJECT_DIR$/Arrendado" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="oldfus">
         <serverdata>
           <mappings>

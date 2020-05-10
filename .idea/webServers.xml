@@ -10,7 +10,7 @@
         </fileTransfer>
       </webServer>
       <webServer id="ed81c743-8a1e-4104-97ad-b80bc66bb80f" name="Arrendado 1" url="http://62.171.183.69">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="62.171.183.69" port="22" sshConfigId="d13e8a68-0371-450f-81ac-c77893b43b31" sshConfig="Arrendado 1">
+        <fileTransfer rootFolder="/root" accessType="SFTP" host="95.111.234.28" port="22" sshConfigId="317e96e0-5e3b-4c6c-8f4a-c3b40fb4bc69" sshConfig="Arrendado 5">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
@@ -32,6 +32,13 @@
       </webServer>
       <webServer id="c3e53d18-b1cf-4d7f-b3ca-154cd84c1d8a" name="Arrendado 4" url="http://95.111.225.241">
         <fileTransfer rootFolder="/root" accessType="SFTP" host="95.111.225.241" port="22" sshConfigId="733f8b79-fa63-424e-99c0-5d63c29b57f6" sshConfig="Arrendado 4">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="9417f19a-c3c6-42e1-b04f-1b04576da9c2" name="Arrendado 5">
+        <fileTransfer rootFolder="/root" accessType="SFTP" host="95.111.234.28" port="22" sshConfigId="317e96e0-5e3b-4c6c-8f4a-c3b40fb4bc69" sshConfig="Arrendado 5">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

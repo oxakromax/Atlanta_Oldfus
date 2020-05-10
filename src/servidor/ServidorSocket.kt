@@ -3066,7 +3066,7 @@ class ServidorSocket(val session: IoSession) {
             ENVIAR_Im_INFORMACION(personaje!!, "1168;" + AtlantaMain.MAX_RECAUDADORES_POR_ZONA)
             return
         }
-        val precio = 1000 + 10 * gremio.nivel
+        val precio = AtlantaMain.VALOR_RECAUDADOR + 10 * gremio.nivel
         if (precio <= 0 || personaje!!.kamas < precio) {
             ENVIAR_Im_INFORMACION(personaje!!, "182")
             return

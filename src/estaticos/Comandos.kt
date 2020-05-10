@@ -3010,8 +3010,8 @@ object Comandos {
                     return
                 }
 
-                if (!ServidorSocket.RASTREAR_CUENTAS.contains(Objects.requireNonNull(objetivo)!!.cuentaID)) {
-                    ServidorSocket.RASTREAR_CUENTAS.add(objetivo!!.cuentaID)
+                if (!ServidorSocket.RASTREAR_CUENTAS.contains(objetivo?.cuentaID)) {
+                    objetivo?.cuentaID?.let { ServidorSocket.RASTREAR_CUENTAS.add(it) }
                 }
                 GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Se agrego a la lista de rastreos: " + infos[1])
             } catch (e: Exception) {
