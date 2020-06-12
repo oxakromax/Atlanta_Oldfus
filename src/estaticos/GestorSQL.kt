@@ -1,6 +1,6 @@
 package estaticos
 
-import com.mysql.jdbc.PreparedStatement
+//import com.mysql.jdbc.PreparedStatement
 //import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const
 import estaticos.Mundo.Duo
 import estaticos.Mundo.Experiencia
@@ -43,11 +43,9 @@ import variables.personaje.Personaje
 import variables.ranking.RankingKoliseo
 import variables.ranking.RankingPVP
 import variables.zotros.*
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.ResultSet
-import java.sql.SQLException
+import java.sql.*
 import java.util.*
+import java.util.Date
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 import kotlin.math.max
