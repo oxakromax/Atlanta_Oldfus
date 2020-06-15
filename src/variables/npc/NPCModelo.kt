@@ -1,8 +1,8 @@
 package variables.npc
 
 import estaticos.Condiciones.validaCondiciones
-import estaticos.GestorSQL.ACTUALIZAR_NPC_VENTAS
 import estaticos.Mundo
+import estaticos.database.GestorSQL.ACTUALIZAR_NPC_VENTAS
 import variables.mision.Mision
 import variables.mision.MisionModelo
 import variables.mision.MisionPregunta

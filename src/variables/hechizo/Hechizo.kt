@@ -6,8 +6,8 @@ import estaticos.Constantes.convertirStringArray
 import estaticos.Constantes.getElementoPorEfectoID
 import estaticos.Constantes.getNombreEfecto
 import estaticos.Formulas.getRandomInt
-import estaticos.GestorSQL.UPDATE_HECHIZO_AFECTADOS
 import estaticos.GestorSalida.ENVIAR_GTM_INFO_STATS_TODO_LUCHADORES_A_TODOS
+import estaticos.database.GestorSQL.UPDATE_HECHIZO_AFECTADOS
 import variables.hechizo.EfectoHechizo.TipoDaño
 import variables.mapa.Celda
 import variables.mapa.Mapa

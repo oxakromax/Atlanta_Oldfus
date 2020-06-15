@@ -3,9 +3,6 @@ package variables.casa
 import estaticos.AtlantaMain
 import estaticos.Constantes
 import estaticos.Constantes.esPosicionEquipamiento
-import estaticos.GestorSQL.GET_COFRE_POR_MAPA_CELDA
-import estaticos.GestorSQL.INSERT_COFRE_MODELO
-import estaticos.GestorSQL.REPLACE_COFRE
 import estaticos.GestorSalida.ENVIAR_BN_NADA
 import estaticos.GestorSalida.ENVIAR_ECK_PANEL_DE_INTERCAMBIOS
 import estaticos.GestorSalida.ENVIAR_EL_LISTA_EXCHANGER
@@ -24,6 +21,9 @@ import estaticos.Mundo.getCasaDentroPorMapa
 import estaticos.Mundo.getCofrePorUbicacion
 import estaticos.Mundo.getMapa
 import estaticos.Mundo.getObjeto
+import estaticos.database.GestorSQL.GET_COFRE_POR_MAPA_CELDA
+import estaticos.database.GestorSQL.INSERT_COFRE_MODELO
+import estaticos.database.GestorSQL.REPLACE_COFRE
 import sprites.Exchanger
 import variables.objeto.Objeto
 import variables.personaje.Cuenta

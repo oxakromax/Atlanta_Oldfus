@@ -1,9 +1,9 @@
 package utilidades.economia
 
 import estaticos.AtlantaMain
-import estaticos.GestorSQL
 import estaticos.GestorSalida
 import estaticos.Mundo
+import estaticos.database.GestorSQL
 import variables.casa.Cofre
 import variables.personaje.Personaje
 

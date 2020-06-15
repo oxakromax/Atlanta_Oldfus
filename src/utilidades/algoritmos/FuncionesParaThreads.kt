@@ -1,6 +1,7 @@
 package utilidades.algoritmos
 
 import estaticos.*
+import estaticos.database.GestorSQL
 import servidor.ServidorServer
 import sincronizador.ExchangeClient
 import java.io.BufferedReader

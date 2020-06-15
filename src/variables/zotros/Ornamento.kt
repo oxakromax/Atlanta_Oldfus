@@ -1,8 +1,8 @@
 package variables.zotros
 
-import estaticos.GestorSQL.RESTAR_CREDITOS
-import estaticos.GestorSQL.RESTAR_OGRINAS
 import estaticos.GestorSalida.ENVIAR_Im_INFORMACION
+import estaticos.database.GestorSQL.RESTAR_CREDITOS
+import estaticos.database.GestorSQL.RESTAR_OGRINAS
 import variables.personaje.Personaje
 
 class Ornamento(

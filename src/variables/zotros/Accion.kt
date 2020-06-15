@@ -5,13 +5,6 @@ import estaticos.AtlantaMain.redactarLogServidorln
 import estaticos.Formulas.formatoTiempo
 import estaticos.Formulas.getRandomInt
 import estaticos.Formulas.getXPMision
-import estaticos.GestorSQL.ADD_OGRINAS_CUENTA
-import estaticos.GestorSQL.CAMBIAR_SEXO_CLASE
-import estaticos.GestorSQL.GET_ABONO
-import estaticos.GestorSQL.GET_CREDITOS_CUENTA
-import estaticos.GestorSQL.REPLACE_MONTURA
-import estaticos.GestorSQL.SET_ABONO
-import estaticos.GestorSQL.SET_CREDITOS_CUENTA
 import estaticos.GestorSalida.ENVIAR_Ak_KAMAS_PDV_EXP_PJ
 import estaticos.GestorSalida.ENVIAR_As_STATS_DEL_PJ
 import estaticos.GestorSalida.ENVIAR_BN_NADA
@@ -48,6 +41,13 @@ import estaticos.GestorSalida.ENVIAR_gUF_PANEL_CERCADOS_GREMIO
 import estaticos.GestorSalida.ENVIAR_gUT_PANEL_CASA_GREMIO
 import estaticos.GestorSalida.ENVIAR_gn_CREAR_GREMIO
 import estaticos.GestorSalida.enviar
+import estaticos.database.GestorSQL.ADD_OGRINAS_CUENTA
+import estaticos.database.GestorSQL.CAMBIAR_SEXO_CLASE
+import estaticos.database.GestorSQL.GET_ABONO
+import estaticos.database.GestorSQL.GET_CREDITOS_CUENTA
+import estaticos.database.GestorSQL.REPLACE_MONTURA
+import estaticos.database.GestorSQL.SET_ABONO
+import estaticos.database.GestorSQL.SET_CREDITOS_CUENTA
 import variables.mision.Mision
 import variables.mob.GrupoMob
 import variables.mob.MobModelo.TipoGrupo
@@ -2171,7 +2171,7 @@ class Accion(val id: Int, val args: String, condicion: String) {
                                 "da6c00"
                             )
                         }
-                        val recompensaExp = getXPMision(victima.getNivel())
+                        val recompensaExp = getXPMision(victima.nivel)
                         val pergRec = 9920
                         val misionPVP = MisionPVP(
                             System.currentTimeMillis(), nombreVict, AtlantaMain.MISION_PVP_KAMAS.toLong(),
@@ -2202,7 +2202,7 @@ class Accion(val id: Int, val args: String, condicion: String) {
                             pergamino.addStatTexto(Constantes.STAT_MISION, "0#0#0#$nombreVict")
                             pergamino.addStatTexto(
                                 Constantes.STAT_RANGO,
-                                "0#0#" + Integer.toHexString(victima.getGradoAlineacion())
+                                "0#0#" + Integer.toHexString(victima.gradoAlineacion)
                             )
                             pergamino.addStatTexto(
                                 Constantes.STAT_NIVEL,

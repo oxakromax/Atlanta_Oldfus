@@ -2,7 +2,6 @@ package variables.personaje
 
 import estaticos.AtlantaMain
 import estaticos.Constantes
-import estaticos.GestorSQL.INSERT_INTERCAMBIO
 import estaticos.GestorSalida.ENVIAR_EK_CHECK_OK_INTERCAMBIO
 import estaticos.GestorSalida.ENVIAR_EMK_MOVER_OBJETO_LOCAL
 import estaticos.GestorSalida.ENVIAR_EmK_MOVER_OBJETO_DISTANTE
@@ -11,6 +10,7 @@ import estaticos.GestorSalida.ENVIAR_OQ_CAMBIA_CANTIDAD_DEL_OBJETO
 import estaticos.GestorSalida.ENVIAR_Ow_PODS_DEL_PJ
 import estaticos.Mundo.Duo
 import estaticos.Mundo.getDuoPorIDPrimero
+import estaticos.database.GestorSQL.INSERT_INTERCAMBIO
 import sprites.Exchanger
 import variables.objeto.Objeto
 import java.util.*

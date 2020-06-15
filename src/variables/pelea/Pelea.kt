@@ -3,6 +3,7 @@ package variables.pelea
 import estaticos.*
 import estaticos.Inteligencia.EstadoLanzHechizo
 import estaticos.Mundo.Duo
+import estaticos.database.GestorSQL
 import servidor.ServidorSocket.AccionDeJuego
 import sprites.PreLuchador
 import utilidades.logdropeo

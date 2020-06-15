@@ -7,8 +7,6 @@ import estaticos.Constantes
 import estaticos.Constantes.esPosicionEquipamiento
 import estaticos.Encriptador.celdaIDAHash
 import estaticos.Encriptador.getValorHashPorNumero
-import estaticos.GestorSQL.DELETE_RECAUDADOR
-import estaticos.GestorSQL.SALVAR_OBJETO
 import estaticos.GestorSalida.ENVIAR_EsK_MOVER_A_TIENDA_COFRE_BANCO
 import estaticos.GestorSalida.ENVIAR_GA_MOVER_SPRITE_MAPA
 import estaticos.GestorSalida.ENVIAR_GM_BORRAR_GM_A_MAPA
@@ -25,6 +23,8 @@ import estaticos.Mundo.getGremio
 import estaticos.Mundo.getMapa
 import estaticos.Mundo.getObjeto
 import estaticos.Mundo.getPersonaje
+import estaticos.database.GestorSQL.DELETE_RECAUDADOR
+import estaticos.database.GestorSQL.SALVAR_OBJETO
 import sprites.Exchanger
 import sprites.PreLuchador
 import sprites.Preguntador

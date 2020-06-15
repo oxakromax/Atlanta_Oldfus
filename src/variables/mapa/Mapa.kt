@@ -5,11 +5,6 @@ import estaticos.AtlantaMain.redactarLogServidorln
 import estaticos.Condiciones.validaCondiciones
 import estaticos.Formulas.getRandomInt
 import estaticos.Formulas.randomBoolean
-import estaticos.GestorSQL.CARGAR_TRIGGERS_POR_MAPA
-import estaticos.GestorSQL.DELETE_MAPA_HEROICO
-import estaticos.GestorSQL.DELETE_MOBS_FIX_MAPA
-import estaticos.GestorSQL.REPLACE_MAPAS_HEROICO
-import estaticos.GestorSQL.UPDATE_SET_MOBS_MAPA
 import estaticos.GestorSalida.ENVIAR_BN_NADA
 import estaticos.GestorSalida.ENVIAR_GA_ACCION_JUEGO_AL_MAPA
 import estaticos.GestorSalida.ENVIAR_GDO_OBJETO_TIRAR_SUELO
@@ -20,6 +15,11 @@ import estaticos.GestorSalida.ENVIAR_Ow_PODS_DEL_PJ
 import estaticos.GestorSalida.ENVIAR_fC_CANTIDAD_DE_PELEAS
 import estaticos.GestorSalida.enviar
 import estaticos.GestorSalida.enviarEnCola
+import estaticos.database.GestorSQL.CARGAR_TRIGGERS_POR_MAPA
+import estaticos.database.GestorSQL.DELETE_MAPA_HEROICO
+import estaticos.database.GestorSQL.DELETE_MOBS_FIX_MAPA
+import estaticos.database.GestorSQL.REPLACE_MAPAS_HEROICO
+import estaticos.database.GestorSQL.UPDATE_SET_MOBS_MAPA
 import sprites.PreLuchador
 import variables.gremio.Recaudador
 import variables.mapa.interactivo.ObjetoInteractivo

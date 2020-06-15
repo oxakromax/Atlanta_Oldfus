@@ -1,6 +1,7 @@
 package estaticos
 
 //import servidor.ServidorThread.Reiniciar
+import estaticos.database.GestorSQL
 import servidor.ServidorServer
 import servidor.ServidorSocket
 import utilidades.algoritmos.FuncionesParaThreads

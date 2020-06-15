@@ -1,7 +1,7 @@
 package utilidades.seguridad
 
 import estaticos.Formulas
-import estaticos.GestorSQL
+import estaticos.database.GestorSQL
 import variables.personaje.Cuenta
 
 object tokenGenerator {

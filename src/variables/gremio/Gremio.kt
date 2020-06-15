@@ -2,7 +2,6 @@ package variables.gremio
 
 import estaticos.AtlantaMain
 import estaticos.Constantes
-import estaticos.GestorSQL.DELETE_MIEMBRO_GREMIO
 import estaticos.GestorSalida.ENVIAR_Oa_CAMBIAR_ROPA_MAPA
 import estaticos.Mundo
 import estaticos.Mundo.getCasaDePj
@@ -10,6 +9,7 @@ import estaticos.Mundo.getExpGremio
 import estaticos.Mundo.getHechizo
 import estaticos.Mundo.getPersonaje
 import estaticos.Mundo.sigIDGremio
+import estaticos.database.GestorSQL.DELETE_MIEMBRO_GREMIO
 import variables.hechizo.StatHechizo
 import variables.personaje.Personaje
 import variables.stats.Stats

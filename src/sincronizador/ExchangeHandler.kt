@@ -7,7 +7,6 @@ import org.apache.mina.core.session.IoSession
 import sincronizador.ExchangePacketHandler.parser
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.StandardCharsets
-import kotlin.concurrent.thread
 
 class ExchangeHandler : IoHandlerAdapter() {
     @Throws(Exception::class)
@@ -19,14 +18,15 @@ class ExchangeHandler : IoHandlerAdapter() {
     override fun messageReceived(arg0: IoSession, arg1: Any) {
         val packet = ioBufferToString(arg1)
         ExchangeClient.logger.info(packet)
-        thread {
-            parser(packet)
-        }.setUncaughtExceptionHandler { t, e ->
-            kotlin.run {
-                exceptionCaught(arg0, e)
-                t.interrupt()
-            }
-        }
+        parser(packet)
+//        thread {
+//            parser(packet)
+//        }.setUncaughtExceptionHandler { t, e ->
+//            kotlin.run {
+//                exceptionCaught(arg0, e)
+//                t.interrupt()
+//            }
+//        }
     }
 
     override fun sessionIdle(session: IoSession?, status: IdleStatus?) {

@@ -2,14 +2,14 @@ package variables.mercadillo
 
 import estaticos.AtlantaMain.redactarLogServidorln
 import estaticos.Constantes
-import estaticos.GestorSQL.DELETE_OBJ_MERCADILLO
-import estaticos.GestorSQL.REPLACE_CUENTA_SERVIDOR
-import estaticos.GestorSQL.REPLACE_OBJETO_MERCADILLO
 import estaticos.GestorSalida.ENVIAR_EmK_MOVER_OBJETO_DISTANTE
 import estaticos.GestorSalida.ENVIAR_Im_INFORMACION
 import estaticos.Mundo.Duo
 import estaticos.Mundo.getCuenta
 import estaticos.Mundo.getObjetoModelo
+import estaticos.database.GestorSQL.DELETE_OBJ_MERCADILLO
+import estaticos.database.GestorSQL.REPLACE_CUENTA_SERVIDOR
+import estaticos.database.GestorSQL.REPLACE_OBJETO_MERCADILLO
 import sprites.Exchanger
 import variables.objeto.Objeto
 import variables.personaje.Personaje

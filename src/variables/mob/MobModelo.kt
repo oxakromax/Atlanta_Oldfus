@@ -3,9 +3,9 @@ package variables.mob
 import estaticos.AtlantaMain
 import estaticos.Constantes
 import estaticos.Formulas.getRandomInt
-import estaticos.GestorSQL.UPDATE_STATS_MOB
-import estaticos.GestorSQL.UPDATE_STATS_PUNTOS_PDV_XP_MOB
 import estaticos.Mundo
+import estaticos.database.GestorSQL.UPDATE_STATS_MOB
+import estaticos.database.GestorSQL.UPDATE_STATS_PUNTOS_PDV_XP_MOB
 import variables.hechizo.Hechizo
 import variables.pelea.DropMob
 import java.util.*

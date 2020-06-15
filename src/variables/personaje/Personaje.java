@@ -2,6 +2,7 @@ package variables.personaje;
 
 import estaticos.*;
 import estaticos.Mundo.Duo;
+import estaticos.database.GestorSQL;
 import servidor.ServidorServer;
 import servidor.ServidorSocket;
 import servidor.ServidorSocket.AccionDeJuego;

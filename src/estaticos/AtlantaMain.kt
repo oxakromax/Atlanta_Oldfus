@@ -1,10 +1,11 @@
 package estaticos
 
-import estaticos.GestorSQL.LOG_SQL
-import estaticos.GestorSQL.iniciarCommit
-import estaticos.GestorSQL.iniciarConexion
 import estaticos.GestorSalida.ENVIAR_BAT2_CONSOLA
 import estaticos.GestorSalida.ENVIAR_Im_INFORMACION_A_TODOS
+import estaticos.database.GestorSQL
+import estaticos.database.GestorSQL.LOG_SQL
+import estaticos.database.GestorSQL.iniciarCommit
+import estaticos.database.GestorSQL.iniciarConexion
 import servidor.ServidorHandler
 import servidor.ServidorServer
 import servidor.ServidorSocket
@@ -790,7 +791,7 @@ object AtlantaMain {
     var PUERTO_SINCRONIZADOR = 19999
     var IP_PUBLICA_SERVIDOR = ""
     var BD_HOST: String? = null
-    private var BD_PORT = "3306"
+    var BD_PORT = "3306"
     var BD_USUARIO: String? = null
     var BD_PASS: String? = null
     var BD_ESTATICA: String? = null

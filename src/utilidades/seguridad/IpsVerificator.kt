@@ -1,8 +1,8 @@
 package utilidades.seguridad
 
 import estaticos.Formulas
-import estaticos.GestorSQL
 import estaticos.GestorSalida
+import estaticos.database.GestorSQL
 import variables.personaje.Cuenta
 
 object IpsVerificator {

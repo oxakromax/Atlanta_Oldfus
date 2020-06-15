@@ -1,9 +1,9 @@
 package sincronizador
 
 import estaticos.AtlantaMain
-import estaticos.GestorSQL
 import estaticos.GestorSalida
 import estaticos.Mundo
+import estaticos.database.GestorSQL
 import servidor.ServidorServer
 import variables.personaje.Cuenta
 

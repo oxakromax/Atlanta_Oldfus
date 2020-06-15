@@ -4,12 +4,12 @@ import estaticos.AtlantaMain
 import estaticos.AtlantaMain.redactarLogServidorln
 import estaticos.Constantes
 import estaticos.Formulas.getRandomInt
-import estaticos.GestorSQL.UPDATE_GFX_OBJMODELO
-import estaticos.GestorSQL.UPDATE_NIVEL_OBJMODELO
-import estaticos.GestorSQL.UPDATE_PRECIO_MEDIO_OBJETO_MODELO
-import estaticos.GestorSQL.UPDATE_PRECIO_OBJETO_MODELO
 import estaticos.GestorSalida.ENVIAR_Im_INFORMACION
 import estaticos.Mundo.Duo
+import estaticos.database.GestorSQL.UPDATE_GFX_OBJMODELO
+import estaticos.database.GestorSQL.UPDATE_NIVEL_OBJMODELO
+import estaticos.database.GestorSQL.UPDATE_PRECIO_MEDIO_OBJETO_MODELO
+import estaticos.database.GestorSQL.UPDATE_PRECIO_OBJETO_MODELO
 import variables.hechizo.EfectoHechizo
 import variables.hechizo.StatHechizo
 import variables.personaje.Personaje

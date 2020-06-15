@@ -4,8 +4,8 @@ import estaticos.*
 import estaticos.AtlantaMain.redactarLogServidorln
 import estaticos.Formulas.getRandomInt
 import estaticos.Formulas.randomBoolean
-import estaticos.GestorSQL.SALVAR_OBJETO
 import estaticos.GestorSalida.ENVIAR_GA_MOVER_SPRITE_MAPA
+import estaticos.database.GestorSQL.SALVAR_OBJETO
 import variables.mapa.Mapa
 import variables.mob.AparecerMobs.Aparecer
 import variables.mob.MobModelo.TipoGrupo

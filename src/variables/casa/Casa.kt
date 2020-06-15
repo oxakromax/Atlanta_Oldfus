@@ -2,7 +2,6 @@ package variables.casa
 
 import estaticos.AtlantaMain.redactarLogServidorln
 import estaticos.Constantes
-import estaticos.GestorSQL.REPLACE_COFRE
 import estaticos.GestorSalida.ENVIAR_BN_NADA
 import estaticos.GestorSalida.ENVIAR_Im_INFORMACION
 import estaticos.GestorSalida.ENVIAR_KCK_VENTANA_CLAVE
@@ -21,6 +20,7 @@ import estaticos.Mundo.getCasaDePj
 import estaticos.Mundo.getCofresPorCasa
 import estaticos.Mundo.getMapa
 import estaticos.Mundo.getPersonaje
+import estaticos.database.GestorSQL.REPLACE_COFRE
 import variables.gremio.Gremio
 import variables.personaje.Personaje
 import java.util.*
