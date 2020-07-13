@@ -192,7 +192,7 @@ object Mundo {
     val CASAS: MutableMap<Int, Casa> = HashMap()
     val MERCADILLOS: MutableMap<Int, Mercadillo> = HashMap()
     val ANIMACIONES: MutableMap<Int, Animacion> = HashMap()
-    val COMANDOSACCION: MutableMap<Int, comandosAccion> = HashMap()
+    val COMANDOSACCION: MutableMap<Int, comandosAccion> = HashMap() // El mapita de toda la vida
     val COFRES: MutableMap<Int, Cofre> = HashMap()
     val TUTORIALES: MutableMap<Int, Tutorial> = HashMap()
     val OBJETIVOS_MODELOS: MutableMap<Int, MisionObjetivoModelo> =
@@ -528,7 +528,7 @@ object Mundo {
         RECARGAR_COFRES()
         println(COFRES.size.toString() + " cofres cargados")
         print("Cargando los comandos personalizados: ")
-        GestorSQL.CARGAR_COMANDOS_ACCION()
+        GestorSQL.CARGAR_COMANDOS_ACCION() // Oa los cargo
         println("${COMANDOSACCION.size} comandos personalizados cargados")
         SIG_ID_OBJETO = GET_SIG_ID_OBJETO()
         try {
@@ -1790,7 +1790,7 @@ object Mundo {
                 e.printStackTrace()
             }
         }
-        GestorSQL.CARGAR_COMANDOS_ACCION()
+        GestorSQL.CARGAR_COMANDOS_ACCION() // Oa como la wea elimina la lista cada vez que carga, los puse en los guardados del servidor
     }
 
     fun salvarServidor(inclusoOffline: Boolean) {

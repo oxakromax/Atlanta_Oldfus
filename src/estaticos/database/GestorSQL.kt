@@ -1538,7 +1538,7 @@ object GestorSQL {
                     it
                 )
             } ?: return
-            Mundo.COMANDOSACCION.clear()
+            Mundo.COMANDOSACCION.clear() // Como siempre, debes acordarte de eliminar la lista antes de volver a cargar
             while (resultado.resultSet.next()) {
                 Mundo.COMANDOSACCION[resultado.resultSet.getInt("id")] = comandosAccion(
                     resultado.resultSet.getInt("id"),

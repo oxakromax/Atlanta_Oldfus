@@ -2167,7 +2167,7 @@ class Accion(val id: Int, val args: String, condicion: String) {
                         } else {
                             ENVIAR_cs_CHAT_MENSAJE(
                                 perso,
-                                "<b>Nueva Cacería</b><br><b>Nombre:</b> " + nombreVict + "<br><b>Nivel:</b> " + victima.getNivel() + "<br><b>Grado:</b> " + victima.getGradoAlineacion() + "<br><b>Buena Suerte</b>.",
+                                "<b>Nueva Cacería</b><br><b>Nombre:</b> " + nombreVict + "<br><b>Nivel:</b> " + victima.getNivel() + "<br><b>Grado:</b> " + victima.gradoAlineacion + "<br><b>Buena Suerte</b>.",
                                 "da6c00"
                             )
                         }
@@ -2769,7 +2769,7 @@ class Accion(val id: Int, val args: String, condicion: String) {
                         ENVIAR_BN_NADA(objetivo, "EXCEPTION ACCION $_id")
                         return false
                     }
-                    HACER_MUCHAS_ACCIONES -> try {
+                    HACER_MUCHAS_ACCIONES -> try { // Oa codigo de hacer muchas pelotudeces a la vez jaja
                         val sep = _args.split(Pattern.quote("|").toRegex()).toTypedArray()
                         var args = ""
                         for (accion in sep) {

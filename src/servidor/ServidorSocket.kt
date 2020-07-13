@@ -7086,9 +7086,13 @@ class ServidorSocket(val session: IoSession) {
             var split = msjChat.split(" ".toRegex()).toTypedArray()
             val cmd = split[0]
             val comando = cmd.substring(1).toLowerCase()
-            for (cmda in Mundo.COMANDOSACCION.values) {
-                if (cmda.comando.equals(comando, ignoreCase = true)) {
-                    if (cmda.realizarAccion(personaje)) {
+            for (cmda in Mundo.COMANDOSACCION.values) { // Se busca si la wea de comando esta dentro de los comandos personalizados primero
+                if (cmda.comando.equals(
+                        comando,
+                        ignoreCase = true
+                    )
+                ) { // se verifica si la wea de comando del jugador es = que el modelo
+                    if (cmda.realizarAccion(personaje)) { // si se hizo, se retorna y era
                         return true
                     }
                 }

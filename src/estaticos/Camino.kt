@@ -17,6 +17,7 @@ import variables.personaje.Personaje
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
+import kotlin.math.abs
 
 object Camino {
     private val DIRECCIONES = charArrayOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
@@ -682,9 +683,9 @@ object Camino {
         val cDestino = mapa.getCelda(celdaDestino)
         val difX = cDestino!!.coordX - cInicio!!.coordX
         val difY = cDestino.coordY - cInicio.coordY
-        return if (Math.abs(difY) == Math.abs(difX) && celdaAnterior > 0) {
+        return if (abs(difY) == abs(difX) && celdaAnterior > 0) {
             listaDirEntreDosCeldas2(mapa, celdaAnterior, celdaDestino, (-1).toShort())
-        } else if (Math.abs(difY) > Math.abs(difX)) {
+        } else if (abs(difY) > abs(difX)) {
             val c =
                 arrayOf(intArrayOf(difX, 0, 2), intArrayOf(difY, 1, 3))
             formulaDireccion(c)
