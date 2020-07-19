@@ -32,7 +32,6 @@ class Database(
                 try {
                     connection = statement.connection
                     statement.execute()
-//                    logger.debug("SQL request executed successfully {}", statement.toString())
                 } catch (e: java.lang.Exception) {
                     e.printStackTrace()
                     logger.error("Can't execute SQL Request :$statement", e)

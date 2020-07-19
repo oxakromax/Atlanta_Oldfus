@@ -2,43 +2,8 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="9d1579f9-88dd-4d3f-ae0b-4575974a30bb" name="oldfus" url="http://d-oldschool.sytes.net">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="d-oldschool.sytes.net" port="22" sshConfigId="20451250-e729-46ec-bcc3-583bc39f71c9" sshConfig="oldfus">
-          <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
-          </advancedOptions>
-        </fileTransfer>
-      </webServer>
-      <webServer id="ed81c743-8a1e-4104-97ad-b80bc66bb80f" name="Arrendado 1" url="http://62.171.183.69">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="95.111.234.28" port="22" sshConfigId="317e96e0-5e3b-4c6c-8f4a-c3b40fb4bc69" sshConfig="Arrendado 5">
-          <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
-          </advancedOptions>
-        </fileTransfer>
-      </webServer>
-      <webServer id="8e986bc9-e818-40ff-bcd8-6d2b9f343721" name="Arrendado 2" url="http://144.91.112.154">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="144.91.112.154" port="22" sshConfigId="372c0764-70f2-498e-8d1c-8490d630b81a" sshConfig="Arrendado 2">
-          <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
-          </advancedOptions>
-        </fileTransfer>
-      </webServer>
-      <webServer id="a90f282e-91c7-489d-a041-be68a89069cc" name="Arrendado 3" url="http://164.68.115.238">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="164.68.115.238" port="22" sshConfigId="7f364299-beed-4176-afda-ed6a06a9a182" sshConfig="Arrendado 3">
-          <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
-          </advancedOptions>
-        </fileTransfer>
-      </webServer>
-      <webServer id="c3e53d18-b1cf-4d7f-b3ca-154cd84c1d8a" name="Arrendado 4" url="http://95.111.225.241">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="95.111.225.241" port="22" sshConfigId="733f8b79-fa63-424e-99c0-5d63c29b57f6" sshConfig="Arrendado 4">
-          <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
-          </advancedOptions>
-        </fileTransfer>
-      </webServer>
-      <webServer id="9417f19a-c3c6-42e1-b04f-1b04576da9c2" name="Arrendado 5">
-        <fileTransfer rootFolder="/root" accessType="SFTP" host="95.111.234.28" port="22" sshConfigId="317e96e0-5e3b-4c6c-8f4a-c3b40fb4bc69" sshConfig="Arrendado 5">
+      <webServer id="58fb33b2-c478-4a24-9add-c06833304c60" name="oldfus">
+        <fileTransfer rootFolder="/root" accessType="SFTP" host="149.56.28.225" port="22" sshConfigId="09f4ee1b-a452-4404-90c3-08eaf73d9684" sshConfig="Oldfus">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

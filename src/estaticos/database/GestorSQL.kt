@@ -8,6 +8,7 @@ import estaticos.GestorSalida
 import estaticos.Mundo
 import estaticos.Mundo.Duo
 import estaticos.Mundo.Experiencia
+import estaticos.Mundo.sigIDPersonaje
 import servidor.ServidorServer
 import utilidades.comandosAccion
 import utilidades.economia.Economia
@@ -188,6 +189,20 @@ object GestorSQL {
         return try {
             _bdAlterna =
                 Database(Constantes.databasetoken, Constantes.iptoken, "3306", Constantes.usertoken, Constantes.tokenpw)
+            if (_bdAlterna?.initializeConnection() == true) {
+                println("Fallo de conexion base de datos privada")
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun recambiarAlterna(host: String?, database: String?, user: String?, pass: String?): Boolean {
+        return try {
+            _bdAlterna?.dataSource?.close()
+            _bdAlterna =
+                Database(database, host, "3306", user, pass)
             if (_bdAlterna?.initializeConnection() == true) {
                 println("Fallo de conexion base de datos privada")
             }
@@ -915,6 +930,340 @@ object GestorSQL {
         }
 
         return i
+    }
+
+    fun GET_CUENTA_ID_ALTERNA(cuenta: String, pass: String): Int {
+        var i = -1
+        val consultaSQL = "SELECT * FROM `accounts` WHERE `account`='$cuenta' AND `pass`='$pass';"
+        try {
+            val resultado = consultaSQL(consultaSQL, _bdAlterna)
+            while (resultado.resultSet.next()) {
+                return resultado.resultSet.getInt("guid")
+            }
+            cerrarResultado(resultado)
+        } catch (e: Exception) {
+        }
+        return i
+    }
+
+    fun GET_PERSONAJES_ALTERNA(idacc: Int, cuenta: Cuenta) {
+        val consultaSQL = "SELECT * FROM `players` WHERE `account`=$idacc"
+        try {
+            val resultado = consultaSQL(consultaSQL, _bdAlterna)
+            while (resultado.resultSet.next()) {
+                val statsBase = TreeMap<Int, Int>()
+                statsBase[Constantes.STAT_MAS_VITALIDAD] = resultado.resultSet.getInt("vitalite")
+                statsBase[Constantes.STAT_MAS_FUERZA] = resultado.resultSet.getInt("force")
+                statsBase[Constantes.STAT_MAS_SABIDURIA] = resultado.resultSet.getInt("sagesse")
+                statsBase[Constantes.STAT_MAS_INTELIGENCIA] = resultado.resultSet.getInt("intelligence")
+                statsBase[Constantes.STAT_MAS_SUERTE] = resultado.resultSet.getInt("chance")
+                statsBase[Constantes.STAT_MAS_AGILIDAD] = resultado.resultSet.getInt("agilite")
+                val statsScroll = TreeMap<Int, Int>()
+                try {
+                    for (s in resultado.resultSet.getString("parcho").split(";")) {
+                        val i = s.split(",")
+                        statsScroll[i[0].toInt()] = i[1].toInt()
+                    }
+                } catch (e: Exception) {
+                }
+                var nombre = resultado.resultSet.getString("name")
+                while (Mundo.getPersonajePorNombre(nombre) != null) {
+                    nombre += "${(Math.random() * 10).toInt()}"
+                }
+                val perso = Personaje(
+                    sigIDPersonaje(),
+                    nombre,
+                    resultado.resultSet.getByte(
+                        "sexe"
+                    ),
+                    resultado.resultSet.getByte("class"),
+                    resultado.resultSet.getInt("color1"),
+                    resultado.resultSet.getInt("color2"),
+                    resultado.resultSet.getInt(
+                        "color3"
+                    ),
+                    resultado.resultSet.getLong("kamas"),
+                    resultado.resultSet.getInt("spellboost"),
+                    resultado.resultSet.getInt("capital"),
+                    resultado.resultSet.getInt("energy"),
+                    resultado.resultSet.getShort("level"),
+                    resultado.resultSet.getLong("xp"),
+                    resultado.resultSet.getInt("size"),
+                    resultado.resultSet.getInt("gfx"),
+                    resultado.resultSet.getByte("alignement"),
+                    cuenta.id,
+                    statsBase,
+                    statsScroll,
+                    true,
+                    false,
+                    "*#%!pi\$:?^¡@~",
+                    resultado.resultSet.getShort("map"),
+                    resultado.resultSet.getShort("cell"),
+                    "",
+                    resultado.resultSet.getByte(
+                        "pdvper"
+                    ).toInt(),
+                    resultado.resultSet.getString("spells"),
+                    resultado.resultSet.getString("savepos"),
+                    resultado.resultSet.getString("jobs"),
+                    0,
+                    -1,
+                    resultado.resultSet.getInt("honor"),
+                    resultado.resultSet.getInt(
+                        "deshonor"
+                    ),
+                    1,
+                    "164,528,844,935,951,1158,1242,1841,2191,3022,3250,4263,4739,5295,6137,6855,6954,7411,8037,8088,8125,8163,8437,8785,9454,10297,10304,10317,10349,10643,11170,11210",
+                    0,
+                    "",
+                    false,
+                    8200,
+                    8,
+                    0,
+                    1,
+                    "",
+                    "",
+                    "",
+                    "",
+                    "ALL",
+                    0,
+                    "",
+                    0,
+                    "",
+                    -1,
+                    "0,0"
+                )
+                if (perso.cuenta != null) {
+                    Mundo.addPersonaje(perso)
+                }
+                val objetos = resultado.resultSet.getString("objets").replace("|", ",")
+                val consultaSQL2 =
+                    "select * from `world.entity.objects` where id in (${objetos.substring(0, objetos.lastIndex)});"
+                val resultado2 = consultaSQL(consultaSQL2, _bdAlterna)
+                while (resultado2.resultSet.next()) {
+                    val objnopermitidos = arrayListOf<Int>(
+                        22098,
+                        17029,
+                        17031,
+                        17030,
+                        17018,
+                        17019,
+                        17020,
+                        17021,
+                        9233,
+                        9234,
+                        10866,
+                        17023,
+                        17024,
+                        17025,
+                        17026,
+                        17027,
+                        17028,
+                        17756,
+                        10802,
+                        17000,
+                        17001,
+                        17002,
+                        17003,
+                        17004,
+                        17005,
+                        17006,
+                        17007,
+                        17008,
+                        17009,
+                        17010,
+                        17011,
+                        17757,
+                        7708,
+                        7709,
+                        7710,
+                        7711,
+                        7712,
+                        7713,
+                        8155,
+                        9624,
+                        7525,
+                        8167,
+                        9363,
+                        9552,
+                        9553,
+                        9554,
+                        9555,
+                        9556,
+                        9964,
+                        17762,
+                        10140,
+                        17759,
+                        9362,
+                        10564,
+                        17758,
+                        17760,
+                        17761,
+                        17763,
+                        17750,
+                        17751,
+                        17752,
+                        17767,
+                        17922,
+                        17755,
+                        972,
+                        8815,
+                        17743,
+                        17748,
+                        17749,
+                        17754,
+                        17915,
+                        17917,
+                        17916,
+                        17919,
+                        17918,
+                        17742,
+                        17744,
+                        17745,
+                        17746,
+                        17747,
+                        17908,
+                        17909,
+                        17910,
+                        17911,
+                        17912,
+                        17913,
+                        17914,
+                        17920,
+                        17921,
+                        8814,
+                        10862,
+                        22040,
+                        22045,
+                        22046,
+                        22047,
+                        22056,
+                        22057,
+                        22058,
+                        22059,
+                        22063,
+                        22064,
+                        22076,
+                        22085,
+                        22086,
+                        22087,
+                        22088,
+                        22089,
+                        22090,
+                        22091,
+                        22092,
+                        22093,
+                        22094,
+                        22095,
+                        22096,
+                        22097,
+                        22099,
+                        7521,
+                        7526,
+                        7527,
+                        8164,
+                        8165,
+                        8166,
+                        15001,
+                        22027,
+                        22028,
+                        22029,
+                        22030,
+                        22031,
+                        22032,
+                        22033,
+                        22034,
+                        22035,
+                        22036,
+                        22037,
+                        22038,
+                        22039,
+                        22041,
+                        22042,
+                        22043,
+                        22044,
+                        22049,
+                        22050,
+                        22051,
+                        22053,
+                        22054,
+                        22060,
+                        22061,
+                        22062,
+                        22065,
+                        22066,
+                        22067,
+                        22068,
+                        22070,
+                        22071,
+                        22072,
+                        22073,
+                        22074,
+                        22075,
+                        22077,
+                        22078,
+                        22079,
+                        22080,
+                        22081,
+                        22082,
+                        22083,
+                        22084,
+                        19072
+                    )
+                    val rs = resultado2.resultSet
+                    val om = Mundo.getObjetoModelo(rs.getInt("template")) ?: continue
+                    if (om.id in objnopermitidos) continue
+                    val obj = om.crearObjeto(rs.getInt("quantity"), rs.getByte("position"), CAPACIDAD_STATS.RANDOM)
+                    obj.convertirStringAStats(rs.getString("stats"))
+                    Mundo.addObjeto(obj, false)
+                    obj.setIDObjevivo(0) // Se saca el objevivo de encima
+                    perso.addObjetoConOAKO(obj, true)
+                }
+                perso.salvar()
+                cerrarResultado(resultado2)
+            }
+            cerrarResultado(resultado)
+            ELIMINAR_CUENTA_ALTERNA(idacc)
+            // Terminamos con lo del personaje, ahora vamos a buscar los items y kk del banco
+            val consultaSQL3 = "select * from `banks` where id = $idacc"
+            val resultado3 = consultaSQL(consultaSQL3, _bdAlterna)
+            val rs = resultado3.resultSet
+            while (rs.next()) {
+                cuenta.addKamasBanco(rs.getLong("kamas"))
+                val objetosB = rs.getString("items").replace("|", ",")
+                val consultaSQL4 =
+                    "select * from `world.entity.objects` where id in (${objetosB.substring(0, objetosB.lastIndex)});"
+                val resultado4 = consultaSQL(consultaSQL4, _bdAlterna)
+                val rs2 = resultado4.resultSet
+                while (rs2.next()) {
+                    val om = Mundo.getObjetoModelo(rs2.getInt("template")) ?: continue
+                    val obj = om.crearObjeto(rs2.getInt("quantity"), rs2.getByte("position"), CAPACIDAD_STATS.RANDOM)
+                    obj.convertirStringAStats(rs2.getString("stats"))
+                    Mundo.addObjeto(obj, false)
+                    cuenta.banco.addObjetoRapido(obj)
+                }
+                cerrarResultado(resultado4)
+            }
+            cerrarResultado(resultado3)
+        } catch (e: Exception) {
+        }
+    }
+
+    fun ELIMINAR_CUENTA_ALTERNA(id: Int) {
+        val consultaSQL = "DELETE FROM `accounts` WHERE `guid`=?;"
+        try {
+            val declaracion = _bdAlterna?.let {
+                transaccionSQL(
+                    consultaSQL,
+                    it
+                )
+            } ?: return
+            declaracion.setInt(1, id)
+            ejecutarTransaccion(declaracion)
+            cerrarDeclaracion(declaracion)
+        } catch (e: Exception) {
+            exceptionModify(e, consultaSQL, "")
+        }
     }
 
     // public static void UPDATE_CUENTA_LOGUEADO(final int cuentaID, final byte log) {
@@ -1722,7 +2071,10 @@ object GestorSQL {
             )
             while (resultado.resultSet.next()) {
                 val creaTuItem = CreaTuItem(
-                    resultado.resultSet.getInt("id"), resultado.resultSet.getString("statsMaximos"), resultado.resultSet.getInt("limiteOgrinas"), resultado.resultSet.getInt("precioBase")
+                    resultado.resultSet.getInt("id"),
+                    resultado.resultSet.getString("statsMaximos"),
+                    resultado.resultSet.getInt("limiteOgrinas"),
+                    resultado.resultSet.getInt("precioBase")
                 )
                 Mundo.CREA_TU_ITEM[creaTuItem.iD] = creaTuItem
             }
@@ -2500,7 +2852,9 @@ object GestorSQL {
                 }
                 if (mapa.getCelda(resultado.resultSet.getShort("celda")) == null) {
                     AtlantaMain.redactarLogServidorln(
-                        "LA CELDA " + resultado.resultSet.getShort("celda") + " DEL MAPA " + resultado.resultSet.getShort("mapa") + " NO EXISTE"
+                        "LA CELDA " + resultado.resultSet.getShort("celda") + " DEL MAPA " + resultado.resultSet.getShort(
+                            "mapa"
+                        ) + " NO EXISTE"
                     )
                     continue
                 }
@@ -2655,7 +3009,11 @@ object GestorSQL {
             while (resultado.resultSet.next()) {
                 val id = resultado.resultSet.getInt("id")
                 val hechizo = Hechizo(
-                    id, resultado.resultSet.getString("nombre"), resultado.resultSet.getInt("sprite"), resultado.resultSet.getString("spriteInfos"), resultado.resultSet.getInt("valorIA")
+                    id,
+                    resultado.resultSet.getString("nombre"),
+                    resultado.resultSet.getInt("sprite"),
+                    resultado.resultSet.getString("spriteInfos"),
+                    resultado.resultSet.getInt("valorIA")
                 )
                 Mundo.addHechizo(hechizo)
                 for (i in 1..6) {
@@ -3134,7 +3492,10 @@ object GestorSQL {
             while (resultado.resultSet.next()) {
                 Mundo.addPreguntaNPC(
                     PreguntaNPC(
-                        resultado.resultSet.getInt("id"), resultado.resultSet.getString("respuestas"), resultado.resultSet.getString("params"), resultado.resultSet.getString("alternos")
+                        resultado.resultSet.getInt("id"),
+                        resultado.resultSet.getString("respuestas"),
+                        resultado.resultSet.getString("params"),
+                        resultado.resultSet.getString("alternos")
                     )
                 )
             }
@@ -3547,7 +3908,10 @@ object GestorSQL {
             while (resultado.resultSet.next()) {
                 Mundo.addRankingKoliseo(
                     RankingKoliseo(
-                        resultado.resultSet.getInt("id"), resultado.resultSet.getString("nombre"), resultado.resultSet.getInt("victorias"), resultado.resultSet.getInt("derrotas")
+                        resultado.resultSet.getInt("id"),
+                        resultado.resultSet.getString("nombre"),
+                        resultado.resultSet.getInt("victorias"),
+                        resultado.resultSet.getInt("derrotas")
                     )
                 )
             }
@@ -4192,12 +4556,30 @@ object GestorSQL {
             declaracion.setInt(parametro++, perso.deshonor)
             declaracion.setInt(parametro++, perso.gradoAlineacion)
             declaracion.setInt(parametro++, perso.cuentaID)
-            perso.subStatsBase[Constantes.STAT_MAS_VITALIDAD]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsBase[Constantes.STAT_MAS_FUERZA]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsBase[Constantes.STAT_MAS_SABIDURIA]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsBase[Constantes.STAT_MAS_INTELIGENCIA]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsBase[Constantes.STAT_MAS_SUERTE]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsBase[Constantes.STAT_MAS_AGILIDAD]?.let { declaracion.setInt(parametro++, it) }
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsBase[Constantes.STAT_MAS_VITALIDAD] != null) perso.subStatsBase[Constantes.STAT_MAS_VITALIDAD]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsBase[Constantes.STAT_MAS_FUERZA] != null) perso.subStatsBase[Constantes.STAT_MAS_FUERZA]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsBase[Constantes.STAT_MAS_SABIDURIA] != null) perso.subStatsBase[Constantes.STAT_MAS_SABIDURIA]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsBase[Constantes.STAT_MAS_INTELIGENCIA] != null) perso.subStatsBase[Constantes.STAT_MAS_INTELIGENCIA]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsBase[Constantes.STAT_MAS_SUERTE] != null) perso.subStatsBase[Constantes.STAT_MAS_SUERTE]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsBase[Constantes.STAT_MAS_AGILIDAD] != null) perso.subStatsBase[Constantes.STAT_MAS_AGILIDAD]!! else 0
+            )
             declaracion.setInt(parametro++, if (perso.mostrarAmigos()) 1 else 0)
             declaracion.setInt(parametro++, if (perso.alasActivadas()) 1 else 0)
             declaracion.setString(parametro++, perso.canales)
@@ -4214,12 +4596,30 @@ object GestorSQL {
             declaracion.setInt(parametro++, perso.esposoID)
             declaracion.setString(parametro++, perso.stringTienda)
             declaracion.setInt(parametro++, if (perso.esMercante()) 1 else 0)
-            perso.subStatsScroll[Constantes.STAT_MAS_FUERZA]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsScroll[Constantes.STAT_MAS_INTELIGENCIA]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsScroll[Constantes.STAT_MAS_AGILIDAD]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsScroll[Constantes.STAT_MAS_SUERTE]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsScroll[Constantes.STAT_MAS_VITALIDAD]?.let { declaracion.setInt(parametro++, it) }
-            perso.subStatsScroll[Constantes.STAT_MAS_SABIDURIA]?.let { declaracion.setInt(parametro++, it) }
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsScroll[Constantes.STAT_MAS_FUERZA] != null) perso.subStatsScroll[Constantes.STAT_MAS_FUERZA]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsScroll[Constantes.STAT_MAS_INTELIGENCIA] != null) perso.subStatsScroll[Constantes.STAT_MAS_INTELIGENCIA]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsScroll[Constantes.STAT_MAS_AGILIDAD] != null) perso.subStatsScroll[Constantes.STAT_MAS_AGILIDAD]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsScroll[Constantes.STAT_MAS_SUERTE] != null) perso.subStatsScroll[Constantes.STAT_MAS_SUERTE]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsScroll[Constantes.STAT_MAS_VITALIDAD] != null) perso.subStatsScroll[Constantes.STAT_MAS_VITALIDAD]!! else 0
+            )
+            declaracion.setInt(
+                parametro++,
+                if (perso.subStatsScroll[Constantes.STAT_MAS_SABIDURIA] != null) perso.subStatsScroll[Constantes.STAT_MAS_SABIDURIA]!! else 0
+            )
             declaracion.setLong(parametro++, perso.restriccionesA.toLong())
             declaracion.setLong(parametro++, perso.restriccionesB.toLong())
             declaracion.setInt(parametro++, 0)

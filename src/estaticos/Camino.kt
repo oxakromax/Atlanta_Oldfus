@@ -702,10 +702,10 @@ object Camino {
             val dif = c[i][0]
             var p = i
             if (dif < 0) {
-                p = Math.abs(3 - i)
+                p = abs(3 - i)
             }
             abc[p] = c[i][1].toByte()
-            abc[Math.abs(3 - p)] = c[i][2].toByte()
+            abc[abs(3 - p)] = c[i][2].toByte()
         }
         return abc
     }

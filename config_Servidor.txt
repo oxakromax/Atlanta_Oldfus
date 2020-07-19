@@ -19,7 +19,7 @@ PARAM_SISTEMA_ORBES = false
 
 #CONEXION SERVIDOR
 MAX_CUENTAS_POR_IP = 99
-IP_MULTISERVIDOR = d-oldschool.sytes.net
+IP_MULTISERVIDOR = localhost
 #IP_MULTISERVIDOR = 62.171.183.69
 SERVER_ID = 900
 PUERTO_SERVIDOR = 5555
@@ -35,7 +35,7 @@ SISTEMA_IP_ESPERA = false
 BD_PORT = 3306
 BD_HOST = 127.0.0.1
 BD_USUARIO = root
-BD_PASS = Nh52895390
+BD_PASS = nh52895390
 BD_ACCOUNTS = evolution_accounts
 BD_DYNAMIC = evolution_dynamic
 BD_STATIC = evolution_static
@@ -265,7 +265,7 @@ TIPO_RECURSOS = 15
 #35,36,38,46,47,48,50,51,53,54,55,56,57,58,59,60,65,68,96,98,103,104,105,106,107,108,109,111
 
 PALABRAS_PROHIBIDAS = landfus,landfuss,llandfus,lanndfus,strong,stron,stroong,retardado,str0ng,erazto,nomekop,nom3kop,nomek0p
-COMANDOS_PERMITIDOS = block_xp,vog,eco,cog,token,liderip,agredir,rturno,mercadillo,tp,panel,infos,buscargrupo,maestro,salvar,comandos,finaccion,tienda,pass,deblo,seguidor,album,puntos,iglesia,dopeul,zonas,koli,mercadillo,rates
+COMANDOS_PERMITIDOS = transferir,recuperar,block_xp,vog,eco,cog,token,liderip,agredir,rturno,mercadillo,tp,panel,infos,buscargrupo,maestro,salvar,comandos,finaccion,tienda,pass,deblo,seguidor,album,puntos,iglesia,dopeul,zonas,koli,mercadillo,rates
 MENSAJE_COMANDOS = <b>Comandos Disponibles:</b><br/><b>.Infos</b> - Muestra el numero de personajes conectados.<br/><b>.Album</b> -  ?lbum de monstruos derrotados con sus respectivas informaciones.<br/><b>.Finaccion</b> - Termina la acci n en caso de bug en combate.<br/><b>.Pass</b> - Permite pasar turno en caso de bug en combate.<br/><b>.Puntos</b> - Muestra su cantidad de ogrinas.<br/><b>.Tienda</b> - Abre la tienda por ogrinas.<br/><b>.Buscargrupo</b> - Permite ver los grupos p blicos disponibles y unirse a ellos. Para crear un grupo deber s agregar un tag (palabra a eleccion) despuÃÂ©s del comando principal.<br/><b>.Maestro</b> - Permite unir todos sus personajes a un mismo grupo. Agregar "on" u "off" para activar/desactivar el seguimiento de personajes secundarios al l der del grupo.<br/><b>.tp</b> - Permite transportar los integrantes de su grupo a su posisc n.<br/><b>.Seguidor</b> - Permite seguir al lÃÂ­der del grupo.<br/><b>.Panel</b> - Abre el Panel de Ogrinas.<br/><b>.Zonas</b> - Desplega una lista de mapas disponibles.<br/><b>.Koli</b> - Abre el panel del koliseo para que puedas inscribirte.<br/><b>.Mercadillo</b> - Abre un panel de mercadillo en el cual podr s vender y comprar cualquier item desde cualquier lugar.<br/><b>.rturno</b> - Activa o Desactiva el refresco automatico de posiciones en las peleas al iniciar turno, Evita bugs visuales a cambio de un pesta eo al iniciar el turno<br/><b>.agredir</b> En caso de no poder agredir de manera normal por la interfaz, usa este comando<br/><b>.liderip</b> Comando en estado Alpha, Funciona para jugar multi en las peleas con una sola interfaz y no entre pestañas, contiene bugs que el servidor premiara en reportar en la pestaña de bugs
 
 #OGRINAS_CREAR_CLASE = 1

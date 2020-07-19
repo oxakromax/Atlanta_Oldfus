@@ -1,49 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="oldfus">
+  <component name="PublishConfigData" autoUpload="Always" serverName="oldfus">
     <serverData>
-      <paths name="Arrendado 1">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/Emu" local="$PROJECT_DIR$/Arrendado" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="Arrendado 2">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/Emu" local="$PROJECT_DIR$/Arrendado" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="Arrendado 3">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/Emu" local="$PROJECT_DIR$/Arrendado" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="Arrendado 4">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/Emu" local="$PROJECT_DIR$/Arrendado" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="Arrendado 5">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/Emu" local="$PROJECT_DIR$/Arrendado" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
       <paths name="oldfus">
         <serverdata>
           <mappings>
-            <mapping deploy="/Escritorio/4 evolution" local="$PROJECT_DIR$/jar" web="/" />
+            <mapping deploy="/emu" local="$PROJECT_DIR$/jar" web="/" />
           </mappings>
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>

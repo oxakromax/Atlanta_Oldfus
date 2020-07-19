@@ -2,12 +2,7 @@
 <project version="4">
   <component name="SshConfigs">
     <configs>
-      <sshConfig authType="PASSWORD" host="d-oldschool.sytes.net" id="20451250-e729-46ec-bcc3-583bc39f71c9" port="22" customName="oldfus" nameFormat="CUSTOM" username="root" />
-      <sshConfig authType="PASSWORD" host="62.171.183.69" id="d13e8a68-0371-450f-81ac-c77893b43b31" port="22" customName="Arrendado 1" nameFormat="CUSTOM" username="root" />
-      <sshConfig authType="PASSWORD" host="144.91.112.154" id="372c0764-70f2-498e-8d1c-8490d630b81a" port="22" customName="Arrendado 2" nameFormat="CUSTOM" username="root" />
-      <sshConfig authType="PASSWORD" host="164.68.115.238" id="7f364299-beed-4176-afda-ed6a06a9a182" port="22" customName="Arrendado 3" nameFormat="CUSTOM" username="root" />
-      <sshConfig authType="PASSWORD" host="95.111.225.241" id="733f8b79-fa63-424e-99c0-5d63c29b57f6" port="22" customName="Arrendado 4" nameFormat="CUSTOM" username="root" />
-      <sshConfig authType="PASSWORD" host="95.111.234.28" id="317e96e0-5e3b-4c6c-8f4a-c3b40fb4bc69" port="22" customName="Arrendado 5" nameFormat="CUSTOM" username="root" />
+      <sshConfig authType="PASSWORD" host="149.56.28.225" id="09f4ee1b-a452-4404-90c3-08eaf73d9684" port="22" customName="Oldfus" nameFormat="CUSTOM" username="root" />
     </configs>
   </component>
 </project>

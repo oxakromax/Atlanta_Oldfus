@@ -1121,20 +1121,20 @@ object AtlantaMain {
                 break
             }
         }
-        if (!(IP_MULTISERVIDOR[0] == "127.0.0.1" || IP_MULTISERVIDOR[0] == "localhost" || TOKEN.equals(
-                "Testing",
-                ignoreCase = true
-            ))
-        ) {
-            if ((!GestorSQL.conexionAlterna(
-                    "slimes.sytes.net",
-                    "clientes",
-                    "takataka",
-                    "Akilesbailo"
-                ) || !GestorSQL.tokenInicio(TOKEN)
-                        )
-            ) return
-        }
+//        if (!(IP_MULTISERVIDOR[0] == "127.0.0.1" || IP_MULTISERVIDOR[0] == "localhost" || TOKEN.equals(
+//                "Testing",
+//                ignoreCase = true
+//            ))
+//        ) {
+//            if ((!GestorSQL.conexionAlterna(
+//                    "slimes.sytes.net",
+//                    "clientes",
+//                    "takataka",
+//                    "Akilesbailo"
+//                ) || !GestorSQL.tokenInicio(TOKEN)
+//                        )
+//            ) return
+//        }
         // conectado a la base de datos sql
         print("Conexión a la base de datos:  ")
         if (iniciarConexion()) {
@@ -1144,6 +1144,7 @@ object AtlantaMain {
             // System.exit(1);
             return
         }
+        GestorSQL.recambiarAlterna(BD_HOST, "mint_login", BD_USUARIO, BD_PASS)
         println("Creando el Servidor ...")
         Mundo.crearServidor()
         ExchangeClient.INSTANCE?.start()

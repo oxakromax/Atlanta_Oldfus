@@ -183,6 +183,7 @@ import estaticos.GestorSalida.ENVIAR_Ñu_URL_LINK_VOTO
 import estaticos.GestorSalida.ENVIAR_Ñx_URL_LINK_BUG
 import estaticos.GestorSalida.ENVIAR_Ñz_URL_LINK_COMPRA
 import estaticos.GestorSalida.enviar
+import estaticos.database.GestorSQL
 import estaticos.database.GestorSQL.DELETE_REPORTE
 import estaticos.database.GestorSQL.ES_IP_BANEADA
 import estaticos.database.GestorSQL.GET_BANEADO
@@ -407,12 +408,16 @@ class ServidorSocket(val session: IoSession) {
     fun rastrear(packet: String) {
         try {
             if (RASTREAR_IPS.contains(actualIP) || cuenta != null && RASTREAR_CUENTAS.contains(cuenta!!.id)) {
-                if (personaje != null) {
-                    redactarLogServidorln("[" + personaje!!.nombre + "] " + packet)
-                } else if (cuenta != null) {
-                    redactarLogServidorln("<<" + cuenta!!.nombre + ">> " + packet)
-                } else {
-                    redactarLogServidorln("{$actualIP} $packet")
+                when {
+                    personaje != null -> {
+                        redactarLogServidorln("[" + personaje!!.nombre + "] " + packet)
+                    }
+                    cuenta != null -> {
+                        redactarLogServidorln("<<" + cuenta!!.nombre + ">> " + packet)
+                    }
+                    else -> {
+                        redactarLogServidorln("{$actualIP} $packet")
+                    }
                 }
             }
         } catch (ignored: Exception) {
@@ -4834,7 +4839,7 @@ class ServidorSocket(val session: IoSession) {
                 objevivo = if (objeto.objModelo?.tipo?.toInt() == Constantes.OBJETO_TIPO_OBJEVIVO) {
                     objeto
                 } else {
-                    Mundo.getObjeto(objeto.objevivoID)
+                    Mundo.getObjeto(objeto.objevivoID) ?: objeto // Arreglar para crear mimobionte
                 }
             }
             val exp = objevivo!!.getParamStatTexto(Constantes.STAT_EXP_OBJEVIVO, 3).toInt(16)
@@ -5930,10 +5935,10 @@ class ServidorSocket(val session: IoSession) {
                 }
                 'P' -> Mundo
                     .getObjetoModelo(packet.substring(3).toInt())?.precioPromedio?.let {
-                    ENVIAR_EHP_PRECIO_PROMEDIO_OBJ(
-                        personaje!!, packet.substring(3).toInt(), it
-                    )
-                }
+                        ENVIAR_EHP_PRECIO_PROMEDIO_OBJ(
+                            personaje!!, packet.substring(3).toInt(), it
+                        )
+                    }
                 'S' -> {
                     val splt = packet.substring(3).split(Pattern.quote("|").toRegex()).toTypedArray()
                     if (mercadillo.esTipoDeEsteMercadillo(splt[0].toInt())) {
@@ -7083,8 +7088,9 @@ class ServidorSocket(val session: IoSession) {
             return false
         }
         if (msjChat[0] == '.') {
-            var split = msjChat.split(" ".toRegex()).toTypedArray()
+            var split = msjChat.split(" ").toTypedArray()
             val cmd = split[0]
+            var args: Array<String> = if (split.size > 2) split.copyOfRange(1, split.size) else emptyArray()
             val comando = cmd.substring(1).toLowerCase()
             for (cmda in Mundo.COMANDOSACCION.values) { // Se busca si la wea de comando esta dentro de los comandos personalizados primero
                 if (cmda.comando.equals(
@@ -7114,6 +7120,67 @@ class ServidorSocket(val session: IoSession) {
                     return false
                 }
                 when (comando) {
+                    "transferir" -> {
+                        personaje.let {
+                            if (it != null) {
+                                if (it.pelea != null) {
+                                    it.enviarmensajeRojo("Tienes que salir de pelea para usar este comando")
+                                    return true
+                                }
+                                var banquero = false
+                                for (npc in it.mapa.npCs?.values ?: emptyList<NPC>()) {
+                                    if (npc.modelo?.nombre?.contains("Banquero".toRegex()) == true) {
+                                        banquero = true
+                                        break
+                                    }
+                                }
+                                if (!banquero) {
+                                    it.enviarmensajeRojo("En este mapa no hay banqueros para realizar la transacción")
+                                    return true
+                                }
+                                loop@ for (objeto in it.objetosTodos) {
+                                    when (objeto.objModelo?.tipo?.toInt()) {
+                                        Constantes.OBJETO_TIPO_OBJETO_MISION, Constantes.OBJETO_TIPO_ROLEPLAY_BUFF, Constantes.OBJETO_TIPO_PERGAMINO_BUSQUEDA, Constantes.OBJETO_TIPO_OBJETO_DE_BUSQUEDA -> {
+                                            continue@loop
+                                        }
+                                        else -> {
+                                            if (objeto.posicion == Constantes.OBJETO_POS_NO_EQUIPADO) {
+                                                it.cuenta.banco.addObjetoRapido(objeto)
+                                                it.Objetos.remove(objeto.id)
+                                            }
+                                        }
+                                    }
+                                }
+                                it.conectarse() // Recarguemos todo, Why not?
+                                it.enviarmensajeVerde("Los objetos han sido correctamente transferidos al banco")
+                            }
+                        }
+                        return true
+                    }
+                    "recuperar" -> {
+                        if (args.size < 2) {
+                            personaje?.enviarmensajeNegro(
+                                "Este comando se utiliza de la siguiente manera:\n" +
+                                        ".recuperar [cuenta] [contraseña] en este respectivo orden\n" +
+                                        "En el apartado de [cuenta] es la cuenta que usabas en Dofus Mint\n" +
+                                        "En el apartado de [contraseña] es la contraseña de la cuenta que acabas de consultar\n" +
+                                        "En el momento que se confirmen los datos, los personajes almacenados en esa cuenta junto con sus objetos" +
+                                        " serán transferidos a la cuenta actual"
+                            )
+                        } else {
+                            val acc = args[0]
+                            val pass = args[1]
+                            val idacc = GestorSQL.GET_CUENTA_ID_ALTERNA(acc, pass)
+                            if (idacc == -1) {
+                                personaje?.enviarmensajeRojo("Cuenta invalida")
+                            } else {
+                                cuenta?.let { GestorSQL.GET_PERSONAJES_ALTERNA(idacc, it) }
+                                personaje?.enviarmensajeVerde("Personajes restaurados! por favor relogea")
+                            }
+                            return true
+                        }
+                        return true
+                    }
                     "convert", "convertir" -> {
                         if (AtlantaMain.VALOR_KAMAS_POR_OGRINA <= 0) {
                             ENVIAR_Im1223_MENSAJE_IMBORRABLE(personaje!!, "No se puede convertir ahora")
@@ -7688,7 +7755,7 @@ class ServidorSocket(val session: IoSession) {
                         }
                         return true
                     }
-                    "banque" -> {
+                    "banque", "banco" -> {
                         try {
                             if (personaje!!.estaDisponible(false, false)) {
                                 if (cuenta!!.idioma.equals("fr", ignoreCase = true)) {
@@ -9605,20 +9672,21 @@ class ServidorSocket(val session: IoSession) {
     private fun juego_Iniciar_Accion(packet: String) {
         try {
             when (val accionID = packet.substring(2, 5).toInt()) {
-                1, 500 -> {
+                1 -> {
+                    addAccionJuego(AccionDeJuego(accionID, packet))
+                    if (!_realizaciandoAccion) {
+                        cumplirSiguienteAccion()
+                    } else {
+                        limpiarAcciones(true)
+                        addAccionJuego(AccionDeJuego(accionID, packet))
+                        cumplirSiguienteAccion()
+                    }
+                }
+                500 -> {
                     addAccionJuego(AccionDeJuego(accionID, packet))
                     if (!_realizaciandoAccion) {
                         cumplirSiguienteAccion()
                     }
-//                    else {
-//                        try{
-//                            Thread.sleep(100) // Si lo saco se va al carajo
-//                            juego_Iniciar_Accion(packet)
-//                        } catch (e:Exception){
-//                            redactarLogServidorln("Error al moverse $e")
-//                            Thread.currentThread().interrupt()
-//                        }
-//                    }
                 }
                 34 -> if (personaje!!.idMisionDocumento != 0) {
                     Accion.realizar_Accion_Estatico(
@@ -10189,9 +10257,6 @@ class ServidorSocket(val session: IoSession) {
 
     private fun realizarAccion(AJ: AccionDeJuego?) {
         try {
-//            if (AJ == null) {
-//                return
-//            }
             when (AJ?.AccionID) {
                 1 -> if (!personaje!!.inicioAccionMoverse(AJ)) {
                     limpiarAcciones(true)

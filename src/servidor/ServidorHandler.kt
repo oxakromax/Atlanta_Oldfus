@@ -53,6 +53,9 @@ class ServidorHandler : IoHandler {
                     client.logger.debug("<=== Recibido: $str")
                     client.rastrear(str)
                     client.registrar("===>> $str")
+                    if (AtlantaMain.MODO_DEBUG) {
+                        AtlantaMain.redactarLogServidorln("${client.logger.name} <=== Recibido: $str")
+                    }
                     val personaje = client.personaje
                     if (personaje != null) {
                         val multi: Personaje? = personaje.Multi
@@ -120,6 +123,9 @@ class ServidorHandler : IoHandler {
             val packet = arg1 as String
             client.logger.trace(" --> $packet")
             client.logger.debug("===> Enviado: $packet")
+            if (AtlantaMain.MODO_DEBUG) {
+                AtlantaMain.redactarLogServidorln("${client.logger.name} ===> Enviado: $packet")
+            }
         } else {
             arg0.attachment = null
             arg0.closeNow()

@@ -3231,6 +3231,7 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
     }
 
     public void analizarPosHechizos(final String str) {
+        boolean r = false; // Se marca si es que es un pj recuperado desde la base de starloco
         for (final String s : str.split(";")) {
             try {
                 String[] split = s.split(",");
@@ -3242,7 +3243,26 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
                     h2.setPosicion('_');
                 }
                 addHechizoPersonaje(pos, Mundo.getHechizo(id), nivel);
-            } catch (final Exception ignored) {
+            } catch (final java.lang.IndexOutOfBoundsException i) { // Con esto identifico si es de starloco o no
+                r = true;
+                break;
+            } catch (Exception ignored) {
+            }
+        }
+        if (r) {
+            for (final String s : str.split(",")) {
+                try {
+                    String[] split = s.split(";");
+                    int id = Integer.parseInt(split[0]);
+                    int nivel = Integer.parseInt(split[1]);
+                    char pos = split[2].charAt(0);
+                    HechizoPersonaje h2 = getHechizoPersonajePorPos(pos);
+                    if (h2 != null) {
+                        h2.setPosicion('_');
+                    }
+                    addHechizoPersonaje(pos, Mundo.getHechizo(id), nivel);
+                } catch (Exception ignored) {
+                }
             }
         }
     }
@@ -4876,10 +4896,24 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
                 Luchador luch = Pelea.getLuchadorPorID(getId());
                 assert luch != null;
                 if (!luch.puedeJugar()) {
+//                    if (luch.getNroInvocaciones() == 0) {
+//                        return false;
+//                    } else {
+//                        luch = Pelea.getLuchadorTurno();
+//                        assert luch != null;
+//                        if (luch.esInvocacion()) {
+//                            if (luch.getInvocador() != Pelea.getLuchadorPorID(getId())) {
+//                                return false;
+//                            }
+//                        } else {
+//                            return false;
+//                        }
+//                    }
                     if (getCompañero() == null) {
                         return false;
+                    } else {
+                        luch = Pelea.getLuchadorPorID(getCompañero().getId());
                     }
-                    luch = Pelea.getLuchadorPorID(getCompañero().getId());
                     assert luch != null;
                     if (!luch.puedeJugar()) {
                         return false;
