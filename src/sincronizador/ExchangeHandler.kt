@@ -19,14 +19,6 @@ class ExchangeHandler : IoHandlerAdapter() {
         val packet = ioBufferToString(arg1)
         ExchangeClient.logger.info(packet)
         parser(packet)
-//        thread {
-//            parser(packet)
-//        }.setUncaughtExceptionHandler { t, e ->
-//            kotlin.run {
-//                exceptionCaught(arg0, e)
-//                t.interrupt()
-//            }
-//        }
     }
 
     override fun sessionIdle(session: IoSession?, status: IdleStatus?) {

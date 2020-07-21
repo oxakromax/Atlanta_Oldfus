@@ -29,7 +29,7 @@ class SetRapido(val id: Int, val nombre: String, private val _icono: Int, data: 
                 }
                 data.append(objetos[i]).append(",").append(i)
             }
-            return id.toString() + "|" + nombre + "|" + _icono + "|" + data.toString()
+            return "$id|$nombre|$_icono|$data"
         }
 
     init {

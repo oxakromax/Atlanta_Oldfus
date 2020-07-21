@@ -7170,6 +7170,11 @@ class ServidorSocket(val session: IoSession) {
                         } else {
                             val acc = args[0]
                             val pass = args[1]
+                            GestorSQL.recambiarAlterna(
+                                AtlantaMain.BD_HOST, "mint_login",
+                                AtlantaMain.BD_USUARIO,
+                                AtlantaMain.BD_PASS
+                            )
                             val idacc = GestorSQL.GET_CUENTA_ID_ALTERNA(acc, pass)
                             if (idacc == -1) {
                                 personaje?.enviarmensajeRojo("Cuenta invalida")
@@ -9617,9 +9622,10 @@ class ServidorSocket(val session: IoSession) {
     }
 
     private fun creandoJuego() {
-        if (!personaje!!.CreandoJuego) { //			try {
+        if (!personaje!!.CreandoJuego) { //
+//             try {
 //				Thread.sleep(500);
-//			} catch (Exception e) {}
+//			} catch (e:Exception) {}
             creandoJuego()
             return
         }

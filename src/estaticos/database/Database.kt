@@ -10,7 +10,6 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Statement
-import kotlin.system.exitProcess
 
 class Database(
     val base: String?,
@@ -23,7 +22,6 @@ class Database(
 
     //connection
     var dataSource: HikariDataSource? = null
-        private set
     object operation{
         val locker = Any()
         val logger = LoggerFactory.getLogger(Database::class.java) as Logger
@@ -53,15 +51,16 @@ class Database(
         }
 
         fun close(connection: Connection?) {
-            if (connection == null) return
+//            if (connection == null) return
             try {
-                if (!connection.isClosed) {
-                    connection.close()
+                if (connection?.isClosed != true) {
+                    connection?.close()
 //                    logger.trace("{} released", connection)
                 }
             } catch (e: java.lang.Exception) {
                 logger.error("Can't stop connection", e)
             }
+
         }
 
         fun close(statement: Statement?) {
@@ -126,9 +125,9 @@ class Database(
             var connection: Connection? = null
             var statement: Statement? = null
             try {
-                connection = dataSource!!.connection
-                statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)
-                statement.execute(query)
+                connection = dataSource?.connection
+                statement = connection?.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)
+                statement?.execute(query)
 //                logger.debug("SQL request executed successfully {}", query)
             } catch (e: java.lang.Exception) {
                 logger.error("Can't execute SQL Request :$query", e)
@@ -144,11 +143,15 @@ class Database(
             val connection: Connection?
             try {
                 if (!query.endsWith(";")) query = "$query;"
-                connection = dataSource!!.connection
+                connection = dataSource?.connection
                 val statement =
-                    connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)
-                val result = Result(connection, statement.executeQuery(query))
+                    connection?.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)
+                val result = statement?.executeQuery(query)?.let { Result(connection, it) }
 //                logger.debug("SQL request executed successfully {}", query)
+//                if (result == null) {
+//                    initializeConnection()
+//                    getData(query)
+//                }
                 return result
             } catch (e: java.lang.Exception) {
                 logger.error("Can't execute SQL Request :$query", e)
@@ -158,13 +161,14 @@ class Database(
 
     fun getPreparedStatement(query: String?): PreparedStatement? {
         return try {
-            val connection = dataSource!!.connection
-            connection.prepareStatement(query)
+            val connection = dataSource?.connection
+            connection?.prepareStatement(query)
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
             logger.error("Can't getWaitingAccount datasource connection", e)
-            dataSource!!.close()
-            if (this.initializeConnection()) exitProcess(1)
+            dataSource?.close()
+            this.initializeConnection()
+//            if (!this.initializeConnection()) exitProcess(1)
             null
         }
     }
