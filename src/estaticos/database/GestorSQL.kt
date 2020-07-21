@@ -48,9 +48,9 @@ import variables.personaje.Personaje
 import variables.ranking.RankingKoliseo
 import variables.ranking.RankingPVP
 import variables.zotros.*
-import java.sql.PreparedStatement
-import java.sql.SQLException
+import java.sql.*
 import java.util.*
+import java.util.Date
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 import kotlin.math.max
@@ -59,16 +59,17 @@ import kotlin.math.min
 
 object GestorSQL {
     var LOG_SQL = StringBuilder()
-    private var _bdDinamica: Database? = null
-    private var _bdEstatica: Database? = null
-    private var _bdCuentas: Database? = null
-    private var _bdAlterna: Database? = null
+    private var _bdDinamica: Connection? = null
+    private var _bdEstatica: Connection? = null
+    private var _bdCuentas: Connection? = null
+    private var _bdAlterna: Connection? = null
     private var _timerComienzo: Timer? = null
     private var _necesitaCommit: Boolean = false
 
-    private fun cerrarResultado(resultado: Database.Result) {
+    private fun cerrarResultado(resultado: ResultSet) {
         try {
-            Database.operation.close(resultado)
+            resultado.statement.close()
+            resultado.close()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -93,25 +94,37 @@ object GestorSQL {
     }
 
     @Throws(Exception::class)
-    fun consultaSQL(consultaSQL: String, coneccion: Database?): Database.Result {
-        val resultado = coneccion?.getData(consultaSQL)
-        return resultado!!
+    fun consultaSQL(consultaSQL: String, coneccion: Connection): ResultSet {
+        val declaracion = coneccion.prepareStatement(consultaSQL) as PreparedStatement
+        val resultado = declaracion.executeQuery()
+        declaracion.queryTimeout = 300
+        return resultado
     }
 
     @Throws(Exception::class)
-    fun transaccionSQL(consultaSQL: String, conexion: Database?): PreparedStatement {
-        return conexion!!.getPreparedStatement(consultaSQL)!!
+    fun transaccionSQL(consultaSQL: String, conexion: Connection): PreparedStatement {
+        val declaracion = conexion.prepareStatement(consultaSQL) as PreparedStatement
+        _necesitaCommit = true
+        return declaracion
     }
 
     private fun ejecutarTransaccion(declaracion: PreparedStatement) {
-        Database.operation.execute(declaracion)
+        var ejecutar = 0
+        try {
+            ejecutar = declaracion.executeUpdate()
+        } catch (e: SQLException) {
+            AtlantaMain.redactarLogServidorln("EXECUTE UPDATE $declaracion")
+            e.printStackTrace()
+        }
+
         val str = declaracion.toString()
         LOG_SQL.append(System.currentTimeMillis()).append(" ").append(str.substring(str.indexOf(":"))).append("\n")
     }
 
     fun ejecutarBatch(declaracion: PreparedStatement) {
         try {
-            ejecutarTransaccion(declaracion)
+            declaracion.executeBatch()
+            cerrarDeclaracion(declaracion)
         } catch (e: SQLException) {
             AtlantaMain.redactarLogServidorln("EXECUTE UPDATE $declaracion")
             e.printStackTrace()
@@ -120,7 +133,12 @@ object GestorSQL {
     }
 
     private fun cerrarDeclaracion(declaracion: PreparedStatement) {
-        // TODO
+        try {
+            declaracion.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
     }
 
     fun timerCommit(iniciar: Boolean) {
@@ -148,28 +166,22 @@ object GestorSQL {
 
     fun iniciarConexion(): Boolean {
         try {
-            _bdDinamica = Database(
-                AtlantaMain.BD_DINAMICA,
-                AtlantaMain.BD_HOST,
-                AtlantaMain.BD_PORT,
-                AtlantaMain.BD_USUARIO,
-                AtlantaMain.BD_PASS
+            _bdDinamica = DriverManager.getConnection(
+                "jdbc:mysql://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_DINAMICA
+                        + "?autoReconnect=true", AtlantaMain.BD_USUARIO, AtlantaMain.BD_PASS
             )
-            _bdEstatica = Database(
-                AtlantaMain.BD_ESTATICA,
-                AtlantaMain.BD_HOST,
-                AtlantaMain.BD_PORT,
-                AtlantaMain.BD_USUARIO,
-                AtlantaMain.BD_PASS
+            _bdDinamica?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
+            _bdEstatica = DriverManager.getConnection(
+                "jdbc:mysql://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_ESTATICA
+                        + "?autoReconnect=true", AtlantaMain.BD_USUARIO, AtlantaMain.BD_PASS
             )
-            _bdCuentas = Database(
-                AtlantaMain.BD_CUENTAS,
-                AtlantaMain.BD_HOST,
-                AtlantaMain.BD_PORT,
-                AtlantaMain.BD_USUARIO,
-                AtlantaMain.BD_PASS
+            _bdEstatica?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
+            _bdCuentas = DriverManager.getConnection(
+                "jdbc:mysql://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_CUENTAS
+                        + "?autoReconnect=true", AtlantaMain.BD_USUARIO, AtlantaMain.BD_PASS
             )
-            if (_bdEstatica!!.initializeConnection() || _bdDinamica!!.initializeConnection() || _bdCuentas!!.initializeConnection()) {
+            _bdCuentas?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
+            if (!_bdEstatica!!.isValid(1000) || !_bdDinamica!!.isValid(1000) || !_bdCuentas!!.isValid(1000)) {
                 AtlantaMain.redactarLogServidorln("SQLError : Conexion a la BDD invalida")
                 return false
             }
@@ -186,26 +198,34 @@ object GestorSQL {
 
     fun conexionAlterna(host: String, database: String, user: String, pass: String): Boolean {
         return try {
-            _bdAlterna =
-                Database(Constantes.databasetoken, Constantes.iptoken, "3306", Constantes.usertoken, Constantes.tokenpw)
-            if (_bdAlterna?.initializeConnection() == true) {
-                println("Fallo de conexion base de datos privada")
+            if (_bdAlterna != null) {
+                try {
+                    _bdAlterna!!.close()
+                } catch (ignored: Exception) {
+                }
+
             }
-            true
+            _bdAlterna = DriverManager.getConnection(
+                "jdbc:mysql://${Constantes.iptoken}/${Constantes.databasetoken}",
+                Constantes.usertoken,
+                Constantes.tokenpw
+            )
+            _bdAlterna?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
+            _bdAlterna?.isValid(5000) ?: false
         } catch (e: Exception) {
             false
         }
     }
-
     fun recambiarAlterna(host: String?, database: String?, user: String?, pass: String?): Boolean {
         return try {
-            _bdAlterna?.dataSource?.close()
-            _bdAlterna =
-                Database(database, host, "3306", user, pass)
-            if (_bdAlterna?.initializeConnection() == true) {
-                println("Fallo de conexion base de datos privada")
-            }
-            true
+            _bdAlterna?.close()
+            _bdAlterna = DriverManager.getConnection(
+                "jdbc:mysql://${host}/${database}",
+                user,
+                pass
+            )
+            _bdAlterna?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
+            _bdAlterna?.isValid(5000) ?: false
         } catch (e: Exception) {
             false
         }
@@ -213,9 +233,67 @@ object GestorSQL {
 
 
     fun iniciarCommit(reiniciando: Boolean) {
-        //TODO
+        if (_bdDinamica!!.isClosed || _bdEstatica!!.isClosed || _bdCuentas!!.isClosed) {
+            cerrarConexion()
+            iniciarConexion()
+            try {
+                Thread.sleep(500)
+            } catch (e: Exception) {
+            }
+        }
+        if (AtlantaMain.PARAM_AUTO_COMMIT) {
+            return
+        }
+        try {
+            if (reiniciando) {
+                if (_bdDinamica!!.isClosed || _bdEstatica!!.isClosed || _bdCuentas!!.isClosed) {
+                    cerrarConexion()
+                    iniciarConexion()
+                }
+            }
+            _necesitaCommit = false
+            try {
+                _bdCuentas!!.commit()
+            } catch (e: Exception) {
+                AtlantaMain.redactarLogServidorln("EXCEPTION COMMIT ACCOUNTS: $e")
+                e.printStackTrace()
+            }
+
+            try {
+                _bdEstatica!!.commit()
+            } catch (e: Exception) {
+                AtlantaMain.redactarLogServidorln("EXCEPTION COMMIT STATIC: $e")
+                e.printStackTrace()
+            }
+
+            try {
+                _bdDinamica!!.commit()
+            } catch (e: Exception) {
+                AtlantaMain.redactarLogServidorln("EXCEPTION COMMIT DYNAMIC: $e")
+                e.printStackTrace()
+            }
+
+//            Thread.sleep(1000)
+        } catch (e: Exception) {
+            AtlantaMain.redactarLogServidorln("SQL ERROR COMENZAR TRANSACCIONES: $e")
+            e.printStackTrace()
+        }
+
     }
 
+    private fun cerrarConexion() {
+        iniciarCommit(false)
+        try {
+            _bdCuentas!!.close()
+            _bdDinamica!!.close()
+            _bdEstatica!!.close()
+            AtlantaMain.redactarLogServidorln("########## CONEXIONES SQL CERRADAS ##########")
+        } catch (e: Exception) {
+            AtlantaMain.redactarLogServidorln("SQL ERROR CERRAR CONEXION: $e")
+            e.printStackTrace()
+        }
+
+    }
 
     fun tokenInicio(str: String): Boolean {
         var token = ""
@@ -226,8 +304,8 @@ object GestorSQL {
             )
         }
         if (resultado != null) {
-            if (resultado.resultSet.first()) {
-                token = resultado.resultSet.getString("token")
+            if (resultado.first()) {
+                token = resultado.getString("token")
                 cerrarResultado(resultado)
                 return token == str
             }
@@ -248,8 +326,8 @@ object GestorSQL {
                 )
             }
             if (resultado != null) {
-                if (resultado.resultSet.first()) {
-                    token = resultado.resultSet.getString("token")
+                if (resultado.first()) {
+                    token = resultado.getString("token")
                     cerrarResultado(resultado)
                     return token
                 }
@@ -269,7 +347,7 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 b = true
             }
             cerrarResultado(resultado)
@@ -287,11 +365,11 @@ object GestorSQL {
                 "SELECT `ip` FROM `banip`;",
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 if (str.isNotEmpty()) {
                     str.append(", ")
                 }
-                str.append(resultado.resultSet.getString("ip"))
+                str.append(resultado.getString("ip"))
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -345,9 +423,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 b = try {
-                    resultado.resultSet.getByte("vip")
+                    resultado.getByte("vip")
                 } catch (e: Exception) {
                     1
                 }
@@ -369,9 +447,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    b = resultado.resultSet.getByte("rango")
+                    b = resultado.getByte("rango")
                 } catch (ignored: Exception) {
                 }
 
@@ -389,8 +467,8 @@ object GestorSQL {
     // String consultaSQL = "SELECT `ultimaIP` FROM `cuentas` WHERE `cuenta` = '" + cuenta + "' ;";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdCuentas);
-    // while (resultado.resultSet.next()) {
-    // str = resultado.resultSet.getString("ultimaIP");
+    // while (resultado.next()) {
+    // str = resultado.getString("ultimaIP");
     // }
     // cerrarResultado(resultado);
     // } catch (final Exception e) {
@@ -408,8 +486,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
-                str = resultado.resultSet.getInt("idWeb")
+            if (resultado.first()) {
+                str = resultado.getInt("idWeb")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -427,8 +505,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
-                str = resultado.resultSet.getString("apodo")
+            if (resultado.first()) {
+                str = resultado.getString("apodo")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -446,8 +524,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
-                l = resultado.resultSet.getLong("abono")
+            if (resultado.first()) {
+                l = resultado.getLong("abono")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -483,8 +561,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
-                i = resultado.resultSet.getInt("ogrinas")
+            if (resultado.first()) {
+                i = resultado.getInt("ogrinas")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -505,8 +583,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
-                i = resultado.resultSet.getInt("referido")
+            if (resultado.first()) {
+                i = resultado.getInt("referido")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -527,8 +605,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdDinamica!!
             )
-            if (resultado.resultSet.first()) {
-                i = resultado.resultSet.getString("vreferido")
+            if (resultado.first()) {
+                i = resultado.getString("vreferido")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -553,8 +631,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
-                i = resultado.resultSet.getInt("creditos")
+            if (resultado.first()) {
+                i = resultado.getInt("creditos")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -769,9 +847,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 try {
-                    str = resultado.resultSet.getString("contraseña")
+                    str = resultado.getString("contraseña")
                 } catch (ignored: Exception) {
                 }
 
@@ -809,9 +887,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 try {
-                    str = resultado.resultSet.getString("pregunta")
+                    str = resultado.getString("pregunta")
                 } catch (ignored: Exception) {
                 }
 
@@ -832,8 +910,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
-                i = resultado.resultSet.getLong("baneado")
+            if (resultado.first()) {
+                i = resultado.getLong("baneado")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -851,9 +929,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 try {
-                    str = resultado.resultSet.getString("respuesta")
+                    str = resultado.getString("respuesta")
                 } catch (ignored: Exception) {
                 }
 
@@ -920,7 +998,7 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 i++
             }
             cerrarResultado(resultado)
@@ -935,9 +1013,9 @@ object GestorSQL {
         var i = -1
         val consultaSQL = "SELECT * FROM `accounts` WHERE `account`='$cuenta' AND `pass`='$pass';"
         try {
-            val resultado = consultaSQL(consultaSQL, _bdAlterna)
-            while (resultado.resultSet.next()) {
-                return resultado.resultSet.getInt("guid")
+            val resultado = _bdAlterna?.let { consultaSQL(consultaSQL, it) } ?: return -1
+            while (resultado.next()) {
+                return resultado.getInt("guid")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -948,68 +1026,68 @@ object GestorSQL {
     fun GET_PERSONAJES_ALTERNA(idacc: Int, cuenta: Cuenta) {
         val consultaSQL = "SELECT * FROM `players` WHERE `account`=$idacc"
         try {
-            val resultado = consultaSQL(consultaSQL, _bdAlterna)
-            while (resultado.resultSet.next()) {
+            val resultado = _bdAlterna?.let { consultaSQL(consultaSQL, it) } ?: return
+            while (resultado.next()) {
                 try {
                     val statsBase = TreeMap<Int, Int>()
-                    statsBase[Constantes.STAT_MAS_VITALIDAD] = resultado.resultSet.getInt("vitalite")
-                    statsBase[Constantes.STAT_MAS_FUERZA] = resultado.resultSet.getInt("force")
-                    statsBase[Constantes.STAT_MAS_SABIDURIA] = resultado.resultSet.getInt("sagesse")
-                    statsBase[Constantes.STAT_MAS_INTELIGENCIA] = resultado.resultSet.getInt("intelligence")
-                    statsBase[Constantes.STAT_MAS_SUERTE] = resultado.resultSet.getInt("chance")
-                    statsBase[Constantes.STAT_MAS_AGILIDAD] = resultado.resultSet.getInt("agilite")
+                    statsBase[Constantes.STAT_MAS_VITALIDAD] = resultado.getInt("vitalite")
+                    statsBase[Constantes.STAT_MAS_FUERZA] = resultado.getInt("force")
+                    statsBase[Constantes.STAT_MAS_SABIDURIA] = resultado.getInt("sagesse")
+                    statsBase[Constantes.STAT_MAS_INTELIGENCIA] = resultado.getInt("intelligence")
+                    statsBase[Constantes.STAT_MAS_SUERTE] = resultado.getInt("chance")
+                    statsBase[Constantes.STAT_MAS_AGILIDAD] = resultado.getInt("agilite")
                     val statsScroll = TreeMap<Int, Int>()
                     try {
-                        for (s in resultado.resultSet.getString("parcho").split(";")) {
+                        for (s in resultado.getString("parcho").split(";")) {
                             val i = s.split(",")
                             statsScroll[i[0].toInt()] = i[1].toInt()
                         }
                     } catch (e: Exception) {
                     }
-                    var nombre = resultado.resultSet.getString("name")
+                    var nombre = resultado.getString("name")
                     while (Mundo.getPersonajePorNombre(nombre) != null) {
                         nombre += "${(Math.random() * 10).toInt()}"
                     }
                     val perso = Personaje(
                         sigIDPersonaje(),
                         nombre,
-                        resultado.resultSet.getByte(
+                        resultado.getByte(
                             "sexe"
                         ),
-                        resultado.resultSet.getByte("class"),
-                        resultado.resultSet.getInt("color1"),
-                        resultado.resultSet.getInt("color2"),
-                        resultado.resultSet.getInt(
+                        resultado.getByte("class"),
+                        resultado.getInt("color1"),
+                        resultado.getInt("color2"),
+                        resultado.getInt(
                             "color3"
                         ),
-                        resultado.resultSet.getLong("kamas"),
-                        resultado.resultSet.getInt("spellboost"),
-                        resultado.resultSet.getInt("capital"),
-                        resultado.resultSet.getInt("energy"),
-                        resultado.resultSet.getShort("level"),
-                        resultado.resultSet.getLong("xp"),
-                        resultado.resultSet.getInt("size"),
-                        resultado.resultSet.getInt("gfx"),
-                        resultado.resultSet.getByte("alignement"),
+                        resultado.getLong("kamas"),
+                        resultado.getInt("spellboost"),
+                        resultado.getInt("capital"),
+                        resultado.getInt("energy"),
+                        resultado.getShort("level"),
+                        resultado.getLong("xp"),
+                        resultado.getInt("size"),
+                        resultado.getInt("gfx"),
+                        resultado.getByte("alignement"),
                         cuenta.id,
                         statsBase,
                         statsScroll,
                         true,
                         false,
                         "*#%!pi\$:?^¡@~",
-                        resultado.resultSet.getShort("map"),
-                        resultado.resultSet.getShort("cell"),
+                        resultado.getShort("map"),
+                        resultado.getShort("cell"),
                         "",
-                        resultado.resultSet.getByte(
+                        resultado.getByte(
                             "pdvper"
                         ).toInt(),
-                        resultado.resultSet.getString("spells"),
-                        resultado.resultSet.getString("savepos"),
-                        resultado.resultSet.getString("jobs"),
+                        resultado.getString("spells"),
+                        resultado.getString("savepos"),
+                        resultado.getString("jobs"),
                         0,
                         -1,
-                        resultado.resultSet.getInt("honor"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("honor"),
+                        resultado.getInt(
                             "deshonor"
                         ),
                         1,
@@ -1036,11 +1114,11 @@ object GestorSQL {
                     if (perso.cuenta != null) {
                         Mundo.addPersonaje(perso)
                     }
-                    val objetos = resultado.resultSet.getString("objets").replace("|", ",")
+                    val objetos = resultado.getString("objets").replace("|", ",")
                     val consultaSQL2 =
                         "select * from `world.entity.objects` where id in (${objetos.substring(0, objetos.lastIndex)});"
-                    val resultado2 = consultaSQL(consultaSQL2, _bdAlterna)
-                    while (resultado2.resultSet.next()) {
+                    val resultado2 = consultaSQL(consultaSQL2, _bdAlterna!!)
+                    while (resultado2.next()) {
                         val objnopermitidos = arrayListOf<Int>(
                             22098,
                             17029,
@@ -1211,7 +1289,7 @@ object GestorSQL {
                             19072
                         )
                         try {
-                            val rs = resultado2.resultSet
+                            val rs = resultado2
                             val om = Mundo.getObjetoModelo(rs.getInt("template")) ?: continue
                             if (om.id in objnopermitidos) continue
                             val obj =
@@ -1237,15 +1315,15 @@ object GestorSQL {
             ELIMINAR_CUENTA_ALTERNA(idacc)
             // Terminamos con lo del personaje, ahora vamos a buscar los items y kk del banco
             val consultaSQL3 = "select * from `banks` where id = $idacc"
-            val resultado3 = consultaSQL(consultaSQL3, _bdAlterna)
-            val rs = resultado3.resultSet
+            val resultado3 = consultaSQL(consultaSQL3, _bdAlterna!!)
+            val rs = resultado3
             while (rs.next()) {
                 cuenta.addKamasBanco(rs.getLong("kamas"))
                 val objetosB = rs.getString("items").replace("|", ",")
                 val consultaSQL4 =
                     "select * from `world.entity.objects` where id in (${objetosB.substring(0, objetosB.lastIndex)});"
-                val resultado4 = consultaSQL(consultaSQL4, _bdAlterna)
-                val rs2 = resultado4.resultSet
+                val resultado4 = consultaSQL(consultaSQL4, _bdAlterna!!)
+                val rs2 = resultado4
                 while (rs2.next()) {
                     try {
                         val om = Mundo.getObjetoModelo(rs2.getInt("template")) ?: continue
@@ -1318,11 +1396,11 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 val cuenta = Cuenta(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("cuenta"),
-                    resultado.resultSet.getInt("referido")
+                    resultado.getInt("id"),
+                    resultado.getString("cuenta"),
+                    resultado.getInt("referido")
                 )
                 Mundo.addCuenta(cuenta)
                 REPLACE_CUENTA_SERVIDOR(cuenta, 1.toByte())
@@ -1340,11 +1418,11 @@ object GestorSQL {
                 "SELECT * FROM `cuentas`;",
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val cuenta = Cuenta(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("cuenta"),
-                    resultado.resultSet.getInt("referido")
+                    resultado.getInt("id"),
+                    resultado.getString("cuenta"),
+                    resultado.getInt("referido")
                 )
                 Mundo.addCuenta(cuenta)
             }
@@ -1363,9 +1441,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdDinamica!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 try {
-                    str = resultado.resultSet.getString("regalo")
+                    str = resultado.getString("regalo")
                 } catch (ignored: Exception) {
                 }
 
@@ -1384,8 +1462,8 @@ object GestorSQL {
                 "SELECT * FROM `captchas`;",
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
-                Mundo.CAPTCHAS.add(resultado.resultSet.getString("captcha") + "|" + resultado.resultSet.getString("respuesta"))
+            while (resultado.next()) {
+                Mundo.CAPTCHAS.add(resultado.getString("captcha") + "|" + resultado.getString("respuesta"))
             }
             cerrarResultado(resultado)
         } catch (ignored: Exception) {
@@ -1402,12 +1480,12 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    if (resultado.resultSet.getString("ultimoVoto").isEmpty()) {
+                    if (resultado.getString("ultimoVoto").isEmpty()) {
                         continue
                     }
-                    time = resultado.resultSet.getLong("ultimoVoto")
+                    time = resultado.getLong("ultimoVoto")
                     break
                 } catch (ignored: Exception) {
                 }
@@ -1419,11 +1497,11 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            while (resultado.resultSet.next()) {
-                if (resultado.resultSet.getString("ultimoVoto").isEmpty()) {
+            while (resultado.next()) {
+                if (resultado.getString("ultimoVoto").isEmpty()) {
                     continue
                 }
-                time = max(time, resultado.resultSet.getLong("ultimoVoto"))
+                time = max(time, resultado.getLong("ultimoVoto"))
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -1441,9 +1519,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdCuentas!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 try {
-                    i = resultado.resultSet.getInt("votos")
+                    i = resultado.getInt("votos")
                 } catch (ignored: Exception) {
                 }
 
@@ -1483,9 +1561,9 @@ object GestorSQL {
                 _bdDinamica!!
             )
 
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    str = resultado.resultSet.getString("objetos")
+                    str = resultado.getString("objetos")
                     println("Objetos: $str")
                 } catch (ignored: Exception) {
                 }
@@ -1522,24 +1600,24 @@ object GestorSQL {
                 "SELECT * FROM `cuentas_servidor`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    Mundo.getCuenta(resultado.resultSet.getInt("id"))
+                    Mundo.getCuenta(resultado.getInt("id"))
                         ?.cargarInfoServerPersonaje(
-                            resultado.resultSet.getString("objetos"),
-                            resultado.resultSet.getLong("kamas"),
-                            resultado.resultSet.getString("amigos"),
-                            resultado.resultSet.getString("enemigos"),
-                            resultado.resultSet.getString(
+                            resultado.getString("objetos"),
+                            resultado.getLong("kamas"),
+                            resultado.getString("amigos"),
+                            resultado.getString("enemigos"),
+                            resultado.getString(
                                 "establo"
                             ),
-                            resultado.resultSet.getString("reportes"),
-                            resultado.resultSet.getString("ultimaConexion"),
-                            resultado.resultSet.getString(
+                            resultado.getString("reportes"),
+                            resultado.getString("ultimaConexion"),
+                            resultado.getString(
                                 "mensajes"
                             ),
-                            resultado.resultSet.getString("ultimaIP"),
-                            resultado.resultSet.getInt("vreferido")
+                            resultado.getString("ultimaIP"),
+                            resultado.getInt("vreferido")
                         )
                 } catch (ignored: Exception) {
                 }
@@ -1560,9 +1638,9 @@ object GestorSQL {
                 consultaSQL,
                 _bdDinamica!!
             )
-            if (resultado.resultSet.first()) {
+            if (resultado.first()) {
                 try {
-                    b = resultado.resultSet.getByte("primeraVez")
+                    b = resultado.getByte("primeraVez")
                 } catch (ignored: Exception) {
                 }
 
@@ -1687,9 +1765,9 @@ object GestorSQL {
     // Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
-    // while (resultado.resultSet.next()) {
+    // while (resultado.next()) {
     // try {
-    // persos.add(Mundo.getPersonaje(Integer.parseInt(resultado.resultSet.getString("id"))));
+    // persos.add(Mundo.getPersonaje(Integer.parseInt(resultado.getString("id"))));
     // } catch (final Exception e) {}
     // }
     // cerrarResultado(resultado);
@@ -1706,9 +1784,9 @@ object GestorSQL {
     // Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
-    // while (resultado.resultSet.next()) {
+    // while (resultado.next()) {
     // try {
-    // gremios.add(Mundo.getGremio(Integer.parseInt(resultado.resultSet.getString("id"))));
+    // gremios.add(Mundo.getGremio(Integer.parseInt(resultado.getString("id"))));
     // } catch (final Exception e) {}
     // }
     // cerrarResultado(resultado);
@@ -1726,9 +1804,9 @@ object GestorSQL {
     // + Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
-    // while (resultado.resultSet.next()) {
+    // while (resultado.next()) {
     // try {
-    // persos.add(Mundo.getPersonaje(resultado.resultSet.getInt("id")));
+    // persos.add(Mundo.getPersonaje(resultado.getInt("id")));
     // } catch (final Exception e) {}
     // }
     // cerrarResultado(resultado);
@@ -1746,9 +1824,9 @@ object GestorSQL {
     // + Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
-    // while (resultado.resultSet.next()) {
+    // while (resultado.next()) {
     // try {
-    // persos.add(Mundo.getPersonaje(resultado.resultSet.getInt("id")));
+    // persos.add(Mundo.getPersonaje(resultado.getInt("id")));
     // } catch (final Exception e) {}
     // }
     // cerrarResultado(resultado);
@@ -1766,8 +1844,8 @@ object GestorSQL {
                 "SELECT MAX(id) AS max FROM `objetos`;",
                 _bdDinamica!!
             )
-            if (resultado.resultSet.first()) {
-                id = resultado.resultSet.getInt("max")
+            if (resultado.first()) {
+                id = resultado.getInt("max")
             }
             cerrarResultado(resultado)
             return id
@@ -1784,11 +1862,11 @@ object GestorSQL {
                 "SELECT * FROM `recetas`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val arrayDuos = ArrayList<Duo<Int, Int>>()
                 var continua = false
-                val idReceta = resultado.resultSet.getInt("id")
-                val receta = resultado.resultSet.getString("receta")
+                val idReceta = resultado.getInt("id")
+                val receta = resultado.getString("receta")
                 for (str in receta.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
                     continua = try {
                         val s = str.split(Pattern.quote(",").toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -1820,20 +1898,20 @@ object GestorSQL {
                     "SELECT * FROM `drops`;",
                     _bdEstatica!!
                 )
-                while (resultado.resultSet.next()) {
-                    if (Mundo.getObjetoModelo(resultado.resultSet.getInt("objeto")) == null) {
+                while (resultado.next()) {
+                    if (Mundo.getObjetoModelo(resultado.getInt("objeto")) == null) {
                         continue
                     }
                     val drop = DropMob(
-                        resultado.resultSet.getInt("objeto"),
-                        resultado.resultSet.getInt("prospeccion"),
-                        resultado.resultSet.getFloat(
+                        resultado.getInt("objeto"),
+                        resultado.getInt("prospeccion"),
+                        resultado.getFloat(
                             "porcentaje"
                         ),
-                        resultado.resultSet.getInt("max"),
-                        resultado.resultSet.getString("condicion")
+                        resultado.getInt("max"),
+                        resultado.getString("condicion")
                     )
-                    Mundo.getMobModelo(resultado.resultSet.getInt("mob"))?.addDrop(drop)
+                    Mundo.getMobModelo(resultado.getInt("mob"))?.addDrop(drop)
                     numero++
                 }
                 cerrarResultado(resultado)
@@ -1852,18 +1930,18 @@ object GestorSQL {
                 "SELECT * FROM `drops_fijos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                if (Mundo.getObjetoModelo(resultado.resultSet.getInt("objeto")) == null) {
+            while (resultado.next()) {
+                if (Mundo.getObjetoModelo(resultado.getInt("objeto")) == null) {
                     continue
                 }
                 Mundo.addDropFijo(
                     DropMob(
-                        resultado.resultSet.getInt("objeto"),
-                        resultado.resultSet.getFloat("porcentaje"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("objeto"),
+                        resultado.getFloat("porcentaje"),
+                        resultado.getInt(
                             "nivelMin"
                         ),
-                        resultado.resultSet.getInt("nivelMax")
+                        resultado.getInt("nivelMax")
                     )
                 )
                 numero++
@@ -1882,9 +1960,9 @@ object GestorSQL {
                 "SELECT * FROM zonas;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                Mundo.ZONAS[resultado.resultSet.getShort("mapa")] = resultado.resultSet.getShort("celda")
-                Mundo.LISTA_ZONAS += "|" + resultado.resultSet.getString("nombre") + ";" + resultado.resultSet.getShort(
+            while (resultado.next()) {
+                Mundo.ZONAS[resultado.getShort("mapa")] = resultado.getShort("celda")
+                Mundo.LISTA_ZONAS += "|" + resultado.getString("nombre") + ";" + resultado.getShort(
                     "mapa"
                 )
             }
@@ -1904,14 +1982,14 @@ object GestorSQL {
                 )
             } ?: return
             Mundo.COMANDOSACCION.clear() // Como siempre, debes acordarte de eliminar la lista antes de volver a cargar
-            while (resultado.resultSet.next()) {
-                Mundo.COMANDOSACCION[resultado.resultSet.getInt("id")] = comandosAccion(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("comando"),
-                    resultado.resultSet.getInt("id_accion"),
-                    resultado.resultSet.getString("arg"),
-                    resultado.resultSet.getString("condicion"),
-                    resultado.resultSet.getString("activo").equals("true", ignoreCase = true)
+            while (resultado.next()) {
+                Mundo.COMANDOSACCION[resultado.getInt("id")] = comandosAccion(
+                    resultado.getInt("id"),
+                    resultado.getString("comando"),
+                    resultado.getInt("id_accion"),
+                    resultado.getString("arg"),
+                    resultado.getString("condicion"),
+                    resultado.getString("activo").equals("true", ignoreCase = true)
                 )
             }
             cerrarResultado(resultado)
@@ -1926,16 +2004,16 @@ object GestorSQL {
                 "SELECT * FROM objetos_set;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val set = ObjetoSet(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("nombre"),
-                    resultado.resultSet.getString(
+                    resultado.getInt("id"),
+                    resultado.getString("nombre"),
+                    resultado.getString(
                         "objetos"
                     )
                 )
                 for (i in 2..8) {
-                    set.setStats(resultado.resultSet.getString(i.toString() + "_objetos"), i)
+                    set.setStats(resultado.getString(i.toString() + "_objetos"), i)
                 }
                 Mundo.addObjetoSet(set)
             }
@@ -1952,17 +2030,17 @@ object GestorSQL {
                 "SELECT * FROM `cercados_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val mapa = Mundo.getMapa(resultado.resultSet.getShort("mapa")) ?: continue
+            while (resultado.next()) {
+                val mapa = Mundo.getMapa(resultado.getShort("mapa")) ?: continue
                 val cercado = Cercado(
                     mapa,
-                    resultado.resultSet.getInt("capacidad"),
-                    resultado.resultSet.getByte("objetos"),
-                    resultado.resultSet.getShort("celdaPJ"),
-                    resultado.resultSet.getShort("celdaPuerta"),
-                    resultado.resultSet.getShort("celdaMontura"),
-                    resultado.resultSet.getString("celdasObjetos"),
-                    resultado.resultSet.getInt("precioOriginal")
+                    resultado.getInt("capacidad"),
+                    resultado.getByte("objetos"),
+                    resultado.getShort("celdaPJ"),
+                    resultado.getShort("celdaPuerta"),
+                    resultado.getShort("celdaMontura"),
+                    resultado.getString("celdasObjetos"),
+                    resultado.getInt("precioOriginal")
                 )
                 Mundo.addCercado(cercado)
             }
@@ -1979,12 +2057,12 @@ object GestorSQL {
                 "SELECT * FROM `oficios`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addOficio(
                     Oficio(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getString("herramientas"),
-                        resultado.resultSet.getString(
+                        resultado.getInt("id"),
+                        resultado.getString("herramientas"),
+                        resultado.getString(
                             "recetas"
                         )
                     )
@@ -2003,17 +2081,17 @@ object GestorSQL {
                 "SELECT * FROM `servicios`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addServicio(
                     Servicio(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getInt("creditos"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("id"),
+                        resultado.getInt("creditos"),
+                        resultado.getInt(
                             "ogrinas"
                         ),
-                        resultado.resultSet.getBoolean("activado"),
-                        resultado.resultSet.getInt("creditosVIP"),
-                        resultado.resultSet.getInt("ogrinasVIP")
+                        resultado.getBoolean("activado"),
+                        resultado.getInt("creditosVIP"),
+                        resultado.getInt("ogrinasVIP")
                     )
                 )
             }
@@ -2030,11 +2108,11 @@ object GestorSQL {
                 "SELECT * FROM `encarnaciones_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addEncarnacionModelo(
                     EncarnacionModelo(
-                        resultado.resultSet.getInt("gfx"), resultado.resultSet.getString("statsFijos"),
-                        resultado.resultSet.getString("statsPorNivel"), resultado.resultSet.getString("hechizos")
+                        resultado.getInt("gfx"), resultado.getString("statsFijos"),
+                        resultado.getString("statsPorNivel"), resultado.getString("hechizos")
                     )
                 )
             }
@@ -2051,24 +2129,24 @@ object GestorSQL {
                 "SELECT * FROM `clases`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val clase = Clase(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("gfxs"),
-                    resultado.resultSet.getString("tallas"),
-                    resultado.resultSet.getShort("mapaInicio"),
-                    resultado.resultSet.getShort("celdaInicio"),
-                    resultado.resultSet.getInt("PDV"),
-                    resultado.resultSet.getString("boostVitalidad"),
-                    resultado.resultSet.getString("boostSabiduria"),
-                    resultado.resultSet.getString("boostFuerza"),
-                    resultado.resultSet.getString("boostInteligencia"),
-                    resultado.resultSet.getString("boostAgilidad"),
-                    resultado.resultSet.getString(
+                    resultado.getInt("id"),
+                    resultado.getString("gfxs"),
+                    resultado.getString("tallas"),
+                    resultado.getShort("mapaInicio"),
+                    resultado.getShort("celdaInicio"),
+                    resultado.getInt("PDV"),
+                    resultado.getString("boostVitalidad"),
+                    resultado.getString("boostSabiduria"),
+                    resultado.getString("boostFuerza"),
+                    resultado.getString("boostInteligencia"),
+                    resultado.getString("boostAgilidad"),
+                    resultado.getString(
                         "boostSuerte"
                     ),
-                    resultado.resultSet.getString("statsInicio"),
-                    resultado.resultSet.getString("hechizos")
+                    resultado.getString("statsInicio"),
+                    resultado.getString("hechizos")
                 )
                 Mundo.CLASES[clase.id] = clase
             }
@@ -2085,12 +2163,12 @@ object GestorSQL {
                 "SELECT * FROM `crear_objetos_modelos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val creaTuItem = CreaTuItem(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("statsMaximos"),
-                    resultado.resultSet.getInt("limiteOgrinas"),
-                    resultado.resultSet.getInt("precioBase")
+                    resultado.getInt("id"),
+                    resultado.getString("statsMaximos"),
+                    resultado.getInt("limiteOgrinas"),
+                    resultado.getInt("precioBase")
                 )
                 Mundo.CREA_TU_ITEM[creaTuItem.iD] = creaTuItem
             }
@@ -2107,12 +2185,12 @@ object GestorSQL {
                 "SELECT * FROM `crear_objetos_stats`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 if (Mundo.CREAT_TU_ITEM_PRECIOS.isNotEmpty()) {
                     Mundo.CREAT_TU_ITEM_PRECIOS += ";"
                 }
-                val stat = resultado.resultSet.getInt("id")
-                val ogrinas = resultado.resultSet.getFloat("ogrinas")
+                val stat = resultado.getInt("id")
+                val ogrinas = resultado.getFloat("ogrinas")
                 Mundo.CREAT_TU_ITEM_PRECIOS += "$stat,$ogrinas"
                 CreaTuItem.PRECIOS[stat] = ogrinas
             }
@@ -2129,11 +2207,11 @@ object GestorSQL {
                 "SELECT * FROM `areas`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val area = Area(
-                    resultado.resultSet.getShort("id").toInt(),
-                    resultado.resultSet.getShort("superarea"),
-                    resultado.resultSet.getString(
+                    resultado.getShort("id").toInt(),
+                    resultado.getShort("superarea"),
+                    resultado.getString(
                         "nombre"
                     )
                 )
@@ -2153,19 +2231,19 @@ object GestorSQL {
                 "SELECT * FROM `subareas`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val subarea = SubArea(
-                    resultado.resultSet.getShort("id").toInt(),
-                    resultado.resultSet.getShort("area"),
-                    resultado.resultSet.getString(
+                    resultado.getShort("id").toInt(),
+                    resultado.getShort("area"),
+                    resultado.getString(
                         "nombre"
                     ),
-                    resultado.resultSet.getInt("conquistable") == 1,
-                    resultado.resultSet.getInt("minNivelGrupoMob"),
-                    resultado.resultSet.getInt(
+                    resultado.getInt("conquistable") == 1,
+                    resultado.getInt("minNivelGrupoMob"),
+                    resultado.getInt(
                         "maxNivelGrupoMob"
                     ),
-                    resultado.resultSet.getString("cementerio")
+                    resultado.getString("cementerio")
                 )
                 Mundo.addSubArea(subarea)
                 if (subarea.area != null) {
@@ -2186,15 +2264,15 @@ object GestorSQL {
                 "SELECT * FROM `npcs_ubicacion`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    val npcModelo = Mundo.getNPCModelo(resultado.resultSet.getInt("npc"))
+                    val npcModelo = Mundo.getNPCModelo(resultado.getInt("npc"))
                     if (npcModelo == null) {
-                        DELETE_NPC_UBICACION(resultado.resultSet.getInt("npc"))
+                        DELETE_NPC_UBICACION(resultado.getInt("npc"))
                         continue
                     }
-                    Mundo.getMapa(resultado.resultSet.getShort("mapa"))?.addNPC(
-                        npcModelo, resultado.resultSet.getShort("celda"), resultado.resultSet.getByte(
+                    Mundo.getMapa(resultado.getShort("mapa"))?.addNPC(
+                        npcModelo, resultado.getShort("celda"), resultado.getByte(
                             "orientacion"
                         )
                     )
@@ -2217,21 +2295,21 @@ object GestorSQL {
                 "SELECT * FROM `casas_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                if (Mundo.getMapa(resultado.resultSet.getShort("mapaFuera")) == null) {
+            while (resultado.next()) {
+                if (Mundo.getMapa(resultado.getShort("mapaFuera")) == null) {
                     continue
                 }
                 Mundo.addCasa(
                     Casa(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getShort("mapaFuera"),
-                        resultado.resultSet.getShort(
+                        resultado.getInt("id"),
+                        resultado.getShort("mapaFuera"),
+                        resultado.getShort(
                             "celdaFuera"
                         ),
-                        resultado.resultSet.getShort("mapaDentro"),
-                        resultado.resultSet.getShort("celdaDentro"),
-                        resultado.resultSet.getLong("precio"),
-                        resultado.resultSet.getString("mapasContenidos")
+                        resultado.getShort("mapaDentro"),
+                        resultado.getShort("celdaDentro"),
+                        resultado.getLong("precio"),
+                        resultado.getString("mapasContenidos")
                     )
                 )
             }
@@ -2248,14 +2326,14 @@ object GestorSQL {
                 "SELECT * FROM `casas`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    Mundo.getCasa(resultado.resultSet.getInt("id"))?.actualizarCasa(
-                        resultado.resultSet.getInt("dueño"),
-                        resultado.resultSet.getInt("precio").toLong(),
-                        resultado.resultSet.getByte("bloqueado"),
-                        resultado.resultSet.getString("clave"),
-                        resultado.resultSet.getInt("derechosGremio")
+                    Mundo.getCasa(resultado.getInt("id"))?.actualizarCasa(
+                        resultado.getInt("dueño"),
+                        resultado.getInt("precio").toLong(),
+                        resultado.getByte("bloqueado"),
+                        resultado.getString("clave"),
+                        resultado.getInt("derechosGremio")
                     )
                 } catch (ignored: Exception) {
                 }
@@ -2274,13 +2352,13 @@ object GestorSQL {
                 "SELECT * FROM `cofres_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addCofre(
                     Cofre(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getInt("casa"),
-                        resultado.resultSet.getShort("mapa"),
-                        resultado.resultSet.getShort("celda"),
+                        resultado.getInt("id"),
+                        resultado.getInt("casa"),
+                        resultado.getShort("mapa"),
+                        resultado.getShort("celda"),
                         AtlantaMain.LIMITE_OBJETOS_COFRE
                     )
                 )
@@ -2304,17 +2382,17 @@ object GestorSQL {
             var maxOficio = 0
             var maxMontura = 0
             var maxEncarnacion = 0
-            while (resultado.resultSet.next()) {
-                val nivel = resultado.resultSet.getInt("nivel")
+            while (resultado.next()) {
+                val nivel = resultado.getInt("nivel")
                 val exp = Experiencia(
-                    resultado.resultSet.getLong("personaje"),
-                    resultado.resultSet.getInt("oficio"),
-                    resultado.resultSet.getInt(
+                    resultado.getLong("personaje"),
+                    resultado.getInt("oficio"),
+                    resultado.getInt(
                         "dragopavo"
                     ),
-                    resultado.resultSet.getLong("gremio"),
-                    resultado.resultSet.getInt("pvp"),
-                    resultado.resultSet.getInt("encarnacion")
+                    resultado.getLong("gremio"),
+                    resultado.getInt("pvp"),
+                    resultado.getInt("encarnacion")
                 )
                 if (exp._alineacion > 0) {
                     maxAlineacion = max(maxAlineacion, nivel)
@@ -2368,14 +2446,14 @@ object GestorSQL {
                 "SELECT * FROM `celdas_accion`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val mapa = Mundo.getMapa(resultado.resultSet.getShort("mapa"))
-                if (mapa?.getCelda(resultado.resultSet.getShort("celda")) == null) {
+            while (resultado.next()) {
+                val mapa = Mundo.getMapa(resultado.getShort("mapa"))
+                if (mapa?.getCelda(resultado.getShort("celda")) == null) {
                     continue
                 }
-                mapa.getCelda(resultado.resultSet.getShort("celda"))!!.addAccion(
-                    resultado.resultSet.getInt("accion"), resultado.resultSet.getString("args"),
-                    resultado.resultSet.getString("condicion")
+                mapa.getCelda(resultado.getShort("celda"))!!.addAccion(
+                    resultado.getInt("accion"), resultado.getString("args"),
+                    resultado.getString("condicion")
                 )
                 numero++
             }
@@ -2394,11 +2472,11 @@ object GestorSQL {
                 "SELECT * FROM `mobs_evento`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addMobEvento(
-                    resultado.resultSet.getByte("evento"),
-                    resultado.resultSet.getInt("mobOriginal"),
-                    resultado.resultSet.getInt("mobEvento")
+                    resultado.getByte("evento"),
+                    resultado.getInt("mobOriginal"),
+                    resultado.getInt("mobEvento")
                 )
             }
             cerrarResultado(resultado)
@@ -2414,87 +2492,87 @@ object GestorSQL {
                 "SELECT * FROM `personajes`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val statsBase = TreeMap<Int, Int>()
-                statsBase[Constantes.STAT_MAS_VITALIDAD] = resultado.resultSet.getInt("vitalidad")
-                statsBase[Constantes.STAT_MAS_FUERZA] = resultado.resultSet.getInt("fuerza")
-                statsBase[Constantes.STAT_MAS_SABIDURIA] = resultado.resultSet.getInt("sabiduria")
-                statsBase[Constantes.STAT_MAS_INTELIGENCIA] = resultado.resultSet.getInt("inteligencia")
-                statsBase[Constantes.STAT_MAS_SUERTE] = resultado.resultSet.getInt("suerte")
-                statsBase[Constantes.STAT_MAS_AGILIDAD] = resultado.resultSet.getInt("agilidad")
+                statsBase[Constantes.STAT_MAS_VITALIDAD] = resultado.getInt("vitalidad")
+                statsBase[Constantes.STAT_MAS_FUERZA] = resultado.getInt("fuerza")
+                statsBase[Constantes.STAT_MAS_SABIDURIA] = resultado.getInt("sabiduria")
+                statsBase[Constantes.STAT_MAS_INTELIGENCIA] = resultado.getInt("inteligencia")
+                statsBase[Constantes.STAT_MAS_SUERTE] = resultado.getInt("suerte")
+                statsBase[Constantes.STAT_MAS_AGILIDAD] = resultado.getInt("agilidad")
                 val statsScroll = TreeMap<Int, Int>()
-                statsScroll[Constantes.STAT_MAS_VITALIDAD] = resultado.resultSet.getInt("sVitalidad")
-                statsScroll[Constantes.STAT_MAS_FUERZA] = resultado.resultSet.getInt("sFuerza")
-                statsScroll[Constantes.STAT_MAS_SABIDURIA] = resultado.resultSet.getInt("sSabiduria")
-                statsScroll[Constantes.STAT_MAS_INTELIGENCIA] = resultado.resultSet.getInt("sInteligencia")
-                statsScroll[Constantes.STAT_MAS_SUERTE] = resultado.resultSet.getInt("sSuerte")
-                statsScroll[Constantes.STAT_MAS_AGILIDAD] = resultado.resultSet.getInt("sAgilidad")
+                statsScroll[Constantes.STAT_MAS_VITALIDAD] = resultado.getInt("sVitalidad")
+                statsScroll[Constantes.STAT_MAS_FUERZA] = resultado.getInt("sFuerza")
+                statsScroll[Constantes.STAT_MAS_SABIDURIA] = resultado.getInt("sSabiduria")
+                statsScroll[Constantes.STAT_MAS_INTELIGENCIA] = resultado.getInt("sInteligencia")
+                statsScroll[Constantes.STAT_MAS_SUERTE] = resultado.getInt("sSuerte")
+                statsScroll[Constantes.STAT_MAS_AGILIDAD] = resultado.getInt("sAgilidad")
                 val perso = Personaje(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("nombre"),
-                    resultado.resultSet.getByte(
+                    resultado.getInt("id"),
+                    resultado.getString("nombre"),
+                    resultado.getByte(
                         "sexo"
                     ),
-                    resultado.resultSet.getByte("clase"),
-                    resultado.resultSet.getInt("color1"),
-                    resultado.resultSet.getInt("color2"),
-                    resultado.resultSet.getInt(
+                    resultado.getByte("clase"),
+                    resultado.getInt("color1"),
+                    resultado.getInt("color2"),
+                    resultado.getInt(
                         "color3"
                     ),
-                    resultado.resultSet.getLong("kamas"),
-                    resultado.resultSet.getInt("puntosHechizo"),
-                    resultado.resultSet.getInt("capital"),
-                    resultado.resultSet.getInt("energia"),
-                    resultado.resultSet.getShort("nivel"),
-                    resultado.resultSet.getLong("xp"),
-                    resultado.resultSet.getInt("talla"),
-                    resultado.resultSet.getInt("gfx"),
-                    resultado.resultSet.getByte("alineacion"),
-                    resultado.resultSet.getInt("cuenta"),
+                    resultado.getLong("kamas"),
+                    resultado.getInt("puntosHechizo"),
+                    resultado.getInt("capital"),
+                    resultado.getInt("energia"),
+                    resultado.getShort("nivel"),
+                    resultado.getLong("xp"),
+                    resultado.getInt("talla"),
+                    resultado.getInt("gfx"),
+                    resultado.getByte("alineacion"),
+                    resultado.getInt("cuenta"),
                     statsBase,
                     statsScroll,
-                    resultado.resultSet.getInt("mostrarAmigos") == 1,
-                    resultado.resultSet.getByte("mostrarAlineacion").toInt() == 1,
-                    resultado.resultSet.getString("canal"),
-                    resultado.resultSet.getShort("mapa"),
-                    resultado.resultSet.getShort("celda"),
-                    resultado.resultSet.getString("objetos"),
-                    resultado.resultSet.getByte(
+                    resultado.getInt("mostrarAmigos") == 1,
+                    resultado.getByte("mostrarAlineacion").toInt() == 1,
+                    resultado.getString("canal"),
+                    resultado.getShort("mapa"),
+                    resultado.getShort("celda"),
+                    resultado.getString("objetos"),
+                    resultado.getByte(
                         "porcVida"
                     ).toInt(),
-                    resultado.resultSet.getString("hechizos"),
-                    resultado.resultSet.getString("posSalvada"),
-                    resultado.resultSet.getString("oficios"),
-                    resultado.resultSet.getByte("xpMontura"),
-                    resultado.resultSet.getInt("montura"),
-                    resultado.resultSet.getInt("honor"),
-                    resultado.resultSet.getInt(
+                    resultado.getString("hechizos"),
+                    resultado.getString("posSalvada"),
+                    resultado.getString("oficios"),
+                    resultado.getByte("xpMontura"),
+                    resultado.getInt("montura"),
+                    resultado.getInt("honor"),
+                    resultado.getInt(
                         "deshonor"
                     ),
-                    resultado.resultSet.getByte("nivelAlin"),
-                    resultado.resultSet.getString("zaaps"),
-                    resultado.resultSet.getInt("esposo"),
-                    resultado.resultSet.getString("tienda"),
-                    resultado.resultSet.getInt("mercante") == 1,
-                    resultado.resultSet.getInt("restriccionesA"),
-                    resultado.resultSet.getInt(
+                    resultado.getByte("nivelAlin"),
+                    resultado.getString("zaaps"),
+                    resultado.getInt("esposo"),
+                    resultado.getString("tienda"),
+                    resultado.getInt("mercante") == 1,
+                    resultado.getInt("restriccionesA"),
+                    resultado.getInt(
                         "restriccionesB"
                     ),
-                    resultado.resultSet.getInt("encarnacion"),
-                    resultado.resultSet.getInt("emotes"),
-                    resultado.resultSet.getString("titulos"),
-                    resultado.resultSet.getString("tituloVIP"),
-                    resultado.resultSet.getString("ornamentos"),
-                    resultado.resultSet.getString("misiones"),
-                    resultado.resultSet.getString("coleccion"),
-                    resultado.resultSet.getByte("resets"),
-                    resultado.resultSet.getString("almanax"),
-                    resultado.resultSet.getInt(
+                    resultado.getInt("encarnacion"),
+                    resultado.getInt("emotes"),
+                    resultado.getString("titulos"),
+                    resultado.getString("tituloVIP"),
+                    resultado.getString("ornamentos"),
+                    resultado.getString("misiones"),
+                    resultado.getString("coleccion"),
+                    resultado.getByte("resets"),
+                    resultado.getString("almanax"),
+                    resultado.getInt(
                         "ultimoNivel"
                     ),
-                    resultado.resultSet.getString("setsRapidos"),
-                    resultado.resultSet.getInt("colorNombre"),
-                    resultado.resultSet.getString(
+                    resultado.getString("setsRapidos"),
+                    resultado.getInt("colorNombre"),
+                    resultado.getString(
                         "orden"
                     )
                 )
@@ -2515,20 +2593,20 @@ object GestorSQL {
                 "SELECT * FROM `prismas`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
-                if (Mundo.getMapa(resultado.resultSet.getShort("mapa")) == null) {
+            while (resultado.next()) {
+                if (Mundo.getMapa(resultado.getShort("mapa")) == null) {
                     continue
                 }
                 val prisma = Prisma(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getByte("alineacion"),
-                    resultado.resultSet.getByte("nivel"),
-                    resultado.resultSet.getShort("mapa"),
-                    resultado.resultSet.getShort("celda"),
-                    resultado.resultSet.getInt("honor"),
-                    resultado.resultSet.getShort("area").toInt(),
-                    resultado.resultSet.getShort("subArea").toInt(),
-                    resultado.resultSet.getLong("tiempoProteccion")
+                    resultado.getInt("id"),
+                    resultado.getByte("alineacion"),
+                    resultado.getByte("nivel"),
+                    resultado.getShort("mapa"),
+                    resultado.getShort("celda"),
+                    resultado.getInt("honor"),
+                    resultado.getShort("area").toInt(),
+                    resultado.getShort("subArea").toInt(),
+                    resultado.getLong("tiempoProteccion")
                 )
                 Mundo.addPrisma(prisma)
             }
@@ -2546,21 +2624,21 @@ object GestorSQL {
                 "SELECT * FROM `mercadillo_objetos`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
-                val puesto = Mundo.getPuestoMercadillo(resultado.resultSet.getInt("mercadillo"))
-                val objeto = Mundo.getObjeto(resultado.resultSet.getInt("objeto"))
+            while (resultado.next()) {
+                val puesto = Mundo.getPuestoMercadillo(resultado.getInt("mercadillo"))
+                val objeto = Mundo.getObjeto(resultado.getInt("objeto"))
                 if (puesto == null || objeto == null || objeto.dueñoTemp != 0) {
                     AtlantaMain.redactarLogServidorln(
-                        "Se borro el objeto mercadillo id:" + resultado.resultSet.getInt("objeto")
-                                + ", dueño: " + resultado.resultSet.getInt("dueño")
+                        "Se borro el objeto mercadillo id:" + resultado.getInt("objeto")
+                                + ", dueño: " + resultado.getInt("dueño")
                     )
-                    DELETE_OBJ_MERCADILLO(resultado.resultSet.getInt("objeto"))
+                    DELETE_OBJ_MERCADILLO(resultado.getInt("objeto"))
                     continue
                 }
                 puesto.addObjMercaAlPuesto(
                     ObjetoMercadillo(
-                        resultado.resultSet.getInt("precio").toLong(), resultado.resultSet.getByte("cantidad").toInt(),
-                        resultado.resultSet.getInt("dueño"), objeto, puesto.iD
+                        resultado.getInt("precio").toLong(), resultado.getByte("cantidad").toInt(),
+                        resultado.getInt("dueño"), objeto, puesto.iD
                     )
                 )
                 num++
@@ -2580,24 +2658,24 @@ object GestorSQL {
                 "SELECT * FROM `recaudadores`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
-                val mapa = Mundo.getMapa(resultado.resultSet.getShort("mapa")) ?: continue
+            while (resultado.next()) {
+                val mapa = Mundo.getMapa(resultado.getShort("mapa")) ?: continue
                 val recaudador = Recaudador(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getShort("mapa"),
-                    resultado.resultSet.getShort("celda"),
-                    resultado.resultSet.getByte("orientacion"),
-                    resultado.resultSet.getInt("gremio"),
-                    resultado.resultSet.getString(
+                    resultado.getInt("id"),
+                    resultado.getShort("mapa"),
+                    resultado.getShort("celda"),
+                    resultado.getByte("orientacion"),
+                    resultado.getInt("gremio"),
+                    resultado.getString(
                         "nombre1"
                     ),
-                    resultado.resultSet.getString("nombre2"),
-                    resultado.resultSet.getString("objetos"),
-                    resultado.resultSet.getLong("kamas"),
-                    resultado.resultSet.getLong("xp"),
-                    resultado.resultSet.getLong("tiempoProteccion"),
-                    resultado.resultSet.getLong("tiempoCreacion"),
-                    resultado.resultSet.getInt("dueño")
+                    resultado.getString("nombre2"),
+                    resultado.getString("objetos"),
+                    resultado.getLong("kamas"),
+                    resultado.getLong("xp"),
+                    resultado.getLong("tiempoProteccion"),
+                    resultado.getLong("tiempoCreacion"),
+                    resultado.getInt("dueño")
                 )
                 Mundo.addRecaudador(recaudador)
                 numero++
@@ -2615,20 +2693,20 @@ object GestorSQL {
                 "SELECT * FROM gremios;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addGremio(
                     Gremio(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getString("nombre"),
-                        resultado.resultSet.getString(
+                        resultado.getInt("id"),
+                        resultado.getString("nombre"),
+                        resultado.getString(
                             "emblema"
                         ),
-                        resultado.resultSet.getShort("nivel"),
-                        resultado.resultSet.getLong("xp"),
-                        resultado.resultSet.getShort("capital"),
-                        resultado.resultSet.getByte("recaudadores"),
-                        resultado.resultSet.getString("hechizos"),
-                        resultado.resultSet.getString("stats")
+                        resultado.getShort("nivel"),
+                        resultado.getLong("xp"),
+                        resultado.getShort("capital"),
+                        resultado.getByte("recaudadores"),
+                        resultado.getString("hechizos"),
+                        resultado.getString("stats")
                     )
                 )
             }
@@ -2640,40 +2718,40 @@ object GestorSQL {
     }
 
     @Throws(SQLException::class)
-    fun RESULSET_MAP(resultado: Database.Result): Mapa {
-        val mapaID = resultado.resultSet.getShort("id")
+    fun RESULSET_MAP(resultado: ResultSet): Mapa {
+        val mapaID = resultado.getShort("id")
         if (AtlantaMain.MODO_DEBUG) {
             println("Cargando mapa ID $mapaID")
         }
         return Mapa(
             mapaID,
-            resultado.resultSet.getString("fecha"),
-            resultado.resultSet.getByte("ancho"),
-            resultado.resultSet.getByte("alto"),
-            resultado.resultSet.getString("posPelea"),
-            resultado.resultSet.getString("mapData"),
-            resultado.resultSet.getString("key"),
-            resultado.resultSet.getString(
+            resultado.getString("fecha"),
+            resultado.getByte("ancho"),
+            resultado.getByte("alto"),
+            resultado.getString("posPelea"),
+            resultado.getString("mapData"),
+            resultado.getString("key"),
+            resultado.getString(
                 "mobs"
             ),
-            resultado.resultSet.getShort("X"),
-            resultado.resultSet.getShort("Y"),
-            resultado.resultSet.getShort("subArea"),
-            resultado.resultSet.getByte(
+            resultado.getShort("X"),
+            resultado.getShort("Y"),
+            resultado.getShort("subArea"),
+            resultado.getByte(
                 "maxGrupoMobs"
             ),
-            resultado.resultSet.getByte("maxMobsPorGrupo"),
-            resultado.resultSet.getByte("maxMercantes"),
-            resultado.resultSet.getShort(
+            resultado.getByte("maxMobsPorGrupo"),
+            resultado.getByte("maxMercantes"),
+            resultado.getShort(
                 "capabilities"
             ),
-            resultado.resultSet.getByte("maxPeleas"),
-            resultado.resultSet.getShort("bgID"),
-            resultado.resultSet.getShort("musicID"),
-            resultado.resultSet.getShort("ambienteID"),
-            resultado.resultSet.getByte("outDoor"),
-            resultado.resultSet.getInt("minNivelGrupoMob"),
-            resultado.resultSet.getInt("maxNivelGrupoMob")
+            resultado.getByte("maxPeleas"),
+            resultado.getShort("bgID"),
+            resultado.getShort("musicID"),
+            resultado.getShort("ambienteID"),
+            resultado.getByte("outDoor"),
+            resultado.getInt("minNivelGrupoMob"),
+            resultado.getInt("maxNivelGrupoMob")
         )
     }
 
@@ -2717,8 +2795,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                if (Mundo.mapaExiste(resultado.resultSet.getShort("id"))) {
+            while (resultado.next()) {
+                if (Mundo.mapaExiste(resultado.getShort("id"))) {
                     continue
                 }
                 val mapa = RESULSET_MAP(resultado)
@@ -2747,8 +2825,8 @@ object GestorSQL {
             var mapa: Mapa
             // 256 MB = 1500 MAPAS
             // 1 GB = 6000 MAPAS
-            while (resultado.resultSet.next()) {
-                if (Mundo.mapaExiste(resultado.resultSet.getShort("id"))) {
+            while (resultado.next()) {
+                if (Mundo.mapaExiste(resultado.getShort("id"))) {
                     continue
                 }
                 mapa = RESULSET_MAP(resultado)
@@ -2771,8 +2849,8 @@ object GestorSQL {
                 _bdEstatica!!
             )
             var mapa: Mapa
-            while (resultado.resultSet.next()) {
-                if (Mundo.mapaExiste(resultado.resultSet.getShort("id"))) {
+            while (resultado.next()) {
+                if (Mundo.mapaExiste(resultado.getShort("id"))) {
                     continue
                 }
                 mapa = RESULSET_MAP(resultado)
@@ -2796,8 +2874,8 @@ object GestorSQL {
                 _bdEstatica!!
             )
             var mapa: Mapa
-            while (resultado.resultSet.next()) {
-                if (Mundo.mapaExiste(resultado.resultSet.getShort("id"))) {
+            while (resultado.next()) {
+                if (Mundo.mapaExiste(resultado.getShort("id"))) {
                     continue
                 }
                 mapa = RESULSET_MAP(resultado)
@@ -2818,14 +2896,14 @@ object GestorSQL {
                 consultaSQL,
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val mapa = Mundo.getMapa(resultado.resultSet.getShort("mapa"))
-                if (mapa?.getCelda(resultado.resultSet.getShort("celda")) == null) {
+            while (resultado.next()) {
+                val mapa = Mundo.getMapa(resultado.getShort("mapa"))
+                if (mapa?.getCelda(resultado.getShort("celda")) == null) {
                     continue
                 }
-                mapa.getCelda(resultado.resultSet.getShort("celda"))!!.addAccion(
-                    resultado.resultSet.getInt("accion"), resultado.resultSet.getString("args"),
-                    resultado.resultSet.getString("condicion")
+                mapa.getCelda(resultado.getShort("celda"))!!.addAccion(
+                    resultado.getInt("accion"), resultado.getString("args"),
+                    resultado.getString("condicion")
                 )
             }
             cerrarResultado(resultado)
@@ -2842,9 +2920,9 @@ object GestorSQL {
                 "SELECT * FROM `mobs_fix`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val mapas = ArrayList<Mapa>()
-                for (m in resultado.resultSet.getString("mapa").split(",".toRegex()).dropLastWhile { it.isEmpty() }
+                for (m in resultado.getString("mapa").split(",".toRegex()).dropLastWhile { it.isEmpty() }
                     .toTypedArray()) {
                     if (m.isEmpty()) {
                         continue
@@ -2863,24 +2941,24 @@ object GestorSQL {
                 }
                 val mapa = mapas[0]
                 if (mapa == null) {
-                    AtlantaMain.redactarLogServidorln("EL MAPA " + resultado.resultSet.getShort("mapa") + " NO EXISTE")
+                    AtlantaMain.redactarLogServidorln("EL MAPA " + resultado.getShort("mapa") + " NO EXISTE")
                     continue
                 }
-                if (mapa.getCelda(resultado.resultSet.getShort("celda")) == null) {
+                if (mapa.getCelda(resultado.getShort("celda")) == null) {
                     AtlantaMain.redactarLogServidorln(
-                        "LA CELDA " + resultado.resultSet.getShort("celda") + " DEL MAPA " + resultado.resultSet.getShort(
+                        "LA CELDA " + resultado.getShort("celda") + " DEL MAPA " + resultado.getShort(
                             "mapa"
                         ) + " NO EXISTE"
                     )
                     continue
                 }
-                var tipoGrupo = Constantes.getTipoGrupoMob(resultado.resultSet.getInt("tipo"))
+                var tipoGrupo = Constantes.getTipoGrupoMob(resultado.getInt("tipo"))
                 if (tipoGrupo == TipoGrupo.NORMAL) {
                     tipoGrupo = TipoGrupo.FIJO
                 }
                 val grupoMob = mapa.addGrupoMobPorTipo(
-                    resultado.resultSet.getShort("celda"), resultado.resultSet.getString("mobs"), tipoGrupo,
-                    resultado.resultSet.getString("condicion"), mapas
+                    resultado.getShort("celda"), resultado.getString("mobs"), tipoGrupo,
+                    resultado.getString("condicion"), mapas
                 )
                 if (grupoMob != null) {
                     val s1 = Mundo.getMapaEstrellas(mapa.id)
@@ -2899,12 +2977,12 @@ object GestorSQL {
                     if (s2 != null && s2.isNotEmpty()) {
                         s2.removeAt(0)
                     }
-                    grupoMob.segundosRespawn = resultado.resultSet.getInt("segundosRespawn")
+                    grupoMob.segundosRespawn = resultado.getInt("segundosRespawn")
                     numero++
                 } else {
                     AtlantaMain.redactarLogServidorln(
-                        "NO SE PUDO AGREGAR EL GRUPOMOB FIJO " + resultado.resultSet.getString("mobs")
-                                + " EN EL MAPA " + resultado.resultSet.getShort("mapa") + ", CELDA " + resultado.resultSet.getShort(
+                        "NO SE PUDO AGREGAR EL GRUPOMOB FIJO " + resultado.getString("mobs")
+                                + " EN EL MAPA " + resultado.getShort("mapa") + ", CELDA " + resultado.getShort(
                             "celda"
                         )
                     )
@@ -2924,18 +3002,18 @@ object GestorSQL {
                 "SELECT * FROM `animaciones`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addAnimacion(
                     Animacion(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getInt("hechizoAnimacion"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("id"),
+                        resultado.getInt("hechizoAnimacion"),
+                        resultado.getInt(
                             "tipoDisplay"
                         ),
-                        resultado.resultSet.getInt("spriteAnimacion"),
-                        resultado.resultSet.getInt("level"),
-                        resultado.resultSet.getInt("duracion"),
-                        resultado.resultSet.getInt("talla")
+                        resultado.getInt("spriteAnimacion"),
+                        resultado.getInt("level"),
+                        resultado.getInt("duracion"),
+                        resultado.getInt("talla")
                     )
                 )
             }
@@ -2952,8 +3030,8 @@ object GestorSQL {
                 "SELECT * FROM `comandos_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                Mundo.addComando(resultado.resultSet.getString("comando"), resultado.resultSet.getInt("rango"))
+            while (resultado.next()) {
+                Mundo.addComando(resultado.getString("comando"), resultado.getInt("rango"))
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -2968,16 +3046,16 @@ object GestorSQL {
                 "SELECT * FROM `otros_interactivos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addOtroInteractivo(
                     OtroInteractivo(
-                        resultado.resultSet.getInt("gfx"),
-                        resultado.resultSet.getShort("mapaID"),
-                        resultado.resultSet.getShort("celdaID"),
-                        resultado.resultSet.getInt("accion"),
-                        resultado.resultSet.getString("args"),
-                        resultado.resultSet.getString("condicion"),
-                        resultado.resultSet.getInt("tiempoRecarga")
+                        resultado.getInt("gfx"),
+                        resultado.getShort("mapaID"),
+                        resultado.getShort("celdaID"),
+                        resultado.getInt("accion"),
+                        resultado.getString("args"),
+                        resultado.getString("condicion"),
+                        resultado.getInt("tiempoRecarga")
                     )
                 )
             }
@@ -2995,15 +3073,15 @@ object GestorSQL {
                 "SELECT * FROM `mascotas_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addMascotaModelo(
                     MascotaModelo(
-                        resultado.resultSet.getInt("mascota"),
-                        resultado.resultSet.getInt("maximoComidas"),
-                        resultado.resultSet.getString("statsPorEfecto"),
-                        resultado.resultSet.getString("comidas"),
-                        resultado.resultSet.getInt("devorador"),
-                        resultado.resultSet.getInt("fantasma")
+                        resultado.getInt("mascota"),
+                        resultado.getInt("maximoComidas"),
+                        resultado.getString("statsPorEfecto"),
+                        resultado.getString("comidas"),
+                        resultado.getInt("devorador"),
+                        resultado.getInt("fantasma")
                     )
                 )
                 numero++
@@ -3022,19 +3100,19 @@ object GestorSQL {
                 "SELECT * FROM `hechizos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val id = resultado.resultSet.getInt("id")
+            while (resultado.next()) {
+                val id = resultado.getInt("id")
                 val hechizo = Hechizo(
                     id,
-                    resultado.resultSet.getString("nombre"),
-                    resultado.resultSet.getInt("sprite"),
-                    resultado.resultSet.getString("spriteInfos"),
-                    resultado.resultSet.getInt("valorIA")
+                    resultado.getString("nombre"),
+                    resultado.getInt("sprite"),
+                    resultado.getString("spriteInfos"),
+                    resultado.getInt("valorIA")
                 )
                 Mundo.addHechizo(hechizo)
                 for (i in 1..6) {
                     var sh: StatHechizo? = null
-                    val txt = resultado.resultSet.getString("nivel$i")
+                    val txt = resultado.getString("nivel$i")
                     if (txt.isNotEmpty()) {
                         try {
                             sh = Hechizo.analizarHechizoStats(id, i, txt)
@@ -3048,8 +3126,8 @@ object GestorSQL {
                         hechizo.addStatsHechizos(i, sh)
                     }
                 }
-                hechizo.setAfectados(resultado.resultSet.getString("afectados"))
-                hechizo.setCondiciones(resultado.resultSet.getString("condiciones"))
+                hechizo.setAfectados(resultado.getString("afectados"))
+                hechizo.setCondiciones(resultado.getString("condiciones"))
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -3064,15 +3142,15 @@ object GestorSQL {
                 "SELECT * FROM `especialidades`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addEspecialidad(
                     Especialidad(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getInt("orden"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("id"),
+                        resultado.getInt("orden"),
+                        resultado.getInt(
                             "nivel"
                         ),
-                        resultado.resultSet.getString("dones")
+                        resultado.getString("dones")
                     )
                 )
             }
@@ -3089,8 +3167,8 @@ object GestorSQL {
                 "SELECT * FROM `dones`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                Mundo.addDonModelo(resultado.resultSet.getInt("id"), resultado.resultSet.getInt("stat"))
+            while (resultado.next()) {
+                Mundo.addDonModelo(resultado.getInt("id"), resultado.getInt("stat"))
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -3106,38 +3184,38 @@ object GestorSQL {
                 "SELECT * FROM `objetos_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                if (resultado.resultSet.getInt("id") > AtlantaMain.MAX_ID_OBJETO_MODELO) {
+            while (resultado.next()) {
+                if (resultado.getInt("id") > AtlantaMain.MAX_ID_OBJETO_MODELO) {
                     continue
                 }
                 try {
-                    if (resultado.resultSet.getString("condicion") == null) {
+                    if (resultado.getString("condicion") == null) {
                         val condicion = ""
                         val obj = ObjetoModelo(
-                            resultado.resultSet.getInt("id"),
-                            resultado.resultSet.getString("statsModelo"),
-                            resultado.resultSet.getString("nombre"),
-                            resultado.resultSet.getShort("tipo"),
-                            resultado.resultSet.getShort("nivel"),
-                            resultado.resultSet.getShort("pods"),
-                            resultado.resultSet.getInt("kamas"),
+                            resultado.getInt("id"),
+                            resultado.getString("statsModelo"),
+                            resultado.getString("nombre"),
+                            resultado.getShort("tipo"),
+                            resultado.getShort("nivel"),
+                            resultado.getShort("pods"),
+                            resultado.getInt("kamas"),
                             condicion,
-                            resultado.resultSet.getString("infosArma"),
-                            resultado.resultSet.getInt(
+                            resultado.getString("infosArma"),
+                            resultado.getInt(
                                 "vendidos"
                             ),
-                            resultado.resultSet.getInt("precioMedio").toLong(),
-                            resultado.resultSet.getInt("ogrinas"),
-                            resultado.resultSet.getBoolean("magueable"),
-                            resultado.resultSet.getShort("gfx").toInt(),
-                            resultado.resultSet.getBoolean("nivelCore"),
-                            resultado.resultSet.getBoolean("etereo"),
-                            resultado.resultSet.getInt(
+                            resultado.getInt("precioMedio").toLong(),
+                            resultado.getInt("ogrinas"),
+                            resultado.getBoolean("magueable"),
+                            resultado.getShort("gfx").toInt(),
+                            resultado.getBoolean("nivelCore"),
+                            resultado.getBoolean("etereo"),
+                            resultado.getInt(
                                 "diasIntercambio"
                             ),
-                            resultado.resultSet.getInt("panelOgrinas"),
-                            resultado.resultSet.getInt("panelKamas"),
-                            resultado.resultSet.getString(
+                            resultado.getInt("panelOgrinas"),
+                            resultado.getInt("panelKamas"),
+                            resultado.getString(
                                 "itemPago"
                             )
                         )
@@ -3145,30 +3223,30 @@ object GestorSQL {
                         maxID = max(maxID, obj.id)
                     } else {
                         val obj = ObjetoModelo(
-                            resultado.resultSet.getInt("id"),
-                            resultado.resultSet.getString("statsModelo"),
-                            resultado.resultSet.getString("nombre"),
-                            resultado.resultSet.getShort("tipo"),
-                            resultado.resultSet.getShort("nivel"),
-                            resultado.resultSet.getShort("pods"),
-                            resultado.resultSet.getInt("kamas"),
-                            resultado.resultSet.getString("condicion"),
-                            resultado.resultSet.getString("infosArma"),
-                            resultado.resultSet.getInt(
+                            resultado.getInt("id"),
+                            resultado.getString("statsModelo"),
+                            resultado.getString("nombre"),
+                            resultado.getShort("tipo"),
+                            resultado.getShort("nivel"),
+                            resultado.getShort("pods"),
+                            resultado.getInt("kamas"),
+                            resultado.getString("condicion"),
+                            resultado.getString("infosArma"),
+                            resultado.getInt(
                                 "vendidos"
                             ),
-                            resultado.resultSet.getInt("precioMedio").toLong(),
-                            resultado.resultSet.getInt("ogrinas"),
-                            resultado.resultSet.getBoolean("magueable"),
-                            resultado.resultSet.getShort("gfx").toInt(),
-                            resultado.resultSet.getBoolean("nivelCore"),
-                            resultado.resultSet.getBoolean("etereo"),
-                            resultado.resultSet.getInt(
+                            resultado.getInt("precioMedio").toLong(),
+                            resultado.getInt("ogrinas"),
+                            resultado.getBoolean("magueable"),
+                            resultado.getShort("gfx").toInt(),
+                            resultado.getBoolean("nivelCore"),
+                            resultado.getBoolean("etereo"),
+                            resultado.getInt(
                                 "diasIntercambio"
                             ),
-                            resultado.resultSet.getInt("panelOgrinas"),
-                            resultado.resultSet.getInt("panelKamas"),
-                            resultado.resultSet.getString(
+                            resultado.getInt("panelOgrinas"),
+                            resultado.getInt("panelKamas"),
+                            resultado.getString(
                                 "itemPago"
                             )
                         )
@@ -3176,7 +3254,7 @@ object GestorSQL {
                         maxID = max(maxID, obj.id)
                     }
                 } catch (e: Exception) {
-                    println("No se ha cargado el objeto ID " + resultado.resultSet.getInt("id"))
+                    println("No se ha cargado el objeto ID " + resultado.getInt("id"))
                     continue
                 }
 
@@ -3199,14 +3277,14 @@ object GestorSQL {
                 "SELECT * FROM `monturas_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addMonturaModelo(
                     MonturaModelo(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getString("stats"),
-                        resultado.resultSet.getString("color"),
-                        resultado.resultSet.getInt("certificado"),
-                        resultado.resultSet.getByte("generacion")
+                        resultado.getInt("id"),
+                        resultado.getString("stats"),
+                        resultado.getString("color"),
+                        resultado.getInt("certificado"),
+                        resultado.getByte("generacion")
                     )
                 )
             }
@@ -3223,32 +3301,32 @@ object GestorSQL {
                 "SELECT * FROM `mobs_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                //				final boolean capturable = resultado.resultSet.getInt("capturable") == 1;
+            while (resultado.next()) {
+                //				final boolean capturable = resultado.getInt("capturable") == 1;
                 val capturable = true
-                val esKickeable = resultado.resultSet.getString("kickeable") == "true"
-                val alineacion = resultado.resultSet.getByte("alineacion")
-                val tipoIA = resultado.resultSet.getByte("tipoIA")
-                val tipo = resultado.resultSet.getByte("tipo")
-                val talla = resultado.resultSet.getShort("talla")
-                val distAgresion = resultado.resultSet.getByte("agresion")
-                val id = resultado.resultSet.getInt("id")
-                val gfxID = resultado.resultSet.getShort("gfxID")
-                val mK = resultado.resultSet.getString("minKamas")
-                val MK = resultado.resultSet.getString("maxKamas")
-                val nombre = resultado.resultSet.getString("nombre")
-                val colores = resultado.resultSet.getString("colores")
+                val esKickeable = resultado.getString("kickeable") == "true"
+                val alineacion = resultado.getByte("alineacion")
+                val tipoIA = resultado.getByte("tipoIA")
+                val tipo = resultado.getByte("tipo")
+                val talla = resultado.getShort("talla")
+                val distAgresion = resultado.getByte("agresion")
+                val id = resultado.getInt("id")
+                val gfxID = resultado.getShort("gfxID")
+                val mK = resultado.getString("minKamas")
+                val MK = resultado.getString("maxKamas")
+                val nombre = resultado.getString("nombre")
+                val colores = resultado.getString("colores")
                 val grados =
-                    resultado.resultSet.getString("grados").replace(" ".toRegex(), "").replace(",g".toRegex(), "g")
+                    resultado.getString("grados").replace(" ".toRegex(), "").replace(",g".toRegex(), "g")
                         .replace(":\\{l:".toRegex(), "@").replace(",r:\\[".toRegex(), ",").replace("]".toRegex(), "|")
                         .replace("]}".toRegex(), "|")
                 // g1: {l: 1, r: [25, 0, -12, 6, -50, 15, 15], lp: 30, ap: 5, mp: 2}, g2: {l: 2
-                val hechizos = resultado.resultSet.getString("hechizos")
-                val stats = resultado.resultSet.getString("stats")
-                val pdvs = resultado.resultSet.getString("pdvs")
-                val puntos = resultado.resultSet.getString("puntos")
-                val iniciativa = resultado.resultSet.getString("iniciativa")
-                val xp = resultado.resultSet.getString("exps")
+                val hechizos = resultado.getString("hechizos")
+                val stats = resultado.getString("stats")
+                val pdvs = resultado.getString("pdvs")
+                val puntos = resultado.getString("puntos")
+                val iniciativa = resultado.getString("iniciativa")
+                val xp = resultado.getString("exps")
                 Mundo.addMobModelo(
                     MobModelo(
                         id, nombre, gfxID, alineacion, colores, grados, hechizos, stats, pdvs, puntos,
@@ -3269,11 +3347,11 @@ object GestorSQL {
                 "SELECT * FROM `mobs_raros`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val idMobRaro = resultado.resultSet.getInt("idMobRaro")
-                val idMobNormal = resultado.resultSet.getInt("idMobNormal")
-                val subAreas = resultado.resultSet.getString("subAreas")
-                val probabilidad = resultado.resultSet.getInt("probabilidad")
+            while (resultado.next()) {
+                val idMobRaro = resultado.getInt("idMobRaro")
+                val idMobNormal = resultado.getInt("idMobNormal")
+                val subAreas = resultado.getString("subAreas")
+                val probabilidad = resultado.getInt("probabilidad")
                 val mobM = Mundo.getMobModelo(idMobRaro) ?: continue
                 val mobN = Mundo.getMobModelo(idMobNormal)
                 if (mobN != null) {
@@ -3295,18 +3373,18 @@ object GestorSQL {
                 "SELECT * FROM miembros_gremio;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
-                if (Mundo.getPersonaje(resultado.resultSet.getInt("id")) == null) {
-                    DELETE_MIEMBRO_GREMIO(resultado.resultSet.getInt("id"))
+            while (resultado.next()) {
+                if (Mundo.getPersonaje(resultado.getInt("id")) == null) {
+                    DELETE_MIEMBRO_GREMIO(resultado.getInt("id"))
                     continue
                 }
-                val gremio = Mundo.getGremio(resultado.resultSet.getInt("gremio")) ?: continue
+                val gremio = Mundo.getGremio(resultado.getInt("gremio")) ?: continue
                 gremio.addMiembro(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getInt("rango"),
-                    resultado.resultSet.getLong("xpDonada"),
-                    resultado.resultSet.getByte("porcXp"),
-                    resultado.resultSet.getInt("derechos")
+                    resultado.getInt("id"),
+                    resultado.getInt("rango"),
+                    resultado.getLong("xpDonada"),
+                    resultado.getByte("porcXp"),
+                    resultado.getInt("derechos")
                 )
                 numero++
             }
@@ -3324,35 +3402,35 @@ object GestorSQL {
                 "SELECT * FROM `monturas`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addMontura(
                     Montura(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getInt("color"),
-                        resultado.resultSet.getByte("sexo"),
-                        resultado.resultSet.getInt("amor"),
-                        resultado.resultSet.getInt("resistencia"),
-                        resultado.resultSet.getInt("nivel"),
-                        resultado.resultSet.getLong("xp"),
-                        resultado.resultSet.getString("nombre"),
-                        resultado.resultSet.getInt("fatiga"),
-                        resultado.resultSet.getInt("energia"),
-                        resultado.resultSet.getByte(
+                        resultado.getInt("id"),
+                        resultado.getInt("color"),
+                        resultado.getByte("sexo"),
+                        resultado.getInt("amor"),
+                        resultado.getInt("resistencia"),
+                        resultado.getInt("nivel"),
+                        resultado.getLong("xp"),
+                        resultado.getString("nombre"),
+                        resultado.getInt("fatiga"),
+                        resultado.getInt("energia"),
+                        resultado.getByte(
                             "reproducciones"
                         ),
-                        resultado.resultSet.getInt("madurez"),
-                        resultado.resultSet.getInt("serenidad"),
-                        resultado.resultSet.getString("objetos"),
-                        resultado.resultSet.getString("ancestros"),
-                        resultado.resultSet.getString("habilidad"),
-                        resultado.resultSet.getByte("talla"),
-                        resultado.resultSet.getShort("celda"),
-                        resultado.resultSet.getShort("mapa"),
-                        resultado.resultSet.getInt("dueño"),
-                        resultado.resultSet.getByte("orientacion"),
-                        resultado.resultSet.getLong("fecundable"),
-                        resultado.resultSet.getInt("pareja"),
-                        resultado.resultSet.getByte("salvaje")
+                        resultado.getInt("madurez"),
+                        resultado.getInt("serenidad"),
+                        resultado.getString("objetos"),
+                        resultado.getString("ancestros"),
+                        resultado.getString("habilidad"),
+                        resultado.getByte("talla"),
+                        resultado.getShort("celda"),
+                        resultado.getShort("mapa"),
+                        resultado.getInt("dueño"),
+                        resultado.getByte("orientacion"),
+                        resultado.getLong("fecundable"),
+                        resultado.getInt("pareja"),
+                        resultado.getByte("salvaje")
                     ), false
                 )
             }
@@ -3369,19 +3447,19 @@ object GestorSQL {
                 "SELECT * FROM `npcs_modelo`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val id = resultado.resultSet.getInt("id")
-                val gfxID = resultado.resultSet.getInt("gfxID")
-                val escalaX = resultado.resultSet.getShort("scaleX")
-                val escalaY = resultado.resultSet.getShort("scaleY")
-                val sexo = resultado.resultSet.getByte("sexo")
-                val color1 = resultado.resultSet.getInt("color1")
-                val color2 = resultado.resultSet.getInt("color2")
-                val color3 = resultado.resultSet.getInt("color3")
-                val foto = resultado.resultSet.getInt("foto")
-                val preguntaID = resultado.resultSet.getInt("pregunta")
-                val ventas = resultado.resultSet.getString("ventas")
-                val nombre = resultado.resultSet.getString("nombre")
+            while (resultado.next()) {
+                val id = resultado.getInt("id")
+                val gfxID = resultado.getInt("gfxID")
+                val escalaX = resultado.getShort("scaleX")
+                val escalaY = resultado.getShort("scaleY")
+                val sexo = resultado.getByte("sexo")
+                val color1 = resultado.getInt("color1")
+                val color2 = resultado.getInt("color2")
+                val color3 = resultado.getInt("color3")
+                val foto = resultado.getInt("foto")
+                val preguntaID = resultado.getInt("pregunta")
+                val ventas = resultado.getString("ventas")
+                val nombre = resultado.getString("nombre")
                 val npcModelo = NPCModelo(
                     id,
                     gfxID,
@@ -3395,11 +3473,11 @@ object GestorSQL {
                     preguntaID,
                     ventas,
                     nombre,
-                    resultado.resultSet.getInt("arma"),
-                    resultado.resultSet.getInt("sombrero"),
-                    resultado.resultSet.getInt("capa"),
-                    resultado.resultSet.getInt("mascota"),
-                    resultado.resultSet.getInt("escudo")
+                    resultado.getInt("arma"),
+                    resultado.getInt("sombrero"),
+                    resultado.getInt("capa"),
+                    resultado.getInt("mascota"),
+                    resultado.getInt("escudo")
                 )
                 Mundo.addNPCModelo(npcModelo)
                 if (AtlantaMain.ID_NPC_BOUTIQUE.toInt() == npcModelo.id) {
@@ -3419,11 +3497,11 @@ object GestorSQL {
                 "SELECT * FROM `mision_objetivos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addMisionObjetivoModelo(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getByte("tipo"),
-                    resultado.resultSet.getString("args")
+                    resultado.getInt("id"),
+                    resultado.getByte("tipo"),
+                    resultado.getString("args")
                 )
             }
             cerrarResultado(resultado)
@@ -3439,15 +3517,15 @@ object GestorSQL {
                 "SELECT * FROM `ornamentos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val o = Ornamento(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("nombre"),
-                    resultado.resultSet.getInt("creditos"),
-                    resultado.resultSet.getInt("ogrinas"),
-                    resultado.resultSet.getInt("kamas"),
-                    resultado.resultSet.getString("vender").equals("true", ignoreCase = true),
-                    resultado.resultSet.getString("valido").equals("true", ignoreCase = true)
+                    resultado.getInt("id"),
+                    resultado.getString("nombre"),
+                    resultado.getInt("creditos"),
+                    resultado.getInt("ogrinas"),
+                    resultado.getInt("kamas"),
+                    resultado.getString("vender").equals("true", ignoreCase = true),
+                    resultado.getString("valido").equals("true", ignoreCase = true)
                 )
                 Mundo.addOrnamento(o)
             }
@@ -3464,15 +3542,15 @@ object GestorSQL {
                 "SELECT * FROM `titulos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val o = Titulo(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("nombre"),
-                    resultado.resultSet.getInt("creditos"),
-                    resultado.resultSet.getInt("ogrinas"),
-                    resultado.resultSet.getInt("kamas"),
-                    resultado.resultSet.getString("vender").equals("true", ignoreCase = true),
-                    resultado.resultSet.getString("valido").equals("true", ignoreCase = true)
+                    resultado.getInt("id"),
+                    resultado.getString("nombre"),
+                    resultado.getInt("creditos"),
+                    resultado.getInt("ogrinas"),
+                    resultado.getInt("kamas"),
+                    resultado.getString("vender").equals("true", ignoreCase = true),
+                    resultado.getString("valido").equals("true", ignoreCase = true)
                 )
                 Mundo.addTitulo(o)
             }
@@ -3489,8 +3567,8 @@ object GestorSQL {
                 "SELECT * FROM `zaaps`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                Mundo.addZaap(resultado.resultSet.getShort("mapa"), resultado.resultSet.getShort("celda"))
+            while (resultado.next()) {
+                Mundo.addZaap(resultado.getShort("mapa"), resultado.getShort("celda"))
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -3505,13 +3583,13 @@ object GestorSQL {
                 "SELECT * FROM `npc_preguntas`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addPreguntaNPC(
                     PreguntaNPC(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getString("respuestas"),
-                        resultado.resultSet.getString("params"),
-                        resultado.resultSet.getString("alternos")
+                        resultado.getInt("id"),
+                        resultado.getString("respuestas"),
+                        resultado.getString("params"),
+                        resultado.getString("alternos")
                     )
                 )
             }
@@ -3528,11 +3606,11 @@ object GestorSQL {
                 "SELECT * FROM `npc_respuestas`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val id = resultado.resultSet.getInt("id")
-                val tipo = resultado.resultSet.getInt("accion")
-                val args = resultado.resultSet.getString("args")
-                val condicion = resultado.resultSet.getString("condicion")
+            while (resultado.next()) {
+                val id = resultado.getInt("id")
+                val tipo = resultado.getInt("accion")
+                val args = resultado.getString("args")
+                val condicion = resultado.getString("condicion")
                 var respuesta: RespuestaNPC? = Mundo.getRespuestaNPC(id)
                 if (respuesta == null) {
                     respuesta = RespuestaNPC(id)
@@ -3554,16 +3632,16 @@ object GestorSQL {
                 "SELECT * FROM `accion_pelea`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val mapa = Mundo.getMapa(resultado.resultSet.getShort("mapa")) ?: continue
+            while (resultado.next()) {
+                val mapa = Mundo.getMapa(resultado.getShort("mapa")) ?: continue
                 val accion = Accion(
-                    resultado.resultSet.getInt("accion"),
-                    resultado.resultSet.getString("args"),
-                    resultado.resultSet.getString(
+                    resultado.getInt("accion"),
+                    resultado.getString("args"),
+                    resultado.getString(
                         "condicion"
                     )
                 )
-                mapa.addAccionFinPelea(resultado.resultSet.getInt("tipoPelea"), accion)
+                mapa.addAccionFinPelea(resultado.getInt("tipoPelea"), accion)
                 numero++
             }
             cerrarResultado(resultado)
@@ -3582,12 +3660,12 @@ object GestorSQL {
                 "SELECT * FROM `objetos_accion`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val objMod = Mundo.getObjetoModelo(resultado.resultSet.getInt("objetoModelo")) ?: continue
+            while (resultado.next()) {
+                val objMod = Mundo.getObjetoModelo(resultado.getInt("objetoModelo")) ?: continue
                 objMod.addAccion(
                     Accion(
-                        resultado.resultSet.getInt("accion"),
-                        resultado.resultSet.getString("args"),
+                        resultado.getInt("accion"),
+                        resultado.getString("args"),
                         ""
                     )
                 )
@@ -3608,13 +3686,13 @@ object GestorSQL {
                 "SELECT * FROM `tutoriales`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
-                val id = resultado.resultSet.getInt("id")
-                val inicio = resultado.resultSet.getString("inicio")
+            while (resultado.next()) {
+                val id = resultado.getInt("id")
+                val inicio = resultado.getString("inicio")
                 val recompensa =
-                    (resultado.resultSet.getString("recompensa1") + "$" + resultado.resultSet.getString("recompensa2") + "$"
-                            + resultado.resultSet.getString("recompensa3") + "$" + resultado.resultSet.getString("recompensa4"))
-                val fin = resultado.resultSet.getString("final")
+                    (resultado.getString("recompensa1") + "$" + resultado.getString("recompensa2") + "$"
+                            + resultado.getString("recompensa3") + "$" + resultado.getString("recompensa4"))
+                val fin = resultado.getString("final")
                 Mundo.addTutorial(Tutorial(id, recompensa, inicio, fin))
             }
             cerrarResultado(resultado)
@@ -3631,19 +3709,19 @@ object GestorSQL {
                 "SELECT * FROM `objetos_interactivos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addObjInteractivoModelo(
                     ObjetoInteractivoModelo(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getInt("recarga"),
-                        resultado.resultSet.getInt("duracion"),
-                        resultado.resultSet.getByte("accionPJ"),
-                        resultado.resultSet.getByte("caminable"),
-                        resultado.resultSet.getByte(
+                        resultado.getInt("id"),
+                        resultado.getInt("recarga"),
+                        resultado.getInt("duracion"),
+                        resultado.getByte("accionPJ"),
+                        resultado.getByte("caminable"),
+                        resultado.getByte(
                             "tipo"
                         ),
-                        resultado.resultSet.getString("gfx"),
-                        resultado.resultSet.getString("skill")
+                        resultado.getString("gfx"),
+                        resultado.getString("skill")
                     )
                 )
             }
@@ -3660,14 +3738,14 @@ object GestorSQL {
                 "SELECT * FROM `cercados`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    Mundo.getCercadoPorMapa(resultado.resultSet.getShort("mapa"))?.actualizarCercado(
-                        resultado.resultSet.getInt("propietario"),
-                        resultado.resultSet.getInt("gremio"),
-                        resultado.resultSet.getInt("precio"),
-                        resultado.resultSet.getString("objetosColocados"),
-                        resultado.resultSet.getString("criando")
+                    Mundo.getCercadoPorMapa(resultado.getShort("mapa"))?.actualizarCercado(
+                        resultado.getInt("propietario"),
+                        resultado.getInt("gremio"),
+                        resultado.getInt("precio"),
+                        resultado.getString("objetosColocados"),
+                        resultado.getString("criando")
                     )
                 } catch (ignored: Exception) {
                 }
@@ -3686,12 +3764,12 @@ object GestorSQL {
                 "SELECT * FROM `cofres`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    Mundo.getCofre(resultado.resultSet.getInt("id"))?.actualizarCofre(
-                        resultado.resultSet.getString("objetos"), resultado.resultSet.getLong(
+                    Mundo.getCofre(resultado.getInt("id"))?.actualizarCofre(
+                        resultado.getString("objetos"), resultado.getLong(
                             "kamas"
-                        ), resultado.resultSet.getString("clave"), resultado.resultSet.getInt("dueño")
+                        ), resultado.getString("clave"), resultado.getInt("dueño")
                     )
                 } catch (ignored: Exception) {
                 }
@@ -3710,15 +3788,15 @@ object GestorSQL {
                 "SELECT * FROM `objetos_trueque` ORDER BY `prioridad` DESC;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
                     Mundo.addObjetoTrueque(
-                        resultado.resultSet.getInt("idObjeto"),
-                        resultado.resultSet.getString("necesita"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("idObjeto"),
+                        resultado.getString("necesita"),
+                        resultado.getInt(
                             "prioridad"
                         ),
-                        resultado.resultSet.getString("npc_ids")
+                        resultado.getString("npc_ids")
                     )
                 } catch (ignored: Exception) {
                 }
@@ -3742,12 +3820,12 @@ object GestorSQL {
                                 "where `cuenta`=${cuenta.id};", it
                     )
                 } ?: return listaips
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    val a = resultado.resultSet.getInt("autorizado")
+                    val a = resultado.getInt("autorizado")
                     val auth = a == 1
                     if (auth) {
-                        listaips.add(resultado.resultSet.getString("ip"))
+                        listaips.add(resultado.getString("ip"))
                     }
                 } catch (e: Exception) {
 //                    exceptionExit(e)
@@ -3766,17 +3844,17 @@ object GestorSQL {
                 "SELECT * FROM `almanax`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
-                    if (resultado.resultSet.getString("ofrenda").isEmpty()) {
+                    if (resultado.getString("ofrenda").isEmpty()) {
                         continue
                     }
                     Mundo.addAlmanax(
                         Almanax(
-                            resultado.resultSet.getInt("id"),
-                            resultado.resultSet.getInt("tipo"),
-                            resultado.resultSet.getInt("bonus"),
-                            resultado.resultSet.getString("ofrenda")
+                            resultado.getInt("id"),
+                            resultado.getInt("tipo"),
+                            resultado.getInt("bonus"),
+                            resultado.getString("ofrenda")
                         )
                     )
                 } catch (ignored: Exception) {
@@ -3797,15 +3875,15 @@ object GestorSQL {
                 "SELECT * FROM `misiones`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 val mision = MisionModelo(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("etapas"),
-                    resultado.resultSet.getString("nombre"),
-                    resultado.resultSet.getString("pregDarMision"),
-                    resultado.resultSet.getString("pregMisCompletada"),
-                    resultado.resultSet.getString("pregMisIncompleta"),
-                    resultado.resultSet.getString("puedeRepetirse").equals("true", ignoreCase = true)
+                    resultado.getInt("id"),
+                    resultado.getString("etapas"),
+                    resultado.getString("nombre"),
+                    resultado.getString("pregDarMision"),
+                    resultado.getString("pregMisCompletada"),
+                    resultado.getString("pregMisIncompleta"),
+                    resultado.getString("puedeRepetirse").equals("true", ignoreCase = true)
                 )
                 Mundo.addMision(mision)
             }
@@ -3822,18 +3900,18 @@ object GestorSQL {
                 "SELECT * FROM `mercadillos`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addPuestoMercadillo(
                     Mercadillo(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getString("mapa"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("id"),
+                        resultado.getString("mapa"),
+                        resultado.getInt(
                             "porcVenta"
                         ),
-                        resultado.resultSet.getShort("tiempoVenta"),
-                        resultado.resultSet.getShort("cantidad"),
-                        resultado.resultSet.getShort("nivelMax"),
-                        resultado.resultSet.getString("categorias")
+                        resultado.getShort("tiempoVenta"),
+                        resultado.getShort("cantidad"),
+                        resultado.getShort("nivelMax"),
+                        resultado.getString("categorias")
                     )
                 )
             }
@@ -3850,12 +3928,12 @@ object GestorSQL {
                 "SELECT * FROM `mision_etapas`;",
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addEtapa(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getString("recompensas"),
-                    resultado.resultSet.getString("objetivos"),
-                    resultado.resultSet.getString("nombre")
+                    resultado.getInt("id"),
+                    resultado.getString("recompensas"),
+                    resultado.getString("objetivos"),
+                    resultado.getString("nombre")
                 )
             }
             cerrarResultado(resultado)
@@ -3871,11 +3949,11 @@ object GestorSQL {
                 "SELECT * FROM `mapas_estrellas`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
                     Mundo.addMapaEstrellas(
-                        resultado.resultSet.getShort("mapa"),
-                        resultado.resultSet.getString("estrellas")
+                        resultado.getShort("mapa"),
+                        resultado.getString("estrellas")
                     )
                 } catch (ignored: Exception) {
                 }
@@ -3895,15 +3973,15 @@ object GestorSQL {
                 "SELECT * FROM `objetos`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.objetoIniciarServer(
-                    resultado.resultSet.getInt("id"),
-                    resultado.resultSet.getInt("modelo"),
-                    resultado.resultSet.getInt("cantidad"),
-                    resultado.resultSet.getByte("posicion"),
-                    resultado.resultSet.getString("stats"),
-                    resultado.resultSet.getInt("objevivo"),
-                    resultado.resultSet.getInt(
+                    resultado.getInt("id"),
+                    resultado.getInt("modelo"),
+                    resultado.getInt("cantidad"),
+                    resultado.getByte("posicion"),
+                    resultado.getString("stats"),
+                    resultado.getInt("objevivo"),
+                    resultado.getInt(
                         "precio"
                     )
                 )
@@ -3921,13 +3999,13 @@ object GestorSQL {
                 "SELECT * FROM `ranking_koliseo`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addRankingKoliseo(
                     RankingKoliseo(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getString("nombre"),
-                        resultado.resultSet.getInt("victorias"),
-                        resultado.resultSet.getInt("derrotas")
+                        resultado.getInt("id"),
+                        resultado.getString("nombre"),
+                        resultado.getInt("victorias"),
+                        resultado.getInt("derrotas")
                     )
                 )
             }
@@ -3944,16 +4022,16 @@ object GestorSQL {
                 "SELECT * FROM `ranking_pvp`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 Mundo.addRankingPVP(
                     RankingPVP(
-                        resultado.resultSet.getInt("id"),
-                        resultado.resultSet.getString("nombre"),
-                        resultado.resultSet.getInt(
+                        resultado.getInt("id"),
+                        resultado.getString("nombre"),
+                        resultado.getInt(
                             "victorias"
                         ),
-                        resultado.resultSet.getInt("derrotas"),
-                        resultado.resultSet.getInt("nivelAlineacion")
+                        resultado.getInt("derrotas"),
+                        resultado.getInt("nivelAlineacion")
                     )
                 )
             }
@@ -3970,13 +4048,13 @@ object GestorSQL {
                 "SELECT * FROM `mapas_heroico`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
                     Mundo.addMapaHeroico(
-                        resultado.resultSet.getShort("mapa"),
-                        resultado.resultSet.getString("mobs"),
-                        resultado.resultSet.getString("objetos"),
-                        resultado.resultSet.getString("kamas")
+                        resultado.getShort("mapa"),
+                        resultado.getString("mobs"),
+                        resultado.getString("objetos"),
+                        resultado.getString("kamas")
                     )
                 } catch (ignored: Exception) {
                 }
@@ -4172,8 +4250,8 @@ object GestorSQL {
                 consultaSQL,
                 _bdEstatica!!
             )
-            if (resultado.resultSet.first()) {
-                id = resultado.resultSet.getInt("id")
+            if (resultado.first()) {
+                id = resultado.getInt("id")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -4214,11 +4292,11 @@ object GestorSQL {
     // final ResultSet resultado = consultaSQL("SELECT * FROM `personajes` WHERE `cuenta` = " +
     // cuenta.getID() + ";",
     // _bdDinamica);
-    // while (resultado.resultSet.next()) {
+    // while (resultado.next()) {
     // try {
-    // cuenta.addPersonaje(Mundo.getPersonaje(resultado.resultSet.getInt("id")));
+    // cuenta.addPersonaje(Mundo.getPersonaje(resultado.getInt("id")));
     // } catch (final Exception e) {
-    // Bustemu.redactarLogServidorln("El personaje " + resultado.resultSet.getString("nombre")
+    // Bustemu.redactarLogServidorln("El personaje " + resultado.getString("nombre")
     // + " no se pudo agregar a la cuenta (REFRESCAR CUENTA)");
     // }
     // }
@@ -5184,10 +5262,10 @@ object GestorSQL {
                     consultaSQL,
                     _bdDinamica!!
                 )
-                while (resultado.resultSet.next()) {
+                while (resultado.next()) {
                     GestorSalida.ENVIAR_Im1223_MENSAJE_IMBORRABLE(
                         p,
-                        resultado.resultSet.getString("mensaje")
+                        resultado.getString("mensaje")
                     )
                 }
                 UPDATE_MENSAJE_PENDIENTE(p.cuentaID.toString())
@@ -5211,7 +5289,7 @@ object GestorSQL {
                     consultaSQL,
                     _bdDinamica!!
                 )
-                while (resultado.resultSet.next()) {
+                while (resultado.next()) {
                     contador += 1
                 }
                 cerrarResultado(resultado)
@@ -6320,10 +6398,10 @@ object GestorSQL {
                 consultaSQL,
                 _bdEstatica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 try {
                     str =
-                        resultado.resultSet.getString("fecha") + "|" + resultado.resultSet.getString("key") + "|" + resultado.resultSet.getString(
+                        resultado.getString("fecha") + "|" + resultado.getString("key") + "|" + resultado.getString(
                             "mapData"
                         )
                 } catch (ignored: Exception) {
@@ -6449,19 +6527,19 @@ object GestorSQL {
                 "SELECT * FROM `live_action`;",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
-                val objMod = Mundo.getObjetoModelo(resultado.resultSet.getInt("idModelo")) ?: continue
+            while (resultado.next()) {
+                val objMod = Mundo.getObjetoModelo(resultado.getInt("idModelo")) ?: continue
                 val objNew = objMod.crearObjeto(
-                    resultado.resultSet.getInt("cantidad"), Constantes.OBJETO_POS_NO_EQUIPADO,
+                    resultado.getInt("cantidad"), Constantes.OBJETO_POS_NO_EQUIPADO,
                     CAPACIDAD_STATS.RANDOM
                 )
-                objNew.convertirStringAStats(resultado.resultSet.getString("stats"))
-                val perso = Mundo.getPersonaje(resultado.resultSet.getInt("idPersonaje"))
+                objNew.convertirStringAStats(resultado.getString("stats"))
+                val perso = Mundo.getPersonaje(resultado.getInt("idPersonaje"))
                 if (perso != null) {
                     perso.addObjetoConOAKO(objNew, true)
                     GestorSalida.ENVIAR_Im1223_MENSAJE_IMBORRABLE(
-                        perso, "Vous avez reçu " + resultado.resultSet.getInt("cantidad") + " "
-                                + resultado.resultSet.getString("nombreObjeto")
+                        perso, "Vous avez reçu " + resultado.getInt("cantidad") + " "
+                                + resultado.getString("nombreObjeto")
                     )
                 }
             }
@@ -6670,8 +6748,8 @@ object GestorSQL {
                     )
                 }
                     ?: return 0
-            while (resultado.resultSet.next()) {
-                retorno = resultado.resultSet.getInt("total")
+            while (resultado.next()) {
+                retorno = resultado.getInt("total")
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -6688,10 +6766,10 @@ object GestorSQL {
                 "SELECT * FROM `" + tipos[tipo.toInt()] + "` WHERE `id` = '" + id + "';",
                 _bdDinamica!!
             )
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 str =
-                    ("<b>" + resultado.resultSet.getString("perso") + "</b> - <i><u>" + resultado.resultSet.getString("asunto") + "</i></u>: "
-                            + resultado.resultSet.getString("detalle"))
+                    ("<b>" + resultado.getString("perso") + "</b> - <i><u>" + resultado.getString("asunto") + "</i></u>: "
+                            + resultado.getString("detalle"))
             }
             cerrarResultado(resultado)
         } catch (e: Exception) {
@@ -6710,17 +6788,17 @@ object GestorSQL {
                     _bdDinamica!!
                 )
             var str2 = StringBuilder()
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 if (str2.isNotEmpty()) {
                     str2.append("#")
                 }
-                str2.append(resultado.resultSet.getInt("id")).append(";").append(resultado.resultSet.getString("perso"))
+                str2.append(resultado.getInt("id")).append(";").append(resultado.getString("perso"))
                     .append(";")
-                    .append(resultado.resultSet.getString("asunto")).append(";")
-                    .append(resultado.resultSet.getString("fecha")).append(";")
+                    .append(resultado.getString("asunto")).append(";")
+                    .append(resultado.getString("fecha")).append(";")
                     .append(
                         if (cuenta.tieneReporte(
-                                Constantes.REPORTE_BUGS, resultado.resultSet.getInt(
+                                Constantes.REPORTE_BUGS, resultado.getInt(
                                     "id"
                                 )
                             )
@@ -6738,17 +6816,17 @@ object GestorSQL {
                     _bdDinamica!!
                 )
             str2 = StringBuilder()
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 if (str2.isNotEmpty()) {
                     str2.append("#")
                 }
-                str2.append(resultado.resultSet.getInt("id")).append(";").append(resultado.resultSet.getString("perso"))
+                str2.append(resultado.getInt("id")).append(";").append(resultado.getString("perso"))
                     .append(";")
-                    .append(resultado.resultSet.getString("asunto")).append(";")
-                    .append(resultado.resultSet.getString("fecha")).append(";")
+                    .append(resultado.getString("asunto")).append(";")
+                    .append(resultado.getString("fecha")).append(";")
                     .append(
                         if (cuenta.tieneReporte(
-                                Constantes.REPORTE_SUGERENCIAS, resultado.resultSet.getInt("id")
+                                Constantes.REPORTE_SUGERENCIAS, resultado.getInt("id")
                             )
                         )
                             1
@@ -6764,17 +6842,17 @@ object GestorSQL {
                     _bdDinamica!!
                 )
             str2 = StringBuilder()
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 if (str2.isNotEmpty()) {
                     str2.append("#")
                 }
-                str2.append(resultado.resultSet.getInt("id")).append(";").append(resultado.resultSet.getString("perso"))
+                str2.append(resultado.getInt("id")).append(";").append(resultado.getString("perso"))
                     .append(";")
-                    .append(resultado.resultSet.getString("asunto")).append(";")
-                    .append(resultado.resultSet.getString("fecha")).append(";")
+                    .append(resultado.getString("asunto")).append(";")
+                    .append(resultado.getString("fecha")).append(";")
                     .append(
                         if (cuenta.tieneReporte(
-                                Constantes.REPORTE_DENUNCIAS, resultado.resultSet.getInt("id")
+                                Constantes.REPORTE_DENUNCIAS, resultado.getInt("id")
                             )
                         )
                             1
@@ -6789,17 +6867,17 @@ object GestorSQL {
                 _bdDinamica!!
             )
             str2 = StringBuilder()
-            while (resultado.resultSet.next()) {
+            while (resultado.next()) {
                 if (str2.isNotEmpty()) {
                     str2.append("#")
                 }
-                str2.append(resultado.resultSet.getInt("id")).append(";").append(resultado.resultSet.getString("perso"))
+                str2.append(resultado.getInt("id")).append(";").append(resultado.getString("perso"))
                     .append(";")
-                    .append(resultado.resultSet.getString("asunto")).append(";")
-                    .append(resultado.resultSet.getString("fecha")).append(";")
+                    .append(resultado.getString("asunto")).append(";")
+                    .append(resultado.getString("fecha")).append(";")
                     .append(
                         if (cuenta.tieneReporte(
-                                Constantes.REPORTE_OGRINAS, resultado.resultSet.getInt(
+                                Constantes.REPORTE_OGRINAS, resultado.getInt(
                                     "id"
                                 )
                             )
