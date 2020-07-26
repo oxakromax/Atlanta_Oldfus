@@ -56,17 +56,20 @@ class StatHechizo(
     private val _efectosCriticos = ArrayList<EfectoHechizo>()
     val efectosNormales = ArrayList<EfectoHechizo>()
     val efectosCriticos = ArrayList<EfectoHechizo>()
+
     // private final String _areaEfecto;// genera un estado, tipo portador
     val estadosProhibido = ArrayList<Int>()
     val estadosNecesario = ArrayList<Int>()
     val hechizo: Hechizo?
     val tipo // 0 normal, 1 pergamino, 2 invocacion, 3 dominios, 4 de clase, 5
             : Byte
+
     // de recaudador
     private var _trampa = false
     private var _intercambioPos = false
     private var _soloMover = false
     private var _automaticoAlFinalTurno = false
+
     // public boolean esHechizoParaAliados() {
 // return _hechizo.getValorIA() != 2;
 // }

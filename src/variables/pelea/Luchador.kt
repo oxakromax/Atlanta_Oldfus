@@ -42,12 +42,15 @@ class Luchador(pelea: Pelea, pre: PreLuchador, espectador: Boolean) {
     val mobsAsesinadosReto = ArrayList<Int>()
     private val _visibles = ArrayList<Int>()
     val buffsPelea = CopyOnWriteArrayList<Buff>()
+
     // private final ArrayList<Buff> _buffsCond = new ArrayList<Buff>();
     private val _estados: MutableMap<Int, Int> = TreeMap()
     val bonusCastigo: MutableMap<Int, Int?> = TreeMap()
+
     @JvmField
     var retrocediendo = false
     var tiempoempujado: Long = 0
+
     @JvmField
     var empujo = false
     private var _estaMuerto = false
@@ -56,6 +59,7 @@ class Luchador(pelea: Pelea, pre: PreLuchador, espectador: Boolean) {
     private var _contaminado = false
     private var _desconectado = false
     private var _estatico = false
+
     // FIXME aun no se para q sirve esto
     var sirveParaBuff = true
     private var _esBomba = false
@@ -69,6 +73,7 @@ class Luchador(pelea: Pelea, pre: PreLuchador, espectador: Boolean) {
     var updateGTM = false
     var direccion = 'b'
     private var _tipoLuch: Byte = 0
+
     // 0 = agresor
 // 1 = agredido
     var equipoBin: Byte = -2

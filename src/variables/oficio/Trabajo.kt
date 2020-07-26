@@ -59,6 +59,7 @@ class Trabajo(// private static float TOLERANCIA_NORMAL = 1.0f, TOLERANCIA_VIP =
     var celda: Celda? = null
         private set
     private var _finThread = true
+
     // taller
     private var kamasPaga: Long = 0
     private var kamasSiSeConsigue: Long = 0
@@ -69,6 +70,7 @@ class Trabajo(// private static float TOLERANCIA_NORMAL = 1.0f, TOLERANCIA_VIP =
     private var _objetosPago: ArrayList<Duo<Int, Int>>? = null
     private var _objetosSiSeConsegui: ArrayList<Duo<Int, Int>>? = null
     var objRunaOPocima: Objeto? = null
+
     @Synchronized
     fun iniciarTrabajo(perso: Personaje?, idUnica: Int, celda: Celda?): Boolean {
         _artesano = perso
@@ -1208,10 +1210,10 @@ class Trabajo(// private static float TOLERANCIA_NORMAL = 1.0f, TOLERANCIA_VIP =
             }
             val exp = objAMaguear.objModelo
                 ?.nivel?.toInt()?.let {
-                Constantes.getExpForjamaguear(
-                    getPesoStat(statMagueo) * valorRuna, it
-                )
-            }
+                    Constantes.getExpForjamaguear(
+                        getPesoStat(statMagueo) * valorRuna, it
+                    )
+                }
             exp?.let { preExp(it) }?.let { _statOficio.addExperiencia(_artesano, it, Constantes.OFICIO_EXP_TIPO_CRAFT) }
             return esSpeedCraft
         } catch (e: Exception) {
@@ -1505,10 +1507,10 @@ class Trabajo(// private static float TOLERANCIA_NORMAL = 1.0f, TOLERANCIA_VIP =
             }
             val exp = objAMaguear.objModelo
                 ?.nivel?.toInt()?.let {
-                Constantes.getExpForjamaguear(
-                    getPesoStat(statMagueo) * valorRuna, it
-                )
-            }
+                    Constantes.getExpForjamaguear(
+                        getPesoStat(statMagueo) * valorRuna, it
+                    )
+                }
             exp?.let { preExp(it) }?.let { _statOficio.addExperiencia(_artesano, it, Constantes.OFICIO_EXP_TIPO_CRAFT) }
             r == RESULTADO_EXITO_CRITICO.toInt() || r == RESULTADO_EXITO_NORMAL.toInt()
         } catch (e: Exception) {
@@ -1744,10 +1746,11 @@ class Trabajo(// private static float TOLERANCIA_NORMAL = 1.0f, TOLERANCIA_VIP =
         var cantidad = cantidad
         if (cantidad > 0) { //
             if (objeto.objModeloID == 7508) { // runa de firma
-            } else if (objeto.objModelo?.esForjaMagueable() == true && _esForjaMagia || objeto.objModelo?.tipo?.toInt()?.let {
-                    Constantes
-                        .getTipoObjPermitidoEnTrabajo(trabajoID, it)
-                } == true
+            } else if (objeto.objModelo?.esForjaMagueable() == true && _esForjaMagia || objeto.objModelo?.tipo?.toInt()
+                    ?.let {
+                        Constantes
+                            .getTipoObjPermitidoEnTrabajo(trabajoID, it)
+                    } == true
             ) {
                 return
             }
@@ -1805,10 +1808,11 @@ class Trabajo(// private static float TOLERANCIA_NORMAL = 1.0f, TOLERANCIA_VIP =
         }
         if (cantidad > 0) {
             if (objeto.objModeloID == 7508) { // runa de firma
-            } else if (objeto.objModelo?.esForjaMagueable() == true && _esForjaMagia || objeto.objModelo?.tipo?.toInt()?.let {
-                    Constantes
-                        .getTipoObjPermitidoEnTrabajo(trabajoID, it)
-                } == true
+            } else if (objeto.objModelo?.esForjaMagueable() == true && _esForjaMagia || objeto.objModelo?.tipo?.toInt()
+                    ?.let {
+                        Constantes
+                            .getTipoObjPermitidoEnTrabajo(trabajoID, it)
+                    } == true
             ) {
                 return
             }

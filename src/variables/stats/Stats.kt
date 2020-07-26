@@ -291,7 +291,8 @@ class Stats {
         if (_statsIDs == null && stats._statsIDs != null || _statsIDs != null && stats._statsIDs == null || Objects.requireNonNull<Map<Int, Int>?>(
                 _statsIDs
             )
-            !!.isEmpty() && Objects.requireNonNull<Map<Int, Int>?>(stats._statsIDs)!!.isNotEmpty() || Objects.requireNonNull<Map<Int, Int>?>(
+            !!.isEmpty() && Objects.requireNonNull<Map<Int, Int>?>(stats._statsIDs)!!
+                .isNotEmpty() || Objects.requireNonNull<Map<Int, Int>?>(
                 stats._statsIDs
             )!!.isEmpty() && _statsIDs!!.isNotEmpty()
         ) {

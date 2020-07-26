@@ -12,6 +12,7 @@ class Buff(
     lanzador: Luchador, args: String, tipo: TipoDaño
 ) : EfectoHechizo(hechizoID) {
     val lanzador: Luchador
+
     // por el momento las condiciones son
 // SOIN, BN,DN,DE,DA,DW,DF,-PA,-PM,PA,PM
     private var _tipo: TipoDaño? = null

@@ -28,6 +28,7 @@ class Mercadillo(
     val objetosMercadillos = CopyOnWriteArrayList<ObjetoMercadillo>()
     private val _tipoObjetos: MutableMap<Int, TipoObjetos> = HashMap()
     private val _lineas: MutableMap<Int, Duo<Int, Int>> = HashMap()
+
     //
 // public float getImpuesto() {
 // return _porcMercadillo / 100f;

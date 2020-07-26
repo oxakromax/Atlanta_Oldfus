@@ -57,6 +57,7 @@ class Recaudador(
     private var _proxMovimiento: Long = -1
     var tiempoProteccion: Long
         private set
+
     //
 // public byte getEstadoPelea() {
 // try {
@@ -426,6 +427,7 @@ class Recaudador(
         }
         return ""
     }
+
     fun HechizosGremio(): Map<Int, StatHechizo> {
         val r = mutableMapOf<Int, StatHechizo>()
         if (gremio != null) {
@@ -437,6 +439,7 @@ class Recaudador(
         }
         return r.toMap()
     }
+
     override val Hechizos: Map<Int, StatHechizo>
         get() = HechizosGremio()
     override val Deshonor: Int
@@ -452,6 +455,7 @@ class Recaudador(
 
     override fun addKamasGanada(kamas: Long) {}
     override fun addXPGanada(exp: Long) {}
+
     @Synchronized
     override fun addObjetoExchanger(objeto: Objeto, cantidad: Int, perso: Personaje, precio: Int) {
     }

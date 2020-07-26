@@ -131,6 +131,7 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
     public MiembroGremio MiembroGremio;
     public Pelea Pelea, PrePelea;
     public Mapa Mapa;
+    public Mapa MapaAnteriorPVP;
     public Celda Celda;
     public Grupo Grupo;
     public Montura Montura;
@@ -2146,6 +2147,9 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
         try {
             if (Mundo.SERVIDOR_ESTADO == Constantes.SERVIDOR_OFFLINE || Desconectando) {
                 return;
+            }
+            if (getGremio() != null) {
+                getGremio().getGuerra().RemoverIntegrante(this);
             }
             Desconectando = true;
 //            if (!_enLinea) {
@@ -5313,6 +5317,13 @@ public class Personaje implements PreLuchador, Exchanger, Preguntador {
 
     public boolean esAbonado() {
         return (Cuenta != null && Cuenta.esAbonado());
+    }
+
+    public void teleport(final short nuevoMapaID) {
+        Mapa mapa = Mundo.getMapa(nuevoMapaID);
+        if (mapa != null) {
+            teleport(nuevoMapaID, mapa.getRandomCeldaIDLibre());
+        }
     }
 
     public void teleport(final short nuevoMapaID, final short nuevaCeldaID) {

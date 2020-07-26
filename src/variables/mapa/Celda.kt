@@ -74,6 +74,7 @@ class Celda(
         private set
     var estado: Byte
         private set
+
     // private int getTipoObjInterac() {
 // if (_objetoInterac == null) {
 // return -1;

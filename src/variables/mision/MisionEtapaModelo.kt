@@ -43,10 +43,12 @@ class MisionEtapaModelo(
                     when (g) {
                         0 -> if (AtlantaMain.RATE_XP_PVM > 1 && !perso.cuenta.esAbonado()) {
                             recompensaslista[0] =
-                                (Objects.requireNonNull(recompensaslista[0])!!.toInt() * (AtlantaMain.RATE_XP_PVM * 3)).toString()
+                                (Objects.requireNonNull(recompensaslista[0])!!
+                                    .toInt() * (AtlantaMain.RATE_XP_PVM * 3)).toString()
                         } else if (AtlantaMain.RATE_XP_PVM > 1 && perso.cuenta.esAbonado()) {
                             recompensaslista[0] =
-                                (Objects.requireNonNull(recompensaslista[0])!!.toInt() * (AtlantaMain.RATE_XP_PVM * 3) * AtlantaMain.RATE_XP_PVM_ABONADOS).toString()
+                                (Objects.requireNonNull(recompensaslista[0])!!
+                                    .toInt() * (AtlantaMain.RATE_XP_PVM * 3) * AtlantaMain.RATE_XP_PVM_ABONADOS).toString()
                         }
                         1 -> if (AtlantaMain.RATE_KAMAS > 1 && !perso.cuenta.esAbonado()) {
                             recompensaslista[1] =

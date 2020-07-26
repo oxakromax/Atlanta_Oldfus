@@ -17,6 +17,7 @@ class Cercado(
     celdaPuerta: Short, celdaMontura: Short, celdasObjetos: String, precioOriginal: Int
 ) : Exchanger {
     val celdaPuerta: Short
+
     // private final Map<Short, Map<Integer, Objeto>> _objCrianzaConDueño = new HashMap<Short,
 // Map<Integer, Objeto>>();
     private val _objCrianza: MutableMap<Short, Objeto?> = HashMap()

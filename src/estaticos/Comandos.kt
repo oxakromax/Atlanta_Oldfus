@@ -33,6 +33,7 @@ import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.pow
 
 object Comandos {
     fun consolaComando(mensaje: String, _cuenta: Cuenta, _perso: Personaje) {
@@ -908,6 +909,51 @@ object Comandos {
                             .nombre + ")" + " fue teletransportado donde jugador " + traedor.nombre + " Desde el Mapa " +
                                 mapaoriginal + " en la Celda " + celdaoriginal
                     )
+                }
+            }
+            "RECOMPENSA_TORNEO" -> try {
+                infos = mensaje.split(" ".toRegex(), 2).toTypedArray()
+                if (infos.size < 2) {
+                    if (_cuenta.idioma.equals("fr", ignoreCase = true)) {
+                        GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Veuillez indiquer le message à envoyer!")
+                    } else {
+                        GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Falta argumentos")
+                    }
+                    return
+                }
+                AtlantaMain.RECOMPENSA_TORNEO = infos[1]
+                GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Se cambio la accion recompensa torneo a ${infos[1]}")
+            } catch (e: Exception) {
+                GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Ocurrio una exception")
+            }
+            "TORNEO" -> {
+                try {
+                    if (AtlantaMain.PERMITIR_TORNEOS) {
+                        AtlantaMain.PERMITIR_TORNEOS =
+                            false
+                        GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Se desactivaron los torneos pvp")
+                    } else {
+                        GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Se activaron los torneos pvp")
+                        AtlantaMain.PERMITIR_TORNEOS = true
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            "RONDAS_TORNEO" -> {
+                try {
+                    var cant = infos[1].toInt()
+                    if (cant < 1) {
+                        GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Tiene que ser mas de 1 ronda")
+                    }
+                    cant = 2.0.pow(cant).toInt()
+                    AtlantaMain.RONDAS_TORNEO = cant
+                    GestorSalida.ENVIAR_BAT2_CONSOLA(
+                        _perso,
+                        "Se ha modificado la cantidad maxima de participantes en los torneos a : ${AtlantaMain.RONDAS_TORNEO}\n" +
+                                "lo que equivale a ${infos[1]} rondas."
+                    )
+                } catch (e: Exception) {
+                    GestorSalida.ENVIAR_BAT2_CONSOLA(_perso, "Error de argumentos")
                 }
             }
             "AN", "ALL", "ANNOUNCE" -> try {

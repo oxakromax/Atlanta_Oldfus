@@ -22,6 +22,7 @@ class Hechizo(
     valorIA: Int
 ) {
     private val _statsHechizos: MutableMap<Int, StatHechizo> = HashMap()
+
     // public ArrayList<Integer> getArrayAfectados() {
 // return _afectados;
 // }
@@ -265,12 +266,12 @@ class Hechizo(
             }
             val celdasObj = lanzador.celdaPelea
                 ?.id?.let {
-                EH.zonaEfecto?.let { it1 ->
-                    Camino.celdasAfectadasEnElArea(
-                        mapa!!, celdaObjetivo, it, it1
-                    )
+                    EH.zonaEfecto?.let { it1 ->
+                        Camino.celdasAfectadasEnElArea(
+                            mapa!!, celdaObjetivo, it, it1
+                        )
+                    }
                 }
-            }
             objetivos = celdasObj?.let { getAfectadosZona(lanzador, it, EH.afectados, celdaObjetivo) }!!
             return objetivos
         }

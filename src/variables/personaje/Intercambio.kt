@@ -22,6 +22,7 @@ class Intercambio(private val _perso1: Personaje, private val _perso2: Personaje
     private var _kamas2: Long = 0
     private var _ok1 = false
     private var _ok2 = false
+
     @Synchronized
     override fun botonOK(perso: Personaje) {
         if (_perso1.Id == perso.Id) {

@@ -25,12 +25,12 @@ import variables.pelea.Luchador
 import variables.pelea.Pelea
 import variables.pelea.Reto.EstReto
 import variables.pelea.Trampa
-import java.lang.management.GarbageCollectorMXBean
 import java.util.*
 import kotlin.math.sqrt
 
 open class EfectoHechizo {
     val hechizoID: Int
+
     //
     protected var _suerte: Byte = 0
     var efectoID = 0
@@ -44,6 +44,7 @@ open class EfectoHechizo {
         protected set
     protected var _args = ""
     protected var _condicionHechizo = ""
+
     // condicion es para especificar si el buff hara efecto segun la condicion DAÑO AGUA, DAÑO TIERRA,
 // CURA , MENOS_PA, NADA ... etc
     var zonaEfecto: String? = null
@@ -2313,6 +2314,7 @@ open class EfectoHechizo {
 
     companion object {
         const val TIEMPO_POR_LUCHADOR_MUERTO = 500
+
         // staticos
         var TIEMPO_ENTRE_EFECTOS = 50
         var TIEMPO_GAME_ACTION = 5
@@ -2486,10 +2488,10 @@ open class EfectoHechizo {
                         }
                         if (lanzador.celdaPelea
                                 ?.id?.let {
-                                Camino.distanciaDosCeldas(
-                                    pelea.mapaCopia, objetivo.celdaPelea!!.id, it
-                                )
-                            }!! > 1
+                                    Camino.distanciaDosCeldas(
+                                        pelea.mapaCopia, objetivo.celdaPelea!!.id, it
+                                    )
+                                }!! > 1
                         ) {
                             continue@loop
                         }
@@ -2680,7 +2682,7 @@ open class EfectoHechizo {
                     try { //                    lanzador.tiempoempujado+=(long)(300 + (200 * Math.sqrt(nCeldasAMover))) *2;
                         lanzador.empujo = true
                         //                    System.out.println((int) (300 + (200 * Math.sqrt(nCeldasAMover))));
-                    Thread.sleep(((300 + (200 * sqrt(nCeldasAMover.toDouble()))).toLong()))
+                        Thread.sleep(((300 + (200 * sqrt(nCeldasAMover.toDouble()))).toLong()))
                     } catch (ignored: Exception) {
                     }
                 }

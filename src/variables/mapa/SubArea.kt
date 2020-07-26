@@ -64,6 +64,7 @@ class SubArea(
     companion object {
         @JvmField
         var BONTAS = 0
+
         @JvmField
         var BRAKMARS = 0
 

@@ -125,6 +125,7 @@ import estaticos.database.GestorSQL.iniciarCommit
 import estaticos.database.GestorSQL.timerCommit
 import servidor.ServidorServer.Companion.clientes
 import sincronizador.ExchangeClient
+import utilidades.LigaPvP.TorneoPvP
 import utilidades.comandosAccion
 import variables.casa.Casa
 import variables.casa.Cofre
@@ -304,6 +305,7 @@ object Mundo {
     var CREA_TU_ITEM_DATA = ""
     var CREAT_TU_ITEM_PRECIOS = ""
     var SALVANDO = false
+    val TORNEOSPVP = CopyOnWriteArrayList<TorneoPvP>()
 
     fun crearServidor() {
         try {

@@ -23,6 +23,7 @@ class Trueque(private val _perso: Personaje, private val _resucitar: Boolean, np
     private var _polvo = false
     private var _idMascota = 0
     private var _npcID = 0
+
     @Synchronized
     override fun botonOK(perso: Personaje) {
         _ok = !_ok

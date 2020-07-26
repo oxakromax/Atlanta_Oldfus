@@ -25,7 +25,7 @@ import java.util.*
 import java.util.regex.Pattern
 
 object Constantes {
-    const val VERSION_EMULADOR = "1.0 Kotlin Version"
+    const val VERSION_EMULADOR = "1.1 Kotlin Version"
 
     // public static final String SUBVERSION_EMULADOR = ".2";
     const val CREADOR = "SLIMES"
@@ -2657,10 +2657,10 @@ object Constantes {
                     val mapa = lanzador.pelea.mapaCopia
                     val dir = objetivo.celdaPelea
                         ?.id?.let {
-                        Camino.direccionEntreDosCeldas(
-                            mapa, celdaLanzamiento!!.id, it, true
-                        )
-                    }
+                            Camino.direccionEntreDosCeldas(
+                                mapa, celdaLanzamiento!!.id, it, true
+                            )
+                        }
                     val sigCeldaID = dir?.let {
                         celdaLanzamiento?.id?.let { it1 ->
                             Camino.getSigIDCeldaMismaDir(

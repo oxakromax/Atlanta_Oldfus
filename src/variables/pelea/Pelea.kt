@@ -296,6 +296,18 @@ class Pelea {
                     }
                 }
             }
+            if (pre1.javaClass == Recaudador::class.java) {
+                val recaudador = pre1 as Recaudador
+                recaudador.actualizarAtacantesDefensores()
+                val str = recaudador.mensajeDeAtaque()
+                for (p in recaudador.gremio!!.miembros) {
+                    if (p != null) {
+                        if (p.enLinea()) {
+                            GestorSalida.ENVIAR_gA_MENSAJE_SOBRE_RECAUDADOR(p, str)
+                        }
+                    }
+                }
+            }
             if (grupoMob != null) {
                 setGrupoMob(grupoMob)
             }
@@ -842,7 +854,8 @@ class Pelea {
                     }
                     GestorSalida.ENVIAR_GM_LUCHADORES_A_PERSO(this, mapaCopia!!, perso)
                 }
-                _luchInit2!!.preLuchador?.actualizarAtacantesDefensores()
+                _luchInit1?.preLuchador?.actualizarAtacantesDefensores()
+                _luchInit2?.preLuchador?.actualizarAtacantesDefensores()
             }
             Constantes.PELEA_FASE_COMBATE -> if (perso != null && !perso.esMultiman()) {
                 GestorSalida.ENVIAR_GM_LUCHADORES_A_PERSO(this, mapaCopia!!, perso)
@@ -1279,7 +1292,8 @@ class Pelea {
 
     private fun antesIniciarPelea() {
         try {
-            _luchInit2!!.preLuchador?.actualizarAtacantesDefensores()
+            _luchInit1?.preLuchador?.actualizarAtacantesDefensores()
+            _luchInit2?.preLuchador?.actualizarAtacantesDefensores()
             if (_tipo == Constantes.PELEA_TIPO_PVM_NO_ESPADA) {
                 // vacio
             } else if (_tipo == Constantes.PELEA_TIPO_PVP) {
@@ -1974,7 +1988,7 @@ class Pelea {
         luchadorTurno!!.bonusCastigo.clear()
         luchadorTurno!!.actualizaHechizoLanzado()
         if (luchadorTurno!!.estaMuerto()) {
-            addMuertosReturnFinalizo(luchadorTurno!!,null)
+            addMuertosReturnFinalizo(luchadorTurno!!, null)
             return
         }
         if (luchadorTurno!!.celdaPelea!!.glifos != null) {
@@ -2043,7 +2057,7 @@ class Pelea {
             return
         }
         if (luchadorTurno!!.estaMuerto()) {
-            addMuertosReturnFinalizo(luchadorTurno!!,null)
+            addMuertosReturnFinalizo(luchadorTurno!!, null)
             return
         }
         if (AtlantaMain.MODO_DEBUG) {
@@ -2114,7 +2128,7 @@ class Pelea {
         }
 //
         if (luchadorTurno!!.estaMuerto()) {
-            addMuertosReturnFinalizo(luchadorTurno!!,null)
+            addMuertosReturnFinalizo(luchadorTurno!!, null)
             return
         }
         acaboPelea(3.toByte())
@@ -2426,7 +2440,31 @@ class Pelea {
             }
             GestorSalida.ENVIAR_GA_ACCION_PELEA(this, 7, 999, victimaID.toString() + "", stringOrdenJugadores())
             refrescarBuffsPorMuerte(victima)
-            if (victima.recaudador != null || victima.prisma != null) {
+            /// Pequeño eslabon de las guerras de gremios
+            var guerragp = victima.personaje?.gremio?.guerra?.pelea == this
+            if (guerragp) {
+                GestorSalida.ENVIAR_ANUNCIO_CHAT_MENSAJE_GREMIO(
+                    victima.personaje?.gremio, "EL JUGADOR ${victima.personaje?.nombre} " +
+                            "HA CAIDO EN LA GUERRA!!!"
+                )
+            }
+            var guerragr = victima.recaudador?.gremio?.guerra?.pelea == this
+            if (guerragr) {
+                val guerra = victima.recaudador?.gremio?.guerra
+                if (guerra != null) {
+                    guerra.recaudadoresMuertos += 1
+                    if (guerra.recaudadoresMuertos * 100 / AtlantaMain.GUERRA_RECAUDADORES > 60) {
+                        acaboPelea((victima.equipoBin + 1).toByte())
+                        return true
+                    } else {
+                        GestorSalida.ENVIAR_ANUNCIO_CHAT_MENSAJE_GREMIO(
+                            victima.recaudador?.gremio,
+                            "UN RECAUDADOR HA CAIDO EN LA GUERRA!!"
+                        )
+                    }
+                }
+                ///// fin del eslabon
+            } else if (victima.recaudador != null || victima.prisma != null) {
                 acaboPelea(2.toByte())
                 return true
             } else if (cantLuchIniMuertos(1) == _inicioLuchEquipo1.size || cantLuchIniMuertos(2) == _inicioLuchEquipo2
@@ -3976,7 +4014,22 @@ class Pelea {
                 }
                 linea = 4
                 val packet = getPanelResultados(if (equipo1Muerto) 2 else 1)
-                if (equipo1Muerto) {
+                var guerrag = _luchInit1?.recaudador?.gremio?.guerra?.pelea == this
+                if (guerrag) {
+                    if (equipo1Muerto) {
+                        _luchInit1?.recaudador?.gremio?.guerra?.recaudadores?.forEach { it.murio() }
+                        _luchInit2?.recaudador?.gremio?.guerra?.recaudadores?.forEach { it.sobrevivio() }
+                        _luchInit1?.recaudador?.gremio?.guerra?.finalizarGuerra(false, true)
+                        _luchInit2?.recaudador?.gremio?.guerra?.finalizarGuerra(true, true)
+                        _luchInit2?.recaudador?.gremio?.guerra?.AnunciarVictoriaSobre(_luchInit1?.recaudador?.gremio)
+                    } else {
+                        _luchInit1?.recaudador?.gremio?.guerra?.recaudadores?.forEach { it.sobrevivio() }
+                        _luchInit2?.recaudador?.gremio?.guerra?.recaudadores?.forEach { it.murio() }
+                        _luchInit1?.recaudador?.gremio?.guerra?.finalizarGuerra(true, true)
+                        _luchInit2?.recaudador?.gremio?.guerra?.finalizarGuerra(false, true)
+                        _luchInit1?.recaudador?.gremio?.guerra?.AnunciarVictoriaSobre(_luchInit2?.recaudador?.gremio)
+                    }
+                } else if (equipo1Muerto) {
                     _luchInit2!!.preLuchador?.sobrevivio()
                 } else {
                     _luchInit2!!.preLuchador?.murio()
@@ -4069,37 +4122,46 @@ class Pelea {
             val initID = _idLuchInit1
             var tipoX: Byte = 0
             when (_tipo) {
-                Constantes.PELEA_TIPO_PRISMA -> {
-                    if (AtlantaMain.OBJETOS_PELEA_PRISMA.isNotEmpty()) {
-                        val equipo = if (equipoGanador == 1) _equipo1 else _equipo2
-                        for (luchador in equipo.values) {
-                            val p = luchador.personaje ?: continue
-                            for (s in AtlantaMain.OBJETOS_PELEA_PRISMA.split(";")) {
-                                try {
-                                    val ss = s.split(",")
-                                    val idModelo = ss[0].toInt()
-                                    val cant = ss[1].toInt()
-                                    val condicion = ss[2]
-                                    if (!Condiciones.validaCondiciones(p, condicion)) continue // No cumplio condicion
-                                    val om = Mundo.getObjetoModelo(idModelo) ?: continue // No existe el modelo
-                                    val obj =
-                                        om.crearObjeto(cant, Constantes.OBJETO_POS_NO_EQUIPADO, CAPACIDAD_STATS.RANDOM)
-                                    luchador.addDropLuchador(obj, true)
-                                } catch (e: Exception) {
+                Constantes.PELEA_TIPO_PVP, Constantes.PELEA_TIPO_PRISMA, Constantes.PELEA_TIPO_KOLISEO -> tipoX = 1
+                Constantes.PELEA_TIPO_RECAUDADOR -> {
+                    var guerrag = _luchInit2?.recaudador?.gremio?.guerra?.pelea == this
+                    if (guerrag) {
+                        val guerra1 = _luchInit1?.recaudador?.gremio?.guerra
+                        val guerra2 = _luchInit2?.recaudador?.gremio?.guerra
+                        if (equipoGanador == 1) {
+                            if (guerra1 != null) {
+                                for (recaudador in guerra1.recaudadores) {
+                                    _kamasRobadas += recaudador.kamas
+                                    _expRobada += recaudador.exp
+                                    if (_objetosRobados == null) {
+                                        _objetosRobados = arrayListOf()
+                                    }
+                                    _objetosRobados?.addAll(recaudador.objetos)
+                                    recaudador.clearObjetos()
+                                }
+                            }
+                        } else {
+                            if (guerra2 != null) {
+                                for (recaudador in guerra2.recaudadores) {
+                                    _kamasRobadas += recaudador.kamas
+                                    _expRobada += recaudador.exp
+                                    if (_objetosRobados == null) {
+                                        _objetosRobados = arrayListOf()
+                                    }
+                                    _objetosRobados?.addAll(recaudador.objetos)
+                                    recaudador.clearObjetos()
                                 }
                             }
                         }
+                    } else if (equipoGanador == 1) {
+                        _kamasRobadas += _luchInit2!!.recaudador!!.kamas
+                        _expRobada += _luchInit2!!.recaudador!!.exp
+                        if (_objetosRobados == null) {
+                            _objetosRobados = ArrayList()
+                        }
+                        _objetosRobados!!.addAll(_luchInit2!!.recaudador!!.objetos)
+                        _luchInit2!!.recaudador!!.clearObjetos()
                     }
-                }
-                Constantes.PELEA_TIPO_PVP, Constantes.PELEA_TIPO_KOLISEO -> tipoX = 1
-                Constantes.PELEA_TIPO_RECAUDADOR -> if (equipoGanador == 1) {
-                    _kamasRobadas += _luchInit2!!.recaudador!!.kamas
-                    _expRobada += _luchInit2!!.recaudador!!.exp
-                    if (_objetosRobados == null) {
-                        _objetosRobados = ArrayList()
-                    }
-                    _objetosRobados!!.addAll(_luchInit2!!.recaudador!!.objetos)
-                    _luchInit2!!.recaudador!!.clearObjetos()
                 }
                 Constantes.PELEA_TIPO_PVM -> {
                     if (mobGrupo != null) {
@@ -5071,9 +5133,9 @@ class Pelea {
                                                     max(1, luchGanador.prospeccionLuchador / 100)
                                                 )
                                                 Mundo.getObjetoModelo(carne)?.crearObjeto(
-                                                        cant,
-                                                        Constantes.OBJETO_POS_NO_EQUIPADO, CAPACIDAD_STATS.RANDOM
-                                                    )
+                                                    cant,
+                                                    Constantes.OBJETO_POS_NO_EQUIPADO, CAPACIDAD_STATS.RANDOM
+                                                )
                                                     ?.let {
                                                         luchGanador.addDropLuchador(
                                                             it, true
@@ -5270,9 +5332,9 @@ class Pelea {
                                                 Integer.parseInt(s.split(",".toRegex()).dropLastWhile { it.isEmpty() }
                                                     .toTypedArray()[1])
                                             Mundo.getObjetoModelo(objID)?.crearObjeto(
-                                                    cant,
-                                                    Constantes.OBJETO_POS_NO_EQUIPADO, CAPACIDAD_STATS.RANDOM
-                                                )
+                                                cant,
+                                                Constantes.OBJETO_POS_NO_EQUIPADO, CAPACIDAD_STATS.RANDOM
+                                            )
                                                 ?.let {
                                                     luchGanador.addDropLuchador(
                                                         it, true
@@ -5290,6 +5352,8 @@ class Pelea {
                     }
                     luchGanador.addKamasLuchador()
                     // AQUI CONVIERTE LOS OBJ DROPS AL INVENTARIO DE CADA GANADOR
+                    // PREMIOS GUERRA DE GREMIOS //
+                    luchGanador.personaje?.gremio?.guerra?.recompensa(luchGanador)
                     if (luchGanador.objDropeados != null) {
                         val logdropeo = logdropeo(luchGanador)
                         for ((obj, value) in luchGanador.objDropeados!!) {
@@ -5633,7 +5697,8 @@ class Pelea {
     fun addIA(IA: Inteligencia) {
         _IAs.add(IA)
     }
-    fun removeIA(IA: Inteligencia){
+
+    fun removeIA(IA: Inteligencia) {
         _IAs.remove(IA)
     }
 
@@ -6034,6 +6099,30 @@ class Pelea {
             }
         }
         return equipo1Vivo && equipo2Vivo
+    }
+
+    fun equipoGanador(): Int {
+        var equipo1Vivo = false
+        var equipo2Vivo = false
+        for (luchador in _equipo1.values) {
+            if (luchador.esInvocacion()) {
+                continue
+            }
+            if (!luchador.estaMuerto()) {
+                equipo1Vivo = true
+                break
+            }
+        }
+        for (luchador in _equipo2.values) {
+            if (luchador.esInvocacion()) {
+                continue
+            }
+            if (!luchador.estaMuerto()) {
+                equipo2Vivo = true
+                break
+            }
+        }
+        return if (equipo1Vivo && equipo2Vivo) 0 else if (equipo1Vivo) 1 else 2
     }
 
     fun cuantosQuedanDelEquipo(id: Int): Int {

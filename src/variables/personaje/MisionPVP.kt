@@ -7,6 +7,7 @@ class MisionPVP(// public Personaje getPjMision() {
     val nombreVictima: String, val kamasRecompensa: Long, val expMision: Long, craneo: Int, pergRec: Int
 ) {
     private val _cazaCabezas: Boolean
+
     //
     val craneo: Int
     val pergRec: Int

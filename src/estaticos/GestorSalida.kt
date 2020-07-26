@@ -1599,6 +1599,28 @@ object GestorSalida {
         imprimir("CHAT: GREMIO", packet)
     }
 
+    fun ENVIAR_ANUNCIO_CHAT_MENSAJE_GREMIO(gremio: Gremio?, msj: String) {
+        if (gremio == null) {
+            return
+        }
+        val prefijos = "\"!\\\"#\$%&/='?¿¡\""
+        var nombre = gremio.nombre
+        for (c in prefijos) {
+            nombre = nombre.replace(c.toString(), "")
+        }
+        val sufijo = "%"
+        val packet = "cMK" + sufijo + "|" + gremio.id + "|" + nombre + "|" + msj
+        for (p in gremio.miembros) {
+            if (p != null) {
+                if (p.tieneCanal(sufijo)) {
+                    continue
+                }
+            }
+            enviarEnCola(p, packet, true)
+        }
+        imprimir("CHAT: GREMIO", packet)
+    }
+
     fun ENVIAR_cMK_CHAT_MENSAJE_KOLISEO(perso: Personaje, msj: String) {
         val sufijo = "¿"
         val packet = "cMK" + sufijo + "|" + perso.Id + "|" + perso.nombre + "|" + msj

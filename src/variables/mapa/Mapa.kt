@@ -1609,7 +1609,19 @@ class Mapa {
         return true
     }
 
-    private fun strCeldasPeleaPosAtacante(): String {
+    fun iniciarPeleaTorneo(init1: GrupoKoliseo?, init2: GrupoKoliseo?): Pelea {
+        prepararCeldasPelea(
+            8,
+            8
+        )
+        val id = sigIDPelea()
+        val pelea = Pelea(id, this, init1!!, init2!!, strCeldasPeleaPosAtacante())
+        _peleas!![id] = pelea
+        ENVIAR_fC_CANTIDAD_DE_PELEAS(this)
+        return pelea
+    }
+
+    fun strCeldasPeleaPosAtacante(): String {
         return "$_celdasPelea|$colorCeldasAtacante"
     }
 

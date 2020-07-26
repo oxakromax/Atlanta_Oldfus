@@ -174,7 +174,8 @@ class MisionObjetivoModelo(val iD: Int, val tipo: Byte, var args: String) {
                                     nuevo.append(",")
                                 }
                                 val statID = st.split("#".toRegex()).toTypedArray()[0].toInt(16)
-                                if (statID == Constantes.STAT_INVOCA_MOB && st.split("#".toRegex()).toTypedArray()[3].equals(
+                                if (statID == Constantes.STAT_INVOCA_MOB && st.split("#".toRegex())
+                                        .toTypedArray()[3].equals(
                                         alma,
                                         ignoreCase = true
                                     ) && van < cantidad

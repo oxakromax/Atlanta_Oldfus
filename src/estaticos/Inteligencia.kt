@@ -136,7 +136,7 @@ class Inteligencia(private val _lanzador: Luchador, private val _pelea: Pelea) :
                     _pelea.pasarTurno(_lanzador)
                 }
                 if (_lanzador.estaMuerto()) {
-                    _pelea.addMuertosReturnFinalizo(_lanzador,null)
+                    _pelea.addMuertosReturnFinalizo(_lanzador, null)
                 }
                 if (!_lanzador.puedeJugar()) {
                     break
@@ -834,14 +834,14 @@ class Inteligencia(private val _lanzador: Luchador, private val _pelea: Pelea) :
             try {
                 val d = objetivo
                     ?.celdaPelea?.id?.let {
-                    _lanzador.celdaPelea?.id?.let { it1 ->
-                        Camino.distanciaDosCeldas(
-                            _pelea.mapaCopia,
-                            it1,
-                            it
-                        ).toInt()
+                        _lanzador.celdaPelea?.id?.let { it1 ->
+                            Camino.distanciaDosCeldas(
+                                _pelea.mapaCopia,
+                                it1,
+                                it
+                            ).toInt()
+                        }
                     }
-                }
                 if (d != null) {
                     if (d < dist) {
                         dist = d
@@ -1365,17 +1365,17 @@ class Inteligencia(private val _lanzador: Luchador, private val _pelea: Pelea) :
                 }
                 val pathTemp = objetivo
                     ?.celdaPelea?.id?.let {
-                    _lanzador.celdaPelea?.id?.let { it1 ->
-                        Camino.getPathPelea(
-                            mapa,
-                            it1,
-                            it,
-                            -1,
-                            _lanzador,
-                            true
-                        )
+                        _lanzador.celdaPelea?.id?.let { it1 ->
+                            Camino.getPathPelea(
+                                mapa,
+                                it1,
+                                it,
+                                -1,
+                                _lanzador,
+                                true
+                            )
+                        }
                     }
-                }
                     ?: continue
                 for (c in pathTemp._segundo) {
                     if (c != null) {
@@ -1925,14 +1925,14 @@ class Inteligencia(private val _lanzador: Luchador, private val _pelea: Pelea) :
             var celdaObjetivo: Celda? = null
             val celdas = _lanzador
                 .celdaPelea?.id?.let {
-                Camino.celdasPosibleLanzamiento(
-                    SH,
-                    _lanzador,
-                    _pelea.mapaCopia!!,
-                    it,
-                    (-1).toShort()
-                )
-            }
+                    Camino.celdasPosibleLanzamiento(
+                        SH,
+                        _lanzador,
+                        _pelea.mapaCopia!!,
+                        it,
+                        (-1).toShort()
+                    )
+                }
             if (celdas != null) {
                 for (celda in celdas) {
                     val dist = objetivo.celdaPelea
@@ -2009,14 +2009,14 @@ class Inteligencia(private val _lanzador: Luchador, private val _pelea: Pelea) :
             var celdaObjetivo: Celda? = null
             for (celda in _lanzador
                 .celdaPelea?.id?.let {
-                Camino.celdasPosibleLanzamiento(
-                    SH,
-                    _lanzador,
-                    _pelea.mapaCopia!!,
-                    it,
-                    (-1).toShort()
-                )
-            }!!) {
+                    Camino.celdasPosibleLanzamiento(
+                        SH,
+                        _lanzador,
+                        _pelea.mapaCopia!!,
+                        it,
+                        (-1).toShort()
+                    )
+                }!!) {
                 if (trampa == 1) {
                     if (celda.esTrampa()) {
                         continue
@@ -2089,14 +2089,14 @@ class Inteligencia(private val _lanzador: Luchador, private val _pelea: Pelea) :
             var celdaObjetivo: Celda? = null
             val celdas = _lanzador
                 .celdaPelea?.id?.let {
-                Camino.celdasPosibleLanzamiento(
-                    SH,
-                    _lanzador,
-                    _pelea.mapaCopia!!,
-                    it,
-                    (-1).toShort()
-                )
-            }
+                    Camino.celdasPosibleLanzamiento(
+                        SH,
+                        _lanzador,
+                        _pelea.mapaCopia!!,
+                        it,
+                        (-1).toShort()
+                    )
+                }
             if (celdas != null) {
                 for (celda in celdas) {
                     val dist = objetivo.celdaPelea

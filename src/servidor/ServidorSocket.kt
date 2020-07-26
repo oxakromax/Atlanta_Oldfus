@@ -216,6 +216,7 @@ import org.apache.mina.core.session.IoSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import sprites.Preguntador
+import utilidades.LigaPvP.TorneoPvP
 import utilidades.buscadores.Comparador
 import utilidades.economia.Economia
 import utilidades.seguridad.IpsVerificator
@@ -7103,12 +7104,14 @@ class ServidorSocket(val session: IoSession) {
                     }
                 }
             }
-            if (AtlantaMain.COMANDOS_VIP.contains(comando)) {
-                if (!cuenta!!.esAbonado()) {
+            if (cuenta?.admin ?: 0 == 0) {
+                if (AtlantaMain.COMANDOS_VIP.contains(comando)) {
+                    if (!cuenta!!.esAbonado()) {
+                        return false
+                    }
+                } else if (!AtlantaMain.COMANDOS_PERMITIDOS.contains(comando)) {
                     return false
                 }
-            } else if (!AtlantaMain.COMANDOS_PERMITIDOS.contains(comando)) {
-                return false
             }
             try {
                 val objetivo = personaje
@@ -7389,13 +7392,6 @@ class ServidorSocket(val session: IoSession) {
                     "mercadillo" -> {
                         if (personaje!!.exchanger != null) {
                             ENVIAR_EV_CERRAR_VENTANAS(personaje!!, "")
-//                            var intercambiando=personaje!!.getIntercambiandoCon(Personaje::class.java) as Personaje?
-//                            if (intercambiando != null){
-//                                intercambiando.tipoExchange=-1
-//                                intercambiando.exchanger=null
-//                                intercambiando.cerrarExchange("")
-//                                ENVIAR_EV_CERRAR_VENTANAS(intercambiando, "")
-//                            }
                         }
                         personaje!!.tipoExchange = -1
                         personaje!!.exchanger = null
@@ -7488,6 +7484,26 @@ class ServidorSocket(val session: IoSession) {
                     "probfm" -> {
                         if (personaje?.trabajo != null) {
                             personaje?.trabajo?.mostrarProbabilidades(personaje)
+                        }
+                        return true
+                    }
+                    "guerra" -> {
+                        if (personaje == null) {
+                            return true
+                        }
+                        if (personaje?.gremio == null) {
+                            personaje?.enviarmensajeRojo("Tu no tienes gremio")
+                        } else {
+                            val gremio = personaje?.gremio ?: return true
+                            val guerra = gremio.guerra ?: return true
+                            if (guerra.Integrantes.contains(personaje!!)) {
+                                guerra.RemoverIntegrante(personaje!!)
+                                return true
+                            } else {
+                                if (!guerra.AgregarIntegrante(personaje)) {
+                                    personaje?.enviarmensajeRojo("No has logrado unirte a la guerra de gremio")
+                                }
+                            }
                         }
                         return true
                     }
@@ -7620,6 +7636,32 @@ class ServidorSocket(val session: IoSession) {
                     }
                     "relog" -> {
                         personaje?.conectarse()
+                        return true
+                    }
+                    "torneo" -> {
+                        if (!AtlantaMain.PERMITIR_TORNEOS) {
+                            personaje?.enviarmensajeNegro("Los torneos no estan permitidos en este momento.")
+                            return true
+                        }
+                        for (torneoPvP in Mundo.TORNEOSPVP) {
+                            if (torneoPvP.participantes.contains(personaje!!)) {
+                                personaje?.enviarmensajeNegro(torneoPvP.listaParticipantes())
+                                return true
+                            }
+                            if (!torneoPvP.addParticipante(personaje!!) && !torneoPvP.termino) continue else return true
+                        }
+                        val torneo = TorneoPvP()
+                        torneo.addParticipante(personaje!!)
+                        return true
+                    }
+                    "dtorneo" -> {
+                        for (torneoPvP in Mundo.TORNEOSPVP) {
+                            if (torneoPvP.removeParticipante(personaje!!)) {
+                                personaje?.enviarmensajeNegro("Te has desincrito del torneo")
+                                return true
+                            }
+                        }
+                        personaje?.enviarmensajeNegro("No estabas en ningun torneo pvp")
                         return true
                     }
                     "tp" -> {

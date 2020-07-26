@@ -61,6 +61,7 @@ class Area(val id: Int, superArea: Short, val nombre: String) {
     companion object {
         @JvmField
         var BONTAS = 0
+
         @JvmField
         var BRAKMARS = 0
 

@@ -11,6 +11,7 @@ import servidor.ServidorServer
 import servidor.ServidorSocket
 import sincronizador.ExchangeClient
 import utilidades.algoritmos.FuncionesParaThreads
+import variables.gremio.GestorGuerras
 import variables.hechizo.EfectoHechizo
 import variables.montura.Montura
 import variables.npc.NPC
@@ -22,6 +23,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.thread
+import kotlin.math.pow
 import kotlin.system.exitProcess
 
 //import utilidades.algoritmos.FuncionesParaThreads.*
@@ -1006,6 +1008,10 @@ object AtlantaMain {
     @JvmField
     var MISION_PVP_KAMAS = 2000
     var MISION_PVP_OBJETOS = "10275,2;9920,1"
+    var OBJETOS_GUERRA = "10275,2;9920,1"
+    var GUERRA_PERSONAJES = 2
+    var GUERRA_RECAUDADORES = 3
+    var MAPA_GUERRA = 39
 
     // LIMITES
     var LIMITE_MAPAS = 12000
@@ -1084,6 +1090,10 @@ object AtlantaMain {
     var PORCENTAJE_DEVOLVER_ITEMS = 60.0
     var encendido = System.currentTimeMillis()
     var TOKEN = "Testing"
+    var RECOMPENSA_TORNEO = ""
+    var RONDAS_TORNEO = 2
+    var MAPA_ESPERA_TORNEO = 196
+    var PERMITIR_TORNEOS = true
     var HECHIZOS_NO_DESHECHIZABLE = arrayListOf<Int>()
     var FACTOR_COMPRA = 1.3
     var FACTOR_VENTA = 0.9
@@ -1185,6 +1195,12 @@ object AtlantaMain {
                 ServidorHandler.filter.Desbanear()
             } catch (e: Exception) {
             }
+        }
+        fixedRateTimer(
+            name = "Gestor Guerras",
+            initialDelay = 20000, period = 5000
+        ) {
+            thread { GestorGuerras.Vigilante() }
         }
         println("Esperando que los jugadores se conecten")
         try {
@@ -1386,6 +1402,22 @@ object AtlantaMain {
                             MISION_PVP_OBJETOS = valor
                             variable = "MISION_PVP_OBJETOS"
                         }
+                        "OBJETOS_GUERRA" -> {
+                            OBJETOS_GUERRA = valor
+                            variable = "OBJETOS_GUERRA"
+                        }
+                        "RECAUDADORES_GUERRA" -> {
+                            GUERRA_RECAUDADORES = valor.toInt()
+                            variable = "RECAUDADORES_GUERRA"
+                        }
+                        "PERSONAJES_GUERRA" -> {
+                            GUERRA_PERSONAJES = valor.toInt()
+                            variable = "PERSONAJES_GUERRA"
+                        }
+                        "MAPA_GUERRA" -> {
+                            MAPA_GUERRA = valor.toInt()
+                            variable = "MAPA_GUERRA"
+                        }
                         "PARAM_PERMITIR_BONUS_PELEA_AFECTEN_PROSPECCION" -> {
                             PARAM_PERMITIR_BONUS_PELEA_AFECTEN_PROSPECCION = valor.equals("true", ignoreCase = true)
                             variable = "PARAM_PERMITIR_BONUS_PELEA_AFECTEN_PROSPECCION"
@@ -1401,6 +1433,31 @@ object AtlantaMain {
                         "DEVOLVER_ITEMS" -> {
                             DEVOLVER_ITEMS = valor.equals("true", true)
                             variable = "DEVOLVER_ITEMS"
+                        }
+                        "FACTOR_COMPRA" -> {
+                            FACTOR_COMPRA = valor.toDouble()
+                            variable = "FACTOR_COMPRA"
+                        }
+                        "FACTOR_VENTA" -> {
+                            FACTOR_VENTA = valor.toDouble()
+                            variable = "FACTOR_VENTA"
+                        }
+                        "ANUNCIO_NIVEL_MAX" -> {
+                            ANUNCIO_NIVEL_MAX = valor.equals("true", ignoreCase = true)
+                            variable = "ANUNCIO_NIVEL_MAX"
+                        }
+                        "HECHIZOS_NO_DESHECHIZABLES" -> {
+                            val lista = valor.split(",")
+                            HECHIZOS_NO_DESHECHIZABLE.clear()
+                            for (s in lista) {
+                                try {
+                                    val i = s.toInt()
+                                    if (!HECHIZOS_NO_DESHECHIZABLE.contains(i)) HECHIZOS_NO_DESHECHIZABLE.add(i)
+                                } catch (e: Exception) {
+                                    continue
+                                }
+                            }
+                            variable = "HECHIZOS_NO_DESHECHIZABLES"
                         }
                         "PERMITIR_BONUS_EXP_RETOS" -> {
                             PARAM_PERMITIR_BONUS_EXP_RETOS = valor.equals("true", ignoreCase = true)
@@ -1840,18 +1897,6 @@ object AtlantaMain {
                             SEGUNDOS_REAPARECER_MOBS = valor.toInt()
                             variable = "SEGUNDOS_REAPARECER_MOBS"
                         }
-                        "FACTOR_COMPRA"->{
-                            FACTOR_COMPRA = valor.toDouble()
-                            variable = "FACTOR_COMPRA"
-                        }
-                        "FACTOR_VENTA"->{
-                            FACTOR_VENTA = valor.toDouble()
-                            variable = "FACTOR_VENTA"
-                        }
-                        "ANUNCIO_NIVEL_MAX"->{
-                            ANUNCIO_NIVEL_MAX = valor.equals("true",ignoreCase = true)
-                            variable = "ANUNCIO_NIVEL_MAX"
-                        }
                         "SEGUNDOS_AGREDIR_RECIEN_LLEGADO_MAPA" -> {
                             SEGUNDOS_AGREDIR_RECIEN_LLEGADO_MAPA = valor.toInt()
                             variable = "SEGUNDOS_AGREDIR_RECIEN_LLEGADO_MAPA"
@@ -2023,19 +2068,6 @@ object AtlantaMain {
                         "INICIO_ESTRELLAS_RECURSOS" -> {
                             INICIO_BONUS_ESTRELLAS_RECURSOS = (valor.toShort() * 20)
                             variable = "INICIO_BONUS_ESTRELLAS_RECURSOS"
-                        }
-                        "HECHIZOS_NO_DESHECHIZABLES" -> {
-                            val lista = valor.split(",")
-                            HECHIZOS_NO_DESHECHIZABLE.clear()
-                            for (s in lista) {
-                                try {
-                                    val i = s.toInt()
-                                    if (!HECHIZOS_NO_DESHECHIZABLE.contains(i)) HECHIZOS_NO_DESHECHIZABLE.add(i)
-                                } catch (e: Exception) {
-                                    continue
-                                }
-                            }
-                            variable = "HECHIZOS_NO_DESHECHIZABLES"
                         }
                         "NIVEL_MAX_PERSONAJE" -> {
                             NIVEL_MAX_PERSONAJE = valor.toShort().toInt()
@@ -2289,6 +2321,23 @@ object AtlantaMain {
                         "LIMITE_DETECTAR_FALLA_KAMAS" -> {
                             LIMITE_DETECTAR_FALLA_KAMAS = valor.toLong()
                             variable = "LIMITE_DETECTAR_FALLA_KAMAS"
+                        }
+                        "RECOMPENSA_TORNEO" -> {
+                            RECOMPENSA_TORNEO = valor
+                            variable = "RECOMPENSA_TORNEO"
+                        }
+                        "RONDAS_TORNEO" -> {
+                            RONDAS_TORNEO = 2.0.pow(valor.toInt()).toInt()
+                            if (RONDAS_TORNEO < 2) RONDAS_TORNEO = 2
+                            variable = "RONDAS_TORNEO"
+                        }
+                        "MAPA_ESPERA_TORNEO" -> {
+                            MAPA_ESPERA_TORNEO = valor.toInt()
+                            variable = "MAPA_ESPERA_TORNEO"
+                        }
+                        "PERMITIR_TORNEOS" -> {
+                            PERMITIR_TORNEOS = valor.equals("true", ignoreCase = true)
+                            variable = "PERMITIR_TORNEOS"
                         }
                         "MAX_PJS_POR_CUENTA" -> {
                             MAX_PJS_POR_CUENTA = valor.toInt()

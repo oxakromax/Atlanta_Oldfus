@@ -24,7 +24,7 @@ class Gremio {
     private val _statsRecolecta: MutableMap<Int, Int> = HashMap()
     private val _tiempoMapaRecolecta: MutableMap<Short, Long?> = HashMap()
     private val _miembros: MutableMap<Int, MiembroGremio> = HashMap()
-    private val _recaudadores = CopyOnWriteArrayList<Recaudador>()
+    val _recaudadores = CopyOnWriteArrayList<Recaudador>()
     val statsPelea = Stats()
     var nroMaxRecau = 0
     var nivel: Short = 1
@@ -34,6 +34,7 @@ class Gremio {
         private set
     var nombre = ""
     var emblema = ""
+    var guerra: Guerra? = null
 
     constructor(dueño: Personaje?, nombre: String, emblema: String) {
         id = sigIDGremio()
@@ -41,6 +42,7 @@ class Gremio {
         this.emblema = emblema
         experiencia = 0
         decompilarStats("176;100|158;1000|124;0")
+        guerra = Guerra(this)
     }
 
     constructor(
@@ -55,6 +57,7 @@ class Gremio {
         this.nroMaxRecau = nroMaxRecau.toInt()
         decompilarHechizos(hechizos)
         decompilarStats(stats)
+        guerra = Guerra(this)
     }
 
     fun addMiembro(

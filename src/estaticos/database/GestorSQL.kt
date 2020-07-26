@@ -216,6 +216,7 @@ object GestorSQL {
             false
         }
     }
+
     fun recambiarAlterna(host: String?, database: String?, user: String?, pass: String?): Boolean {
         return try {
             _bdAlterna?.close()

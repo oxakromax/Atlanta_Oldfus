@@ -2072,7 +2072,7 @@ class Accion(val id: Int, val args: String, condicion: String) {
                         if (pergamino != null) {
                             pergamino.addStatTexto(
                                 Constantes.STAT_ALINEACION,
-                                "0#0#" + Integer.toHexString(objetivo.getAlineacion().toInt())
+                                "0#0#" + Integer.toHexString(objetivo.alineacion.toInt())
                             )
                         }
                         perso.addObjetoConOAKO(pergamino, true)
@@ -2167,7 +2167,7 @@ class Accion(val id: Int, val args: String, condicion: String) {
                         } else {
                             ENVIAR_cs_CHAT_MENSAJE(
                                 perso,
-                                "<b>Nueva Cacería</b><br><b>Nombre:</b> " + nombreVict + "<br><b>Nivel:</b> " + victima.getNivel() + "<br><b>Grado:</b> " + victima.gradoAlineacion + "<br><b>Buena Suerte</b>.",
+                                "<b>Nueva Cacería</b><br><b>Nombre:</b> " + nombreVict + "<br><b>Nivel:</b> " + victima.nivel + "<br><b>Grado:</b> " + victima.gradoAlineacion + "<br><b>Buena Suerte</b>.",
                                 "da6c00"
                             )
                         }

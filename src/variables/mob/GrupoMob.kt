@@ -33,6 +33,7 @@ class GrupoMob {
     private var _bonusEstrellas = AtlantaMain.INICIO_BONUS_ESTRELLAS_MOBS
     var id: Int = 0
     var segundosRespawn = 0
+
     // public void setCondIniciaPelea(final String cond) {
 // _condInicioPelea = cond;
 // }
