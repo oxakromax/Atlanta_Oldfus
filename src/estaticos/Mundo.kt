@@ -164,7 +164,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.regex.Pattern
 import kotlin.collections.HashMap
-import kotlin.concurrent.thread
 
 //import com.mysql.jdbc.PreparedStatement;
 //import variables.mob.GrupoMob;
@@ -1663,109 +1662,97 @@ object Mundo {
             try {
                 var CANT_SALVANDO = 0
                 redactarLogServidorln("Salvando los personajes y sus cuentas: ")
-                thread {
-                    for (perso in _PERSONAJES.values) {
-                        try {
-                            if (perso == null || perso.cuenta == null) {
-                                continue
-                            }
-                            if ((perso.enLinea() || inclusoOffline) && perso.pelea == null) {
-                                if (SERVIDOR_ESTADO == Constantes.SERVIDOR_OFFLINE) {
-                                    perso.previosDesconectar()
-                                }
-                                perso.salvar()
-                                REPLACE_CUENTA_SERVIDOR(
-                                    perso.cuenta,
-                                    GET_PRIMERA_VEZ(perso.cuenta.nombre)
-                                )
-                                redactarLogServidorln(" [ONLINE] " + " 100%")
-                                CANT_SALVANDO++
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                for (perso in _PERSONAJES.values) {
+                    try {
+                        if (perso == null || perso.cuenta == null) {
+                            continue
                         }
-                    }
-                    redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                    TOTAL_SALVADO += CANT_SALVANDO
-                }
-                thread {
-                    var CANT_SALVANDO = 0
-                    redactarLogServidor("Salvando los gremios: ")
-                    for (gremio in _GREMIOS.values) {
-                        try {
-                            REPLACE_GREMIO(gremio)
+                        if ((perso.enLinea() || inclusoOffline) && perso.pelea == null) {
+                            if (SERVIDOR_ESTADO == Constantes.SERVIDOR_OFFLINE) {
+                                perso.previosDesconectar()
+                            }
+                            perso.salvar()
+                            REPLACE_CUENTA_SERVIDOR(
+                                perso.cuenta,
+                                GET_PRIMERA_VEZ(perso.cuenta.nombre)
+                            )
+                            redactarLogServidorln(" [ONLINE] " + " 100%")
                             CANT_SALVANDO++
-                        } catch (e: Exception) {
-                            e.printStackTrace()
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                    TOTAL_SALVADO += CANT_SALVANDO
                 }
-                thread {
-                    var CANT_SALVANDO = 0
-                    redactarLogServidor("Salvando los cercados: ")
-                    for (cercado in CERCADOS.values) {
-                        try {
-                            if (cercado.dueñoID != 0 || cercado.gremio != null || !cercado.criando.isEmpty()) {
-                                REPLACE_CERCADO(cercado)
-                                CANT_SALVANDO++
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+                TOTAL_SALVADO += CANT_SALVANDO
+                CANT_SALVANDO = 0
+                redactarLogServidor("Salvando los gremios: ")
+                for (gremio in _GREMIOS.values) {
+                    try {
+                        REPLACE_GREMIO(gremio)
+                        CANT_SALVANDO++
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+                TOTAL_SALVADO += CANT_SALVANDO
+                CANT_SALVANDO = 0
+                redactarLogServidor("Salvando los cercados: ")
+                for (cercado in CERCADOS.values) {
+                    try {
+                        if (cercado.dueñoID != 0 || cercado.gremio != null || !cercado.criando.isEmpty()) {
+                            REPLACE_CERCADO(cercado)
+                            CANT_SALVANDO++
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                    TOTAL_SALVADO += CANT_SALVANDO
                 }
-                thread {
-                    var CANT_SALVANDO = 0
-                    redactarLogServidor("Salvando las monturas: ")
-                    for (montura in _MONTURAS.values) {
-                        try {
-                            if (montura.estaCriando()) {
-                                REPLACE_MONTURA(montura, true)
-                                CANT_SALVANDO++
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+                TOTAL_SALVADO += CANT_SALVANDO
+                CANT_SALVANDO = 0
+                redactarLogServidor("Salvando las monturas: ")
+                for (montura in _MONTURAS.values) {
+                    try {
+                        if (montura.estaCriando()) {
+                            REPLACE_MONTURA(montura, true)
+                            CANT_SALVANDO++
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                    TOTAL_SALVADO += CANT_SALVANDO
                 }
-                thread {
-                    var CANT_SALVANDO = 0
-                    redactarLogServidor("Salvando las casas: ")
-                    for (casa in CASAS.values) {
-                        try {
-                            if (casa.dueño != null) {
-                                REPLACE_CASA(casa)
-                                CANT_SALVANDO++
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+                TOTAL_SALVADO += CANT_SALVANDO
+                CANT_SALVANDO = 0
+                redactarLogServidor("Salvando las casas: ")
+                for (casa in CASAS.values) {
+                    try {
+                        if (casa.dueño != null) {
+                            REPLACE_CASA(casa)
+                            CANT_SALVANDO++
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                    TOTAL_SALVADO += CANT_SALVANDO
                 }
-                thread {
-                    var CANT_SALVANDO = 0
-                    redactarLogServidor("Salvando los cofres: ")
-                    for (cofre in COFRES.values) {
-                        try {
-                            if (cofre.dueñoID != 0) {
-                                REPLACE_COFRE(cofre, true)
-                                CANT_SALVANDO++
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+                TOTAL_SALVADO += CANT_SALVANDO
+                CANT_SALVANDO = 0
+                redactarLogServidor("Salvando los cofres: ")
+                for (cofre in COFRES.values) {
+                    try {
+                        if (cofre.dueñoID != 0) {
+                            REPLACE_COFRE(cofre, true)
+                            CANT_SALVANDO++
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                    TOTAL_SALVADO += CANT_SALVANDO
                 }
+                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+                TOTAL_SALVADO += CANT_SALVANDO
                 //                CANT_SALVANDO = 0;
 //                AtlantaMain.redactarLogServidor("Salvando las cuentas: ");
 //                for (final Cuenta cuenta : _CUENTAS.values()) {
@@ -1822,206 +1809,182 @@ object Mundo {
             redactarLogServidor("Salvando Kamas de la Ruleta de Jalato")
             modificarParam("KAMAS_RULETA_JALATO", AtlantaMain.KAMAS_RULETA_JALATO.toString() + "")
             // PERSONAJES
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidorln("Salvando los personajes: ")
-                for (perso in _PERSONAJES.values) {
-                    try {
-                        if (perso == null || perso.cuenta == null) {
-                            continue
-                        }
-                        if (perso.enLinea() || inclusoOffline) {
-                            redactarLogServidor(" -> Salvando a " + perso.nombre + " ... ") // Ecatome
-                            if (SERVIDOR_ESTADO == Constantes.SERVIDOR_OFFLINE) {
-                                perso.previosDesconectar()
-                            }
-                            SALVAR_PERSONAJE(perso, true)
-                            redactarLogServidorln(" [ONLINE] " + " 100%")
-                            CANT_SALVANDO++
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+            var CANT_SALVANDO = 0
+            redactarLogServidorln("Salvando los personajes: ")
+            for (perso in _PERSONAJES.values) {
+                try {
+                    if (perso == null || perso.cuenta == null) {
+                        continue
                     }
-                }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
-            }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidorln("Salvando los mercantes: ")
-                for (perso in _PERSONAJES.values) {
-                    try {
-                        if (perso == null || perso.cuenta == null || inclusoOffline) {
-                            continue
+                    if (perso.enLinea() || inclusoOffline) {
+                        redactarLogServidor(" -> Salvando a " + perso.nombre + " ... ") // Ecatome
+                        if (SERVIDOR_ESTADO == Constantes.SERVIDOR_OFFLINE) {
+                            perso.previosDesconectar()
                         }
-                        if (perso.esMercante()) {
-                            redactarLogServidor(" -> Salvando a " + perso.nombre + " ... ") // Ecatome
-                            SALVAR_PERSONAJE(perso, true)
-                            redactarLogServidorln(" [MERCANTE] " + " 100%")
-                            CANT_SALVANDO++
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
-            }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando los prismas: ")
-                for (prisma in _PRISMAS.values) {
-                    try {
-                        REPLACE_PRISMA(prisma)
+                        SALVAR_PERSONAJE(perso, true)
+                        redactarLogServidorln(" [ONLINE] " + " 100%")
                         CANT_SALVANDO++
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
             }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando los gremios: ")
-                for (gremio in _GREMIOS.values) {
-                    try {
-                        REPLACE_GREMIO(gremio)
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidorln("Salvando los mercantes: ")
+            for (perso in _PERSONAJES.values) {
+                try {
+                    if (perso == null || perso.cuenta == null || inclusoOffline) {
+                        continue
+                    }
+                    if (perso.esMercante()) {
+                        redactarLogServidor(" -> Salvando a " + perso.nombre + " ... ") // Ecatome
+                        SALVAR_PERSONAJE(perso, true)
+                        redactarLogServidorln(" [MERCANTE] " + " 100%")
                         CANT_SALVANDO++
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
             }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando los recaudadores: ")
-                for (recau in _RECAUDADORES.values) {
-                    try {
-                        if (recau.gremio == null) {
-                            continue
-                        }
-                        REPLACE_RECAUDADOR(recau, true)
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando los prismas: ")
+            for (prisma in _PRISMAS.values) {
+                try {
+                    REPLACE_PRISMA(prisma)
+                    CANT_SALVANDO++
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando los gremios: ")
+            for (gremio in _GREMIOS.values) {
+                try {
+                    REPLACE_GREMIO(gremio)
+                    CANT_SALVANDO++
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando los recaudadores: ")
+            for (recau in _RECAUDADORES.values) {
+                try {
+                    if (recau.gremio == null) {
+                        continue
+                    }
+                    REPLACE_RECAUDADOR(recau, true)
+                    CANT_SALVANDO++
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando los cercados: ")
+            for (cercado in CERCADOS.values) {
+                try {
+                    REPLACE_CERCADO(cercado)
+                    CANT_SALVANDO++
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando las monturas: ")
+            for (montura in _MONTURAS.values) {
+                try {
+                    if (montura.estaCriando()) {
+                        REPLACE_MONTURA(montura, false)
                         CANT_SALVANDO++
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
             }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando los cercados: ")
-                for (cercado in CERCADOS.values) {
-                    try {
-                        REPLACE_CERCADO(cercado)
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando las casas: ")
+            for (casa in CASAS.values) {
+                try {
+                    REPLACE_CASA(casa)
+                    CANT_SALVANDO++
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando los cofres: ")
+            for (cofre in COFRES.values) {
+                try {
+                    if (cofre.dueñoID != 0) {
+                        REPLACE_COFRE(cofre, true)
                         CANT_SALVANDO++
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                    } else if (!cofre.objetos.isEmpty()) {
+                        cofre.limpiarCofre()
+                        println("El cofre: " + cofre.iD + " Fue vaciado")
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
             }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando las monturas: ")
-                for (montura in _MONTURAS.values) {
-                    try {
-                        if (montura.estaCriando()) {
-                            REPLACE_MONTURA(montura, false)
-                            CANT_SALVANDO++
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando los rankings PVP: ")
+            for (rank in _RANKINGS_PVP.values) {
+                try {
+                    REPLACE_RANKING_PVP(rank)
+                    CANT_SALVANDO++
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
             }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando las casas: ")
-                for (casa in CASAS.values) {
-                    try {
-                        REPLACE_CASA(casa)
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando los rankings Koliseo: ")
+            for (rank in _RANKINGS_KOLISEO.values) {
+                try {
+                    REPLACE_RANKING_KOLISEO(rank)
+                    CANT_SALVANDO++
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
+            CANT_SALVANDO = 0
+            redactarLogServidor("Salvando las cuentas: ")
+            for (cuenta in cuentas.values) {
+                try {
+                    if (cuenta.enLinea() || inclusoOffline) {
+                        REPLACE_CUENTA_SERVIDOR(cuenta, GET_PRIMERA_VEZ(cuenta.nombre))
                         CANT_SALVANDO++
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
             }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando los cofres: ")
-                for (cofre in COFRES.values) {
-                    try {
-                        if (cofre.dueñoID != 0) {
-                            REPLACE_COFRE(cofre, true)
-                            CANT_SALVANDO++
-                        } else if (!cofre.objetos.isEmpty()) {
-                            cofre.limpiarCofre()
-                            println("El cofre: " + cofre.iD + " Fue vaciado")
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
+            for (mapa in MAPAS.values) {
+                mapa!!.limpiarobjetostirados()
             }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando los rankings PVP: ")
-                for (rank in _RANKINGS_PVP.values) {
-                    try {
-                        REPLACE_RANKING_PVP(rank)
-                        CANT_SALVANDO++
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
-            }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando los rankings Koliseo: ")
-                for (rank in _RANKINGS_KOLISEO.values) {
-                    try {
-                        REPLACE_RANKING_KOLISEO(rank)
-                        CANT_SALVANDO++
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
-            }
-            thread {
-                var CANT_SALVANDO = 0
-                redactarLogServidor("Salvando las cuentas: ")
-                for (cuenta in cuentas.values) {
-                    try {
-                        if (cuenta.enLinea() || inclusoOffline) {
-                            REPLACE_CUENTA_SERVIDOR(cuenta, GET_PRIMERA_VEZ(cuenta.nombre))
-                            CANT_SALVANDO++
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-                for (mapa in MAPAS.values) {
-                    mapa!!.limpiarobjetostirados()
-                }
-                redactarLogServidorln("Finalizó con $CANT_SALVANDO")
-                TOTAL_SALVADO += CANT_SALVANDO
-            }
+            redactarLogServidorln("Finalizó con $CANT_SALVANDO")
+            TOTAL_SALVADO += CANT_SALVANDO
             redactarLogServidorln("------------ Se salvó exitosamente el servidor 100% ------------")
             println(TOTAL_SALVADO.toString() + " Datos Guardados ----> en " + (System.currentTimeMillis() - xxxx) + " Milisegundos <------")
             val dateFormat: DateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss")

@@ -1,6 +1,5 @@
 package estaticos.database
 
-//import com.mysql.jdbc.PreparedStatement
 //import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const
 import estaticos.AtlantaMain
 import estaticos.Constantes
@@ -65,6 +64,7 @@ object GestorSQL {
     private var _bdAlterna: Connection? = null
     private var _timerComienzo: Timer? = null
     private var _necesitaCommit: Boolean = false
+    private var connection = "mariadb"
 
     private fun cerrarResultado(resultado: ResultSet) {
         try {
@@ -167,17 +167,17 @@ object GestorSQL {
     fun iniciarConexion(): Boolean {
         try {
             _bdDinamica = DriverManager.getConnection(
-                "jdbc:mysql://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_DINAMICA
+                "jdbc:$connection://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_DINAMICA
                         + "?autoReconnect=true", AtlantaMain.BD_USUARIO, AtlantaMain.BD_PASS
             )
             _bdDinamica?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
             _bdEstatica = DriverManager.getConnection(
-                "jdbc:mysql://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_ESTATICA
+                "jdbc:$connection://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_ESTATICA
                         + "?autoReconnect=true", AtlantaMain.BD_USUARIO, AtlantaMain.BD_PASS
             )
             _bdEstatica?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
             _bdCuentas = DriverManager.getConnection(
-                "jdbc:mysql://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_CUENTAS
+                "jdbc:$connection://" + AtlantaMain.BD_HOST + "/" + AtlantaMain.BD_CUENTAS
                         + "?autoReconnect=true", AtlantaMain.BD_USUARIO, AtlantaMain.BD_PASS
             )
             _bdCuentas?.autoCommit = AtlantaMain.PARAM_AUTO_COMMIT
@@ -206,7 +206,7 @@ object GestorSQL {
 
             }
             _bdAlterna = DriverManager.getConnection(
-                "jdbc:mysql://${Constantes.iptoken}/${Constantes.databasetoken}",
+                "jdbc:$connection://${Constantes.iptoken}/${Constantes.databasetoken}",
                 Constantes.usertoken,
                 Constantes.tokenpw
             )
@@ -221,7 +221,7 @@ object GestorSQL {
         return try {
             _bdAlterna?.close()
             _bdAlterna = DriverManager.getConnection(
-                "jdbc:mysql://${host}/${database}",
+                "jdbc:$connection://${host}/${database}",
                 user,
                 pass
             )
@@ -300,7 +300,7 @@ object GestorSQL {
         var token = ""
         val resultado = _bdAlterna?.let {
             consultaSQL(
-                "SELECT `token` from `tokens` where `token` = \"$str\";",
+                "SELECT token from tokens where token = \"$str\";",
                 it
             )
         }
@@ -322,7 +322,7 @@ object GestorSQL {
             var token = ""
             val resultado = _bdDinamica?.let {
                 consultaSQL(
-                    "SELECT `token` from `tokens` where `id` = ${cuenta.id};",
+                    "SELECT token from tokens where id = ${cuenta.id};",
                     it
                 )
             }
@@ -342,7 +342,7 @@ object GestorSQL {
 
     fun ES_IP_BANEADA(ip: String): Boolean {
         var b = false
-        val consultaSQL = "SELECT `ip` FROM `banip` WHERE `ip` = '$ip';"
+        val consultaSQL = "SELECT ip FROM banip WHERE ip = '$ip';"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -363,7 +363,7 @@ object GestorSQL {
         val str = StringBuilder()
         try {
             val resultado = consultaSQL(
-                "SELECT `ip` FROM `banip`;",
+                "SELECT ip FROM banip;",
                 _bdCuentas!!
             )
             while (resultado.next()) {
@@ -383,7 +383,7 @@ object GestorSQL {
     fun INSERT_BAN_IP(ip: String): Boolean {
         // return true;
         AtlantaMain.redactarLogServidorln("IP BANEADA : $ip")
-        val consultaSQL = "INSERT INTO `banip` (`ip`) VALUES (?);"
+        val consultaSQL = "INSERT INTO banip (ip) VALUES (?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -401,7 +401,7 @@ object GestorSQL {
     }
 
     fun DELETE_BAN_IP(ip: String) {
-        val consultaSQL = "DELETE FROM `banip` WHERE `ip` = ?;"
+        val consultaSQL = "DELETE FROM banip WHERE ip = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -418,7 +418,7 @@ object GestorSQL {
 
     fun GET_VIP(cuenta: String): Byte {
         var b: Byte = 0
-        val consultaSQL = "SELECT * FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT * FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -442,7 +442,7 @@ object GestorSQL {
 
     fun GET_RANGO(cuenta: String): Byte {
         var b: Byte = 0
-        val consultaSQL = "SELECT `rango` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT rango FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -465,7 +465,7 @@ object GestorSQL {
 
     // public static String GET_ULTIMA_IP(final String cuenta) {
     // String str = "";
-    // String consultaSQL = "SELECT `ultimaIP` FROM `cuentas` WHERE `cuenta` = '" + cuenta + "' ;";
+    // String consultaSQL = "SELECT ultimaIP FROM cuentas WHERE cuenta = '" + cuenta + "' ;";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdCuentas);
     // while (resultado.next()) {
@@ -481,7 +481,7 @@ object GestorSQL {
     // }
     fun GET_ID_WEB(cuenta: String): Int {
         var str = -1
-        val consultaSQL = "SELECT `idWeb` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT idWeb FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -500,7 +500,7 @@ object GestorSQL {
 
     fun GET_APODO(cuenta: String): String {
         var str = ""
-        val consultaSQL = "SELECT `apodo` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT apodo FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -519,7 +519,7 @@ object GestorSQL {
 
     fun GET_ABONO(cuenta: String): Long {
         var l: Long = 0
-        val consultaSQL = "SELECT `abono` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT abono FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -537,7 +537,7 @@ object GestorSQL {
     }
 
     fun SET_ABONO(abono: Long, cuentaID: Int) {
-        val consultaSQL = "UPDATE `cuentas` SET `abono`='$abono' WHERE `id`= '$cuentaID'"
+        val consultaSQL = "UPDATE cuentas SET abono='$abono' WHERE id= '$cuentaID'"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -556,7 +556,7 @@ object GestorSQL {
             return 9999999
         }
         var i = 0
-        val consultaSQL = "SELECT `ogrinas` FROM `cuentas` WHERE `id` = '$cuentaID' ;"
+        val consultaSQL = "SELECT ogrinas FROM cuentas WHERE id = '$cuentaID' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -578,7 +578,7 @@ object GestorSQL {
             return 9999999
         }
         var i = 0
-        val consultaSQL = "SELECT `referido` FROM `cuentas` WHERE `id` = '$cuentaID' ;"
+        val consultaSQL = "SELECT referido FROM cuentas WHERE id = '$cuentaID' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -600,7 +600,7 @@ object GestorSQL {
             return 9999999
         }
         var i = ""
-        val consultaSQL = "SELECT `vreferido` FROM `cuentas_servidor` WHERE `ultimaIP` = \"$Ip\" and vreferido=1 ;"
+        val consultaSQL = "SELECT vreferido FROM cuentas_servidor WHERE ultimaIP = \"$Ip\" and vreferido=1 ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -626,7 +626,7 @@ object GestorSQL {
             return 9999999
         }
         var i = 0
-        val consultaSQL = "SELECT `creditos` FROM `cuentas` WHERE `id` = '$cuentaID' ;"
+        val consultaSQL = "SELECT creditos FROM cuentas WHERE id = '$cuentaID' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -647,7 +647,7 @@ object GestorSQL {
         if (AtlantaMain.PARAM_NO_USAR_OGRINAS) {
             return
         }
-        val consultaSQL = "UPDATE `cuentas` SET `ogrinas` = '$ogrinas' WHERE `id` = '$cuentaID'"
+        val consultaSQL = "UPDATE cuentas SET ogrinas = '$ogrinas' WHERE id = '$cuentaID'"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -665,7 +665,7 @@ object GestorSQL {
         if (AtlantaMain.PARAM_NO_USAR_OGRINAS) {
             return
         }
-        val consultaSQL = "UPDATE `cuentas_servidor` SET `vreferido` = $i WHERE `ultimaIP` = \"$ip\""
+        val consultaSQL = "UPDATE cuentas_servidor SET vreferido = $i WHERE ultimaIP = \"$ip\""
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -683,7 +683,7 @@ object GestorSQL {
         if (AtlantaMain.PARAM_NO_USAR_CREDITOS) {
             return
         }
-        val consultaSQL = "UPDATE `cuentas` SET `creditos` = '$creditos' WHERE `id` = '$cuentaID'"
+        val consultaSQL = "UPDATE cuentas SET creditos = '$creditos' WHERE id = '$cuentaID'"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -702,7 +702,7 @@ object GestorSQL {
             return
         }
         val exOgrinas = GET_OGRINAS_CUENTA(cuentaID)
-        val consultaSQL = ("UPDATE `cuentas` SET `ogrinas` = '" + (ogrinas + exOgrinas) + "' WHERE `id` = '" + cuentaID
+        val consultaSQL = ("UPDATE cuentas SET ogrinas = '" + (ogrinas + exOgrinas) + "' WHERE id = '" + cuentaID
                 + "'")
         try {
             val declaracion = transaccionSQL(
@@ -723,7 +723,7 @@ object GestorSQL {
         }
         val exOgrinas = GET_CREDITOS_CUENTA(cuentaID)
         val consultaSQL =
-            ("UPDATE `cuentas` SET `creditos` = '" + (creditos + exOgrinas) + "' WHERE `id` = '" + cuentaID
+            ("UPDATE cuentas SET creditos = '" + (creditos + exOgrinas) + "' WHERE id = '" + cuentaID
                     + "'")
         try {
             val declaracion = transaccionSQL(
@@ -744,7 +744,7 @@ object GestorSQL {
         }
         var resto = false
         try {
-            var consultaSQL = "SELECT `ogrinas` FROM `cuentas` WHERE `id` = '" + cuenta.id + "' ;"
+            var consultaSQL = "SELECT ogrinas FROM cuentas WHERE id = '" + cuenta.id + "' ;"
             val ogrinas = GET_OGRINAS_CUENTA(cuenta.id)
             if (restar <= 0 || ogrinas < restar) {
                 if (perso != null) {
@@ -755,7 +755,7 @@ object GestorSQL {
                 }
                 return false
             }
-            consultaSQL = "UPDATE `cuentas` SET `ogrinas` = ? WHERE `id` = '" + cuenta.id + "';"
+            consultaSQL = "UPDATE cuentas SET ogrinas = ? WHERE id = '" + cuenta.id + "';"
             try {
                 val declaracion = transaccionSQL(
                     consultaSQL,
@@ -797,7 +797,7 @@ object GestorSQL {
         }
         var resto = false
         try {
-            var consultaSQL = "SELECT `creditos` FROM `cuentas` WHERE `id` = '" + cuenta.id + "' ;"
+            var consultaSQL = "SELECT creditos FROM cuentas WHERE id = '" + cuenta.id + "' ;"
             val creditos = GET_CREDITOS_CUENTA(cuenta.id)
             if (restar <= 0 || creditos < restar) {
                 GestorSalida.ENVIAR_Im_INFORMACION(
@@ -806,7 +806,7 @@ object GestorSQL {
                 )
                 return true
             }
-            consultaSQL = "UPDATE `cuentas` SET `creditos` = ? WHERE `id` = '" + cuenta.id + "';"
+            consultaSQL = "UPDATE cuentas SET creditos = ? WHERE id = '" + cuenta.id + "';"
             try {
                 val declaracion = transaccionSQL(
                     consultaSQL,
@@ -842,7 +842,7 @@ object GestorSQL {
 
     fun GET_CONTRASEÑA_CUENTA(cuenta: String): String {
         var str = ""
-        val consultaSQL = "SELECT `contraseña` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT contraseña FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -864,7 +864,7 @@ object GestorSQL {
     }
 
     fun CAMBIAR_CONTRASEÑA_CUENTA(contraseña: String, cuentaID: Int) {
-        val consultaSQL = "UPDATE `cuentas` SET `contraseña`= ? WHERE `id`= ?"
+        val consultaSQL = "UPDATE cuentas SET contraseña= ? WHERE id= ?"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -882,7 +882,7 @@ object GestorSQL {
 
     fun GET_PREGUNTA_SECRETA(cuenta: String): String {
         var str = ""
-        val consultaSQL = "SELECT `pregunta` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT pregunta FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -906,7 +906,7 @@ object GestorSQL {
     fun GET_BANEADO(cuenta: String): Long {
         var i: Long = 0
         try {
-            val consultaSQL = "SELECT `baneado` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+            val consultaSQL = "SELECT baneado FROM cuentas WHERE cuenta = '$cuenta' ;"
             val resultado = consultaSQL(
                 consultaSQL,
                 _bdCuentas!!
@@ -924,7 +924,7 @@ object GestorSQL {
 
     fun GET_RESPUESTA_SECRETA(cuenta: String): String {
         var str = ""
-        val consultaSQL = "SELECT `respuesta` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT respuesta FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -946,7 +946,7 @@ object GestorSQL {
     }
 
     fun SET_RANGO(cuenta: String, rango: Int) {
-        val consultaSQL = "UPDATE `cuentas` SET `rango` = ? WHERE `cuenta` = ?;"
+        val consultaSQL = "UPDATE cuentas SET rango = ? WHERE cuenta = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -963,7 +963,7 @@ object GestorSQL {
     }
 
     // public static void SET_ULTIMA_IP(final String cuenta, final String ip) {
-    // String consultaSQL = "UPDATE `cuentas` SET `ultimaIP` = ? WHERE `cuenta` = ?;";
+    // String consultaSQL = "UPDATE cuentas SET ultimaIP = ? WHERE cuenta = ?;";
     // try {
     // final PreparedStatement declaracion = transaccionSQL(consultaSQL, _bdCuentas);
     // declaracion.setString(1, ip);
@@ -977,7 +977,7 @@ object GestorSQL {
     // }
     // }
     fun SET_BANEADO(cuenta: String, baneado: Long) {
-        val consultaSQL = "UPDATE `cuentas` SET `baneado` = '$baneado' WHERE `cuenta` = '$cuenta';"
+        val consultaSQL = "UPDATE cuentas SET baneado = '$baneado' WHERE cuenta = '$cuenta';"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -993,7 +993,7 @@ object GestorSQL {
 
     fun GET_CUENTAS_CONECTADAS_IP(ip: String): Int {
         var i = 0
-        val consultaSQL = "SELECT * FROM `cuentas` WHERE `ultimaIP` = '$ip' AND `logeado` = 1 ;"
+        val consultaSQL = "SELECT * FROM cuentas WHERE ultimaIP = '$ip' AND logeado = 1 ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -1012,7 +1012,7 @@ object GestorSQL {
 
     fun GET_CUENTA_ID_ALTERNA(cuenta: String, pass: String): Int {
         var i = -1
-        val consultaSQL = "SELECT * FROM `accounts` WHERE `account`='$cuenta' AND `pass`='$pass';"
+        val consultaSQL = "SELECT * FROM accounts WHERE account='$cuenta' AND pass='$pass';"
         try {
             val resultado = _bdAlterna?.let { consultaSQL(consultaSQL, it) } ?: return -1
             while (resultado.next()) {
@@ -1025,7 +1025,7 @@ object GestorSQL {
     }
 
     fun GET_PERSONAJES_ALTERNA(idacc: Int, cuenta: Cuenta) {
-        val consultaSQL = "SELECT * FROM `players` WHERE `account`=$idacc"
+        val consultaSQL = "SELECT * FROM players WHERE account=$idacc"
         try {
             val resultado = _bdAlterna?.let { consultaSQL(consultaSQL, it) } ?: return
             while (resultado.next()) {
@@ -1117,7 +1117,7 @@ object GestorSQL {
                     }
                     val objetos = resultado.getString("objets").replace("|", ",")
                     val consultaSQL2 =
-                        "select * from `world.entity.objects` where id in (${objetos.substring(0, objetos.lastIndex)});"
+                        "select * from world.entity.objects where id in (${objetos.substring(0, objetos.lastIndex)});"
                     val resultado2 = consultaSQL(consultaSQL2, _bdAlterna!!)
                     while (resultado2.next()) {
                         val objnopermitidos = arrayListOf<Int>(
@@ -1315,14 +1315,14 @@ object GestorSQL {
             cerrarResultado(resultado)
             ELIMINAR_CUENTA_ALTERNA(idacc)
             // Terminamos con lo del personaje, ahora vamos a buscar los items y kk del banco
-            val consultaSQL3 = "select * from `banks` where id = $idacc"
+            val consultaSQL3 = "select * from banks where id = $idacc"
             val resultado3 = consultaSQL(consultaSQL3, _bdAlterna!!)
             val rs = resultado3
             while (rs.next()) {
                 cuenta.addKamasBanco(rs.getLong("kamas"))
                 val objetosB = rs.getString("items").replace("|", ",")
                 val consultaSQL4 =
-                    "select * from `world.entity.objects` where id in (${objetosB.substring(0, objetosB.lastIndex)});"
+                    "select * from world.entity.objects where id in (${objetosB.substring(0, objetosB.lastIndex)});"
                 val resultado4 = consultaSQL(consultaSQL4, _bdAlterna!!)
                 val rs2 = resultado4
                 while (rs2.next()) {
@@ -1345,7 +1345,7 @@ object GestorSQL {
     }
 
     fun ELIMINAR_CUENTA_ALTERNA(id: Int) {
-        val consultaSQL = "DELETE FROM `accounts` WHERE `guid`=?;"
+        val consultaSQL = "DELETE FROM accounts WHERE guid=?;"
         try {
             val declaracion = _bdAlterna?.let {
                 transaccionSQL(
@@ -1362,7 +1362,7 @@ object GestorSQL {
     }
 
     // public static void UPDATE_CUENTA_LOGUEADO(final int cuentaID, final byte log) {
-    // String consultaSQL = "UPDATE `cuentas` SET `logeado`= " + log + " WHERE `id`=" + cuentaID +
+    // String consultaSQL = "UPDATE cuentas SET logeado= " + log + " WHERE id=" + cuentaID +
     // ";";
     // try {
     // final PreparedStatement declaracion = transaccionSQL(consultaSQL, _bdCuentas);
@@ -1378,7 +1378,7 @@ object GestorSQL {
     // if (cuentas.isEmpty()) {
     // return;
     // }
-    // String consultaSQL = "UPDATE `cuentas` SET `logeado`= 0 WHERE `id` IN (" + cuentas + ");";
+    // String consultaSQL = "UPDATE cuentas SET logeado= 0 WHERE id IN (" + cuentas + ");";
     // try {
     // final PreparedStatement declaracion = transaccionSQL(consultaSQL, _bdCuentas);
     // ejecutarTransaccion(declaracion);
@@ -1388,7 +1388,7 @@ object GestorSQL {
     // }
     // }
     fun CARGAR_CUENTA_POR_ID(id: Int) {
-        val consultaSQL = "SELECT * FROM `cuentas` WHERE `id` = $id;"
+        val consultaSQL = "SELECT * FROM cuentas WHERE id = $id;"
         try {
             if (Mundo.getCuenta(id) != null) {
                 return
@@ -1416,7 +1416,7 @@ object GestorSQL {
     fun CARGAR_DB_CUENTAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `cuentas`;",
+                "SELECT * FROM cuentas;",
                 _bdCuentas!!
             )
             while (resultado.next()) {
@@ -1436,7 +1436,7 @@ object GestorSQL {
 
     fun GET_REGALO(cuenta: String): String {
         var str = ""
-        val consultaSQL = "SELECT `regalo` FROM `cuentas_servidor` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT regalo FROM cuentas_servidor WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -1460,7 +1460,7 @@ object GestorSQL {
     fun CARGAR_CAPTCHAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `captchas`;",
+                "SELECT * FROM captchas;",
                 _bdCuentas!!
             )
             while (resultado.next()) {
@@ -1474,8 +1474,8 @@ object GestorSQL {
 
     fun GET_ULTIMO_SEGUNDOS_VOTO(ip: String, cuentaID: Int): Long {
         var time: Long = 0
-        var consultaSQL = ("SELECT `ultimoVoto` FROM `cuentas` WHERE `ultimaIP` = '" + ip
-                + "' ORDER BY `ultimoVoto` DESC ;")
+        var consultaSQL = ("SELECT ultimoVoto FROM cuentas WHERE ultimaIP = '" + ip
+                + "' ORDER BY ultimoVoto DESC ;")
         try {
             var resultado = consultaSQL(
                 consultaSQL,
@@ -1493,7 +1493,7 @@ object GestorSQL {
 
             }
             cerrarResultado(resultado)
-            consultaSQL = "SELECT `ultimoVoto` FROM `cuentas` WHERE `id` = '$cuentaID' ;"
+            consultaSQL = "SELECT ultimoVoto FROM cuentas WHERE id = '$cuentaID' ;"
             resultado = consultaSQL(
                 consultaSQL,
                 _bdCuentas!!
@@ -1514,7 +1514,7 @@ object GestorSQL {
 
     fun GET_VOTOS(cuenta: String): Int {
         var i = 0
-        val consultaSQL = "SELECT `votos` FROM `cuentas` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT votos FROM cuentas WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -1536,7 +1536,7 @@ object GestorSQL {
     }
 
     fun SET_ULTIMO_SEGUNDOS_VOTO(cuentaID: Int, ip: String, time: Long) {
-        val consultaSQL = "UPDATE `cuentas` SET `ultimoVoto` = ? WHERE `id` = ? OR `ultimaIP` = ? ;"
+        val consultaSQL = "UPDATE cuentas SET ultimoVoto = ? WHERE id = ? OR ultimaIP = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -1555,7 +1555,7 @@ object GestorSQL {
 
     fun RECUPERAR_OBJETOS(id: Int): String {
         var str = ""
-        val consultaSQL = "select `objetos` FROM `personajes_r` WHERE `id`=$id;"
+        val consultaSQL = "select objetos FROM personajes_r WHERE id=$id;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -1579,7 +1579,7 @@ object GestorSQL {
     }
 
     fun SET_VOTOS(cuentaID: Int, votos: Int) {
-        val consultaSQL = "UPDATE `cuentas` SET `votos` = ? WHERE `id` = ? ;"
+        val consultaSQL = "UPDATE cuentas SET votos = ? WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -1598,7 +1598,7 @@ object GestorSQL {
     fun CARGAR_CUENTAS_SERVER_PERSONAJE() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `cuentas_servidor`;",
+                "SELECT * FROM cuentas_servidor;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -1633,7 +1633,7 @@ object GestorSQL {
 
     fun GET_PRIMERA_VEZ(cuenta: String): Byte {
         var b: Byte = 0
-        val consultaSQL = "SELECT `primeraVez` FROM `cuentas_servidor` WHERE `cuenta` = '$cuenta' ;"
+        val consultaSQL = "SELECT primeraVez FROM cuentas_servidor WHERE cuenta = '$cuenta' ;"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -1655,7 +1655,7 @@ object GestorSQL {
     }
 
     fun SET_PRIMERA_VEZ_CERO(cuenta: String) {
-        val consultaSQL = "UPDATE `cuentas_servidor` SET `primeraVez` = 0 WHERE `cuenta` = ?;"
+        val consultaSQL = "UPDATE cuentas_servidor SET primeraVez = 0 WHERE cuenta = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -1671,7 +1671,7 @@ object GestorSQL {
     }
 
     fun SET_REGALO(cuenta: String, regalo: String) {
-        val consultaSQL = "UPDATE `cuentas_servidor` SET `regalo` = ? WHERE `cuenta` = ?;"
+        val consultaSQL = "UPDATE cuentas_servidor SET regalo = ? WHERE cuenta = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -1688,7 +1688,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MENSAJES_CUENTA(cuenta: String, mensajes: String) {
-        val consultaSQL = "UPDATE `cuentas_servidor` SET `mensajes` = ? WHERE `cuenta` = ? ;"
+        val consultaSQL = "UPDATE cuentas_servidor SET mensajes = ? WHERE cuenta = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -1705,7 +1705,7 @@ object GestorSQL {
     }
 
     fun INSERT_TOKEN(cuenta: Cuenta, token: String) {
-        val consultaSQL = "INSERT INTO `tokens` (`id`,`token`) values (?,?);"
+        val consultaSQL = "INSERT INTO tokens (id,token) values (?,?);"
         try {
             val declaracion = _bdDinamica?.let {
                 transaccionSQL(
@@ -1724,7 +1724,7 @@ object GestorSQL {
 
 
     fun REPLACE_CUENTA_SERVIDOR(cuenta: Cuenta, primeraVez: Byte) {
-        val consultaSQL = "REPLACE INTO `cuentas_servidor` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO cuentas_servidor VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -1762,7 +1762,7 @@ object GestorSQL {
     //
     // public static ArrayList<Personaje> GET_RANKING_NIVEL() {
     // final ArrayList<Personaje> persos = new ArrayList<>();
-    // String consultaSQL = "SELECT `id` FROM `personajes` ORDER BY `xp` DESC LIMIT " +
+    // String consultaSQL = "SELECT id FROM personajes ORDER BY xp DESC LIMIT " +
     // Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
@@ -1781,7 +1781,7 @@ object GestorSQL {
     //
     // public static ArrayList<Gremio> GET_RANKING_GREMIOS() {
     // final ArrayList<Gremio> gremios = new ArrayList<>();
-    // String consultaSQL = "SELECT `id` FROM `gremios` ORDER BY `xp` DESC LIMIT " +
+    // String consultaSQL = "SELECT id FROM gremios ORDER BY xp DESC LIMIT " +
     // Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
@@ -1801,7 +1801,7 @@ object GestorSQL {
     // public static ArrayList<Personaje> GET_RANKING_PVP() {
     // final ArrayList<Personaje> persos = new ArrayList<>();
     // String consultaSQL =
-    // "SELECT `id` FROM `ranking_pvp` ORDER BY `victorias` DESC, `derrotas`ASC LIMIT "
+    // "SELECT id FROM ranking_pvp ORDER BY victorias DESC, derrotasASC LIMIT "
     // + Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
@@ -1821,7 +1821,7 @@ object GestorSQL {
     // public static ArrayList<Personaje> GET_RANKING_KOLISEO() {
     // final ArrayList<Personaje> persos = new ArrayList<>();
     // String consultaSQL =
-    // "SELECT `id` FROM `ranking_koliseo` ORDER BY `victorias` DESC, `derrotas`ASC LIMIT "
+    // "SELECT id FROM ranking_koliseo ORDER BY victorias DESC, derrotasASC LIMIT "
     // + Bustemu.LIMITE_LADDER + ";";
     // try {
     // final ResultSet resultado = consultaSQL(consultaSQL, _bdDinamica);
@@ -1842,7 +1842,7 @@ object GestorSQL {
         var id = 1
         try {
             val resultado = consultaSQL(
-                "SELECT MAX(id) AS max FROM `objetos`;",
+                "SELECT MAX(id) AS max FROM objetos;",
                 _bdDinamica!!
             )
             if (resultado.first()) {
@@ -1860,7 +1860,7 @@ object GestorSQL {
     fun CARGAR_RECETAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `recetas`;",
+                "SELECT * FROM recetas;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -1896,7 +1896,7 @@ object GestorSQL {
         try {
             if (!AtlantaMain.PARAM_SISTEMA_ORBES) {
                 val resultado = consultaSQL(
-                    "SELECT * FROM `drops`;",
+                    "SELECT * FROM drops;",
                     _bdEstatica!!
                 )
                 while (resultado.next()) {
@@ -1928,7 +1928,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `drops_fijos`;",
+                "SELECT * FROM drops_fijos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2028,7 +2028,7 @@ object GestorSQL {
     fun CARGAR_CERCADOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `cercados_modelo`;",
+                "SELECT * FROM cercados_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2055,7 +2055,7 @@ object GestorSQL {
     fun CARGAR_OFICIOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `oficios`;",
+                "SELECT * FROM oficios;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2079,7 +2079,7 @@ object GestorSQL {
     fun CARGAR_SERVICIOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `servicios`;",
+                "SELECT * FROM servicios;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2106,7 +2106,7 @@ object GestorSQL {
     fun CARGAR_ENCARNACIONES_MODELOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `encarnaciones_modelo`;",
+                "SELECT * FROM encarnaciones_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2127,7 +2127,7 @@ object GestorSQL {
     fun CARGAR_CLASES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `clases`;",
+                "SELECT * FROM clases;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2161,7 +2161,7 @@ object GestorSQL {
     fun CARGAR_CREA_OBJETOS_MODELOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `crear_objetos_modelos`;",
+                "SELECT * FROM crear_objetos_modelos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2183,7 +2183,7 @@ object GestorSQL {
     fun CARGAR_CREA_OBJETOS_PRECIOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `crear_objetos_stats`;",
+                "SELECT * FROM crear_objetos_stats;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2205,7 +2205,7 @@ object GestorSQL {
     fun CARGAR_AREA() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `areas`;",
+                "SELECT * FROM areas;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2229,7 +2229,7 @@ object GestorSQL {
     fun CARGAR_SUBAREA() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `subareas`;",
+                "SELECT * FROM subareas;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2262,7 +2262,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `npcs_ubicacion`;",
+                "SELECT * FROM npcs_ubicacion;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2293,7 +2293,7 @@ object GestorSQL {
     fun CARGAR_CASAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `casas_modelo`;",
+                "SELECT * FROM casas_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2324,7 +2324,7 @@ object GestorSQL {
     fun RECARGAR_CASAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `casas`;",
+                "SELECT * FROM casas;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -2350,7 +2350,7 @@ object GestorSQL {
     fun CARGAR_COFRES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `cofres_modelo`;",
+                "SELECT * FROM cofres_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2374,7 +2374,7 @@ object GestorSQL {
     fun CARGAR_EXPERIENCIA() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `experiencia`;",
+                "SELECT * FROM experiencia;",
                 _bdEstatica!!
             )
             var maxAlineacion = 0
@@ -2444,7 +2444,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `celdas_accion`;",
+                "SELECT * FROM celdas_accion;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2470,7 +2470,7 @@ object GestorSQL {
     fun CARGAR_MOBS_EVENTO() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mobs_evento`;",
+                "SELECT * FROM mobs_evento;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -2490,7 +2490,7 @@ object GestorSQL {
     fun CARGAR_PERSONAJES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `personajes`;",
+                "SELECT * FROM personajes;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -2591,7 +2591,7 @@ object GestorSQL {
     fun CARGAR_PRISMAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `prismas`;",
+                "SELECT * FROM prismas;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -2622,7 +2622,7 @@ object GestorSQL {
         var num = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mercadillo_objetos`;",
+                "SELECT * FROM mercadillo_objetos;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -2656,7 +2656,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `recaudadores`;",
+                "SELECT * FROM recaudadores;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -2760,7 +2760,7 @@ object GestorSQL {
         mapaClonar: Mapa, nuevaID: Int, nuevaFecha: String, nuevaX: Int, nuevaY: Int,
         nuevaSubArea: Int
     ): Boolean {
-        var consultaSQL = "REPLACE INTO `mapas` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        var consultaSQL = "REPLACE INTO mapas VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         try {
             var i = 1
             val declaracion = transaccionSQL(
@@ -2791,7 +2791,7 @@ object GestorSQL {
             declaracion.setInt(i++, mapaClonar.maxNumeroPeleas)
             ejecutarTransaccion(declaracion)
             cerrarDeclaracion(declaracion)
-            consultaSQL = "SELECT * FROM `mapas` WHERE `id` = $nuevaID;"
+            consultaSQL = "SELECT * FROM mapas WHERE id = $nuevaID;"
             val resultado = consultaSQL(
                 consultaSQL,
                 _bdEstatica!!
@@ -2812,11 +2812,11 @@ object GestorSQL {
     }
 
     fun CARGAR_MAPAS() {
-        var consultaSQL = "SELECT * FROM `mapas` LIMIT " + AtlantaMain.LIMITE_MAPAS + ";"
+        var consultaSQL = "SELECT * FROM mapas LIMIT " + AtlantaMain.LIMITE_MAPAS + ";"
         try {
             if (AtlantaMain.MODO_MAPAS_LIMITE) {
                 consultaSQL =
-                    ("SELECT * FROM `mapas` WHERE `subArea` IN (" + AtlantaMain.STR_SUBAREAS_LIMITE + ") OR `id` IN ("
+                    ("SELECT * FROM mapas WHERE subArea IN (" + AtlantaMain.STR_SUBAREAS_LIMITE + ") OR id IN ("
                             + AtlantaMain.STR_MAPAS_LIMITE + ");")
             }
             val resultado = consultaSQL(
@@ -2846,7 +2846,7 @@ object GestorSQL {
         }
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mapas` WHERE `id` IN ($ids) ;",
+                "SELECT * FROM mapas WHERE id IN ($ids) ;",
                 _bdEstatica!!
             )
             var mapa: Mapa
@@ -2871,7 +2871,7 @@ object GestorSQL {
         }
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mapas` WHERE `subArea` IN ($subAreas) ;",
+                "SELECT * FROM mapas WHERE subArea IN ($subAreas) ;",
                 _bdEstatica!!
             )
             var mapa: Mapa
@@ -2891,7 +2891,7 @@ object GestorSQL {
     }
 
     fun CARGAR_TRIGGERS_POR_MAPA(id: Short) {
-        val consultaSQL = "SELECT * FROM `celdas_accion` WHERE `mapa` = '$id';"
+        val consultaSQL = "SELECT * FROM celdas_accion WHERE mapa = '$id';"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -2918,7 +2918,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mobs_fix`;",
+                "SELECT * FROM mobs_fix;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3000,7 +3000,7 @@ object GestorSQL {
     fun SELECT_ANIMACIONES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `animaciones`;",
+                "SELECT * FROM animaciones;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3028,7 +3028,7 @@ object GestorSQL {
     fun CARGAR_COMANDOS_MODELO() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `comandos_modelo`;",
+                "SELECT * FROM comandos_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3044,7 +3044,7 @@ object GestorSQL {
     fun CARGAR_OTROS_INTERACTIVOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `otros_interactivos`;",
+                "SELECT * FROM otros_interactivos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3071,7 +3071,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mascotas_modelo`;",
+                "SELECT * FROM mascotas_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3098,7 +3098,7 @@ object GestorSQL {
     fun CARGAR_HECHIZOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `hechizos`;",
+                "SELECT * FROM hechizos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3140,7 +3140,7 @@ object GestorSQL {
     fun CARGAR_ESPECIALIDADES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `especialidades`;",
+                "SELECT * FROM especialidades;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3165,7 +3165,7 @@ object GestorSQL {
     fun CARGAR_DONES_MODELOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `dones`;",
+                "SELECT * FROM dones;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3182,7 +3182,7 @@ object GestorSQL {
         try {
             var maxID = 0
             val resultado = consultaSQL(
-                "SELECT * FROM `objetos_modelo`;",
+                "SELECT * FROM objetos_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3275,7 +3275,7 @@ object GestorSQL {
     fun CARGAR_MONTURAS_MODELOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `monturas_modelo`;",
+                "SELECT * FROM monturas_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3299,7 +3299,7 @@ object GestorSQL {
     fun CARGAR_MOBS_MODELOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mobs_modelo`;",
+                "SELECT * FROM mobs_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3345,7 +3345,7 @@ object GestorSQL {
     fun CARGAR_MOBS_RAROS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mobs_raros`;",
+                "SELECT * FROM mobs_raros;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3400,7 +3400,7 @@ object GestorSQL {
     fun CARGAR_MONTURAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `monturas`;",
+                "SELECT * FROM monturas;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -3445,7 +3445,7 @@ object GestorSQL {
     fun CARGAR_NPC_MODELOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `npcs_modelo`;",
+                "SELECT * FROM npcs_modelo;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3495,7 +3495,7 @@ object GestorSQL {
     fun CARGAR_MISION_OBJETIVOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mision_objetivos`;",
+                "SELECT * FROM mision_objetivos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3515,7 +3515,7 @@ object GestorSQL {
     fun CARGAR_ORNAMENTOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `ornamentos`;",
+                "SELECT * FROM ornamentos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3540,7 +3540,7 @@ object GestorSQL {
     fun CARGAR_TITULOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `titulos`;",
+                "SELECT * FROM titulos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3565,7 +3565,7 @@ object GestorSQL {
     fun CARGAR_ZAAPS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `zaaps`;",
+                "SELECT * FROM zaaps;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3581,7 +3581,7 @@ object GestorSQL {
     fun CARGAR_PREGUNTAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `npc_preguntas`;",
+                "SELECT * FROM npc_preguntas;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3604,7 +3604,7 @@ object GestorSQL {
     fun CARGAR_RESPUESTAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `npc_respuestas`;",
+                "SELECT * FROM npc_respuestas;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3630,7 +3630,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `accion_pelea`;",
+                "SELECT * FROM accion_pelea;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3658,7 +3658,7 @@ object GestorSQL {
         var numero = 0
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `objetos_accion`;",
+                "SELECT * FROM objetos_accion;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3684,7 +3684,7 @@ object GestorSQL {
     fun CARGAR_TUTORIALES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `tutoriales`;",
+                "SELECT * FROM tutoriales;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3707,7 +3707,7 @@ object GestorSQL {
     fun CARGAR_INTERACTIVOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `objetos_interactivos`;",
+                "SELECT * FROM objetos_interactivos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3736,7 +3736,7 @@ object GestorSQL {
     fun RECARGAR_CERCADOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `cercados`;",
+                "SELECT * FROM cercados;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -3762,7 +3762,7 @@ object GestorSQL {
     fun RECARGAR_COFRES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `cofres`;",
+                "SELECT * FROM cofres;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -3786,7 +3786,7 @@ object GestorSQL {
     fun CARGAR_OBJETOS_TRUEQUE() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `objetos_trueque` ORDER BY `prioridad` DESC;",
+                "SELECT * FROM objetos_trueque ORDER BY prioridad DESC;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3817,8 +3817,8 @@ object GestorSQL {
             val resultado =
                 _bdDinamica?.let {
                     consultaSQL(
-                        "select `ip`,`autorizado` from `historial_ip` " +
-                                "where `cuenta`=${cuenta.id};", it
+                        "select ip,autorizado from historial_ip " +
+                                "where cuenta=${cuenta.id};", it
                     )
                 } ?: return listaips
             while (resultado.next()) {
@@ -3842,7 +3842,7 @@ object GestorSQL {
     fun CARGAR_ALMANAX() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `almanax`;",
+                "SELECT * FROM almanax;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3873,7 +3873,7 @@ object GestorSQL {
     fun CARGAR_MISIONES() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `misiones`;",
+                "SELECT * FROM misiones;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3898,7 +3898,7 @@ object GestorSQL {
     fun SELECT_PUESTOS_MERCADILLOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mercadillos`;",
+                "SELECT * FROM mercadillos;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3926,7 +3926,7 @@ object GestorSQL {
     fun CARGAR_ETAPAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mision_etapas`;",
+                "SELECT * FROM mision_etapas;",
                 _bdEstatica!!
             )
             while (resultado.next()) {
@@ -3947,7 +3947,7 @@ object GestorSQL {
     fun CARGAR_MAPAS_ESTRELLAS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mapas_estrellas`;",
+                "SELECT * FROM mapas_estrellas;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -3971,7 +3971,7 @@ object GestorSQL {
     fun CARGAR_OBJETOS() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `objetos`;",
+                "SELECT * FROM objetos;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -3997,7 +3997,7 @@ object GestorSQL {
     fun SELECT_RANKING_KOLISEO() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `ranking_koliseo`;",
+                "SELECT * FROM ranking_koliseo;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -4020,7 +4020,7 @@ object GestorSQL {
     fun SELECT_RANKING_PVP() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `ranking_pvp`;",
+                "SELECT * FROM ranking_pvp;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -4046,7 +4046,7 @@ object GestorSQL {
     fun CARGAR_MAPAS_HEROICO() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `mapas_heroico`;",
+                "SELECT * FROM mapas_heroico;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -4070,7 +4070,7 @@ object GestorSQL {
     }
 
     fun UPDATE_IPS_AUTORIZADAS_TOKEN(cuenta: Cuenta) {
-        val consultaSQL = "UPDATE `historial_ip` SET `autorizado` = ? WHERE `cuenta` = ?;"
+        val consultaSQL = "UPDATE historial_ip SET autorizado = ? WHERE cuenta = ?;"
         try {
             val declaracion = _bdDinamica?.let {
                 transaccionSQL(
@@ -4089,7 +4089,7 @@ object GestorSQL {
     }
 
     fun REPLACE_IP_AUTORIZADA(cuenta: Cuenta, auth: Boolean) {
-        val consultaSQL = "DELETE FROM `historial_ip` WHERE `cuenta`=? AND `ip`=?;"
+        val consultaSQL = "DELETE FROM historial_ip WHERE cuenta=? AND ip=?;"
         try {
             val declaracion = _bdDinamica?.let {
                 transaccionSQL(
@@ -4111,7 +4111,7 @@ object GestorSQL {
     }
 
     fun INSERT_IP_AUTORIZADA(cuenta: Cuenta, auth: Boolean) {
-        val consultaSQL = "INSERT INTO `historial_ip` (`cuenta`,`ip`,`autorizado`) VALUES (?,?,?);"
+        val consultaSQL = "INSERT INTO historial_ip (cuenta,ip,autorizado) VALUES (?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4129,7 +4129,7 @@ object GestorSQL {
 
     fun INSERT_CEMENTERIO(nombre: String, nivel: Int, sexo: Byte, clase: Byte, asesino: String, subArea: Int) {
         val consultaSQL =
-            "INSERT INTO `cementerio` (`nombre`,`nivel`,`sexo`,`clase`,`asesino`,`subArea`,`fecha`) VALUES (?,?,?,?,?,?,?);"
+            "INSERT INTO cementerio (nombre,nivel,sexo,clase,asesino,subArea,fecha) VALUES (?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4152,7 +4152,7 @@ object GestorSQL {
 
     fun INSERT_OBJETO_TRUEQUE(objeto: Int, solicita: String, prioridad: Int, npcs: String, nombre: String) {
         val consultaSQL =
-            "INSERT INTO `objetos_trueque` (`idObjeto`,`necesita`,`prioridad`,`npc_ids`,`nombre_objeto`) VALUES (?,?,?,?,?);"
+            "INSERT INTO objetos_trueque (idObjeto,necesita,prioridad,npc_ids,nombre_objeto) VALUES (?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4172,7 +4172,7 @@ object GestorSQL {
     }
 
     fun UPDATE_STATS_OBJETO_SET(id: Int, bonus: String) {
-        val consultaSQL = "UPDATE `objetos_set` SET `bonus` = ? WHERE `id` = ? ;"
+        val consultaSQL = "UPDATE objetos_set SET bonus = ? WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4189,9 +4189,9 @@ object GestorSQL {
     }
 
     fun UPDATE_PRECIO_OBJETO_MODELO(id: Int, ogrinas: Int, vip: Boolean) {
-        var consultaSQL = "UPDATE `objetos_modelo` SET `kamas` = ? WHERE `id` = ? ;"
+        var consultaSQL = "UPDATE objetos_modelo SET kamas = ? WHERE id = ? ;"
         if (vip) {
-            consultaSQL = "UPDATE `objetos_modelo` SET `ogrinas` = ? WHERE `id` = ? ;"
+            consultaSQL = "UPDATE objetos_modelo SET ogrinas = ? WHERE id = ? ;"
         }
         try {
             val declaracion = transaccionSQL(
@@ -4209,7 +4209,7 @@ object GestorSQL {
     }
 
     fun UPDATE_STATS_OBJETO_MODELO(id: Int, stats: String) {
-        val consultaSQL = "UPDATE `objetos_modelo` SET `statsModelo` = ? WHERE `id` = ? ;"
+        val consultaSQL = "UPDATE objetos_modelo SET statsModelo = ? WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4226,7 +4226,7 @@ object GestorSQL {
     }
 
     fun INSERT_COFRE_MODELO(casaID: Int, mapaID: Short, celdaID: Short) {
-        val consultaSQL = "INSERT INTO `cofres_modelo` (`casa`,`mapa`,`celda`) VALUES (?,?,?);"
+        val consultaSQL = "INSERT INTO cofres_modelo (casa,mapa,celda) VALUES (?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4245,7 +4245,7 @@ object GestorSQL {
 
     fun GET_COFRE_POR_MAPA_CELDA(mapa: Short, celda: Short): Int {
         var id = -1
-        val consultaSQL = "SELECT * FROM `cofres_modelo` WHERE `mapa` = '$mapa' AND `celda` = '$celda';"
+        val consultaSQL = "SELECT * FROM cofres_modelo WHERE mapa = '$mapa' AND celda = '$celda';"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -4266,7 +4266,7 @@ object GestorSQL {
         if (cofre == null) {
             return
         }
-        val consultaSQL = "REPLACE INTO `cofres` VALUES (?,?,?,?,?)"
+        val consultaSQL = "REPLACE INTO cofres VALUES (?,?,?,?,?)"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4290,7 +4290,7 @@ object GestorSQL {
 
     // private static void CARGAR_PERSONAJES_POR_CUENTA(final Cuenta cuenta) {
     // try {
-    // final ResultSet resultado = consultaSQL("SELECT * FROM `personajes` WHERE `cuenta` = " +
+    // final ResultSet resultado = consultaSQL("SELECT * FROM personajes WHERE cuenta = " +
     // cuenta.getID() + ";",
     // _bdDinamica);
     // while (resultado.next()) {
@@ -4308,7 +4308,7 @@ object GestorSQL {
     // }
     // }
     fun DELETE_PERSONAJE(perso: Personaje) {
-        val consultaSQL = "DELETE FROM `personajes` WHERE `id` = ?;"
+        val consultaSQL = "DELETE FROM personajes WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4324,7 +4324,7 @@ object GestorSQL {
     }
 
     fun INSERT_CAPTCHA(captcha: String, respuesta: String) {
-        val consultaSQL = "INSERT INTO `captchas` (`captcha`,`respuesta`) VALUES (?,?);"
+        val consultaSQL = "INSERT INTO captchas (captcha,respuesta) VALUES (?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4344,7 +4344,7 @@ object GestorSQL {
         mapData: String, X: Short, Y: Short, subArea: Short
     ) {
         val consultaSQL =
-            "INSERT INTO `mapas` (`id`,`fecha`,`ancho`,`alto`,`mapData`,`X`,`Y`, `subArea`,`key`, `mobs`) VALUES (?,?,?,?,?,?,?,?,'','');"
+            "INSERT INTO mapas (id,fecha,ancho,alto,mapData,X,Y, subArea,key, mobs) VALUES (?,?,?,?,?,?,?,?,'','');"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4367,7 +4367,7 @@ object GestorSQL {
     }
 
     fun UPDATE_GFX_OBJMODELO(id: Int, gfx: Int) {
-        val consultaSQL = "UPDATE `objetos_modelo` SET `gfx` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE objetos_modelo SET gfx = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4384,7 +4384,7 @@ object GestorSQL {
     }
 
     fun UPDATE_NIVEL_OBJMODELO(id: Int, nivel: Short) {
-        val consultaSQL = "UPDATE `objetos_modelo` SET `nivel` = ?, `nivelCore` = 'true' WHERE `id` = ?;"
+        val consultaSQL = "UPDATE objetos_modelo SET nivel = ?, nivelCore = 'true' WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4401,7 +4401,7 @@ object GestorSQL {
     }
 
     fun ACTUALIZAR_NPC_VENTAS(npc: NPCModelo) {
-        val consultaSQL = "UPDATE `npcs_modelo` SET `ventas` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE npcs_modelo SET ventas = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4422,7 +4422,7 @@ object GestorSQL {
         condicion: String, segundos: Int
     ) {
         val consultaSQL =
-            "REPLACE INTO `mobs_fix` (`mapa`,`celda`,`mobs`,`tipo`,`condicion`,`segundosRespawn`,`descripcion`) VALUES (?,?,?,?,?,?,'')"
+            "REPLACE INTO mobs_fix (mapa,celda,mobs,tipo,condicion,segundosRespawn,descripcion) VALUES (?,?,?,?,?,?,'')"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4447,7 +4447,7 @@ object GestorSQL {
         pregMisCompletada: String, pregMisIncompleta: String
     ) {
         val consultaSQL =
-            "UPDATE `misiones` SET `etapas`= ?, `pregDarMision`= ?, `pregMisCompletada`= ?, `pregMisIncompleta`= ? WHERE `id` = ?;"
+            "UPDATE misiones SET etapas= ?, pregDarMision= ?, pregMisCompletada= ?, pregMisIncompleta= ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4467,7 +4467,7 @@ object GestorSQL {
     }
 
     fun UPDATE_OBJETIVO_MISION(id: Int, args: String) {
-        val consultaSQL = "UPDATE `mision_objetivos` SET `args`= ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mision_objetivos SET args= ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4484,7 +4484,7 @@ object GestorSQL {
     }
 
     fun UPDATE_RECOMPENSA_ETAPA(id: Int, recompensas: String) {
-        val consultaSQL = "UPDATE `mision_etapas` SET `recompensas`= ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mision_etapas SET recompensas= ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4501,7 +4501,7 @@ object GestorSQL {
     }
 
     fun UPDATE_ETAPA(id: Int, objetivos: String) {
-        val consultaSQL = "UPDATE `mision_etapas` SET `objetivos`= ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mision_etapas SET objetivos= ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4522,7 +4522,7 @@ object GestorSQL {
         mascota: Int, escudo: Int
     ) {
         val consultaSQL =
-            "UPDATE `npcs_modelo` SET `sexo`= ?, `scaleX`= ?, `scaleY`= ?, `gfxID`= ?, `color1`= ?, `color2`= ?, `color3`= ?, `arma`= ?, `sombrero`= ?, `capa`= ?, `mascota`= ?, `escudo`= ?  WHERE `id` = ?;"
+            "UPDATE npcs_modelo SET sexo= ?, scaleX= ?, scaleY= ?, gfxID= ?, color1= ?, color2= ?, color3= ?, arma= ?, sombrero= ?, capa= ?, mascota= ?, escudo= ?  WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4550,7 +4550,7 @@ object GestorSQL {
     }
 
     fun UPDATE_ALMANAX(id: Int, ofrenda: String, tipo: Int, bonus: Int) {
-        val consultaSQL = "UPDATE `almanax` SET `ofrenda`=?, `tipo`=?, `bonus`= ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE almanax SET ofrenda=?, tipo=?, bonus= ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4569,7 +4569,7 @@ object GestorSQL {
     }
 
     fun CAMBIAR_SEXO_CLASE(perso: Personaje) {
-        val consultaSQL = "UPDATE `personajes` SET `sexo`=?, `clase`= ?, `hechizos`= ? WHERE `id`= ?"
+        val consultaSQL = "UPDATE personajes SET sexo=?, clase= ?, hechizos= ? WHERE id= ?"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4588,7 +4588,7 @@ object GestorSQL {
     }
 
     fun UPDATE_NOMBRE_PJ(perso: Personaje) {
-        val consultaSQL = "UPDATE `personajes` SET `nombre` = ? WHERE `id` = ? ;"
+        val consultaSQL = "UPDATE personajes SET nombre = ? WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4604,7 +4604,7 @@ object GestorSQL {
     }
 
     fun UPDATE_COLORES_PJ(perso: Personaje) {
-        val consultaSQL = "UPDATE `personajes` SET `color1` = ?, `color2`= ?, `color3` = ? WHERE `id` = ? ;"
+        val consultaSQL = "UPDATE personajes SET color1 = ?, color2= ?, color3 = ? WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4624,7 +4624,7 @@ object GestorSQL {
 
     fun SALVAR_PERSONAJE(perso: Personaje, salvarObjetos: Boolean) {
         val consultaSQL =
-            "REPLACE INTO `personajes` VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+            "REPLACE INTO personajes VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
         try {
             var parametro = 1
             val declaracion = transaccionSQL(
@@ -4764,7 +4764,7 @@ object GestorSQL {
             return
         }
         var tempObjetos: List<Objeto?>? = ArrayList(objetos)
-        val consultaSQL = "REPLACE INTO `objetos` VALUES(?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO objetos VALUES(?,?,?,?,?,?,?,?);"
         try {
             for (obj in tempObjetos!!) {
                 if (obj == null) {
@@ -4793,7 +4793,7 @@ object GestorSQL {
     }
 
     fun SALVAR_OBJETO(objeto: Objeto) {
-        val consultaSQL = "REPLACE INTO `objetos` VALUES (?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO objetos VALUES (?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4818,7 +4818,7 @@ object GestorSQL {
     fun VACIAR_MAPAS_ESTRELLAS() {
         try {
             val declaracion = transaccionSQL(
-                "TRUNCATE `mapas_estrellas`;",
+                "TRUNCATE mapas_estrellas;",
                 _bdDinamica!!
             )
             ejecutarTransaccion(declaracion)
@@ -4832,7 +4832,7 @@ object GestorSQL {
     fun VACIAR_MAPAS_HEROICO() {
         try {
             val declaracion = transaccionSQL(
-                "TRUNCATE `mapas_heroico`;",
+                "TRUNCATE mapas_heroico;",
                 _bdDinamica!!
             )
             ejecutarTransaccion(declaracion)
@@ -4867,7 +4867,7 @@ object GestorSQL {
     }
 
     fun REPLACE_MAPAS_HEROICO(mapaID: Int, mobs: String, objetos: String, kamas: String) {
-        val consultaSQL = "REPLACE INTO `mapas_heroico` VALUES (?,?,?,?);"
+        val consultaSQL = "REPLACE INTO mapas_heroico VALUES (?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4886,7 +4886,7 @@ object GestorSQL {
     }
 
     fun DELETE_MAPA_HEROICO(mapaID: Int) {
-        val consultaSQL = "DELETE FROM `mapas_heroico` WHERE `mapa` = ?;"
+        val consultaSQL = "DELETE FROM mapas_heroico WHERE mapa = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4902,7 +4902,7 @@ object GestorSQL {
     }
 
     fun DELETE_MONTURA(drago: Montura) {
-        val consultaSQL = "DELETE FROM `monturas` WHERE `id` = ?;"
+        val consultaSQL = "DELETE FROM monturas WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4918,7 +4918,7 @@ object GestorSQL {
     }
 
     fun DELETE_DRAGOPAVO_LISTA(lista: String) {
-        val consultaSQL = "DELETE FROM `monturas` WHERE `id` IN ($lista);"
+        val consultaSQL = "DELETE FROM monturas WHERE id IN ($lista);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4933,7 +4933,7 @@ object GestorSQL {
     }
 
     fun DELETE_OBJETOS_LISTA(lista: String) {
-        val consultaSQL = "DELETE FROM `objetos` WHERE `id` IN ($lista);"
+        val consultaSQL = "DELETE FROM objetos WHERE id IN ($lista);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4948,7 +4948,7 @@ object GestorSQL {
     }
 
     fun DELETE_OBJETO(id: Int) {
-        val consultaSQL = "DELETE FROM `objetos` WHERE `id` = ?"
+        val consultaSQL = "DELETE FROM objetos WHERE id = ?"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4964,7 +4964,7 @@ object GestorSQL {
     }
 
     fun ACTUALIZAR_TITULO_POR_NOMBRE(nombre: String) {
-        val consultaSQL = "UPDATE `personajes` SET `titulo` = 0 WHERE `nombre` = ?;"
+        val consultaSQL = "UPDATE personajes SET titulo = 0 WHERE nombre = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -4980,7 +4980,7 @@ object GestorSQL {
     }
 
     fun REPLACE_MONTURA(montura: Montura, salvarObjetos: Boolean) {
-        val consultaSQL = "REPLACE INTO `monturas` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO monturas VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5022,7 +5022,7 @@ object GestorSQL {
     }
 
     fun DELETE_CERCADO(id: Int) {
-        val consultaSQL = "DELETE FROM `cercados` WHERE `mapa` = ? ;"
+        val consultaSQL = "DELETE FROM cercados WHERE mapa = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5038,7 +5038,7 @@ object GestorSQL {
     }
 
     fun REPLACE_CERCADO(cercado: Cercado) {
-        var consultaSQL = "REPLACE INTO `cercados` VALUES (?,?,?,?,?,?);"
+        var consultaSQL = "REPLACE INTO cercados VALUES (?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5051,7 +5051,7 @@ object GestorSQL {
             declaracion.setString(5, cercado.strPavosCriando())
             declaracion.setString(6, cercado.strObjCriaParaBD())
             ejecutarTransaccion(declaracion)
-            consultaSQL = "REPLACE INTO `objetos` VALUES (?,?,?,?,?,?,?,?);"
+            consultaSQL = "REPLACE INTO objetos VALUES (?,?,?,?,?,?,?,?);"
             try {
                 for (obj in cercado.objetosParaBD) {
                     val declaracion = transaccionSQL(
@@ -5079,7 +5079,7 @@ object GestorSQL {
     }
 
     fun REPLACE_RANKING_KOLISEO(rank: RankingKoliseo) {
-        val consultaSQL = "REPLACE INTO `ranking_koliseo` VALUES (?,?,?,?);"
+        val consultaSQL = "REPLACE INTO ranking_koliseo VALUES (?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5098,7 +5098,7 @@ object GestorSQL {
     }
 
     fun DELETE_RANKING_KOLISEO(id: Int): Boolean {
-        val consultaSQL = "DELETE FROM `ranking_koliseo` WHERE `id` = ? ;"
+        val consultaSQL = "DELETE FROM ranking_koliseo WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5116,7 +5116,7 @@ object GestorSQL {
     }
 
     fun REPLACE_RANKING_PVP(rank: RankingPVP) {
-        val consultaSQL = "REPLACE INTO `ranking_pvp` VALUES (?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO ranking_pvp VALUES (?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5136,7 +5136,7 @@ object GestorSQL {
     }
 
     fun DELETE_RANKING_PVP(id: Int) {
-        val consultaSQL = "DELETE FROM `ranking_pvp` WHERE `id` = ? ;"
+        val consultaSQL = "DELETE FROM ranking_pvp WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5155,7 +5155,7 @@ object GestorSQL {
         idModelo: Int, accion: Int, args: String,
         nombre: String
     ) {
-        val consultaSQL = "REPLACE INTO `objetos_accion` VALUES(?,?,?,?);"
+        val consultaSQL = "REPLACE INTO objetos_accion VALUES(?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5174,7 +5174,7 @@ object GestorSQL {
     }
 
     fun DELETE_ACCION_OBJETO(id: Int) {
-        val consultaSQL = "DELETE FROM `objetos_accion` WHERE `objetoModelo` = ?;"
+        val consultaSQL = "DELETE FROM objetos_accion WHERE objetoModelo = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5194,7 +5194,7 @@ object GestorSQL {
         nMob: String, nObjeto: String, condicion: String
     ) {
         val consultaSQL =
-            "INSERT INTO `drops` (`mob`,`objeto`,`prospeccion`, `porcentaje`,`max`, `nombre_mob`, `nombre_objeto`,`condicion`) VALUES (?,?,?,?,?,?,?,?);"
+            "INSERT INTO drops (mob,objeto,prospeccion, porcentaje,max, nombre_mob, nombre_objeto,condicion) VALUES (?,?,?,?,?,?,?,?);"
         try {
             DELETE_DROP(objeto, mob)
             val declaracion = transaccionSQL(
@@ -5218,7 +5218,7 @@ object GestorSQL {
     }
 
     fun INSERTAR_MENSAJE_PENDIENTE(invitador: Cuenta, invitado: Personaje, Estado: Int) {
-        val consultaSQL = "INSERT INTO `mensajes_pendientes` (`cuenta`,`mensaje`,`verificador`) VALUES (?,?,?);"
+        val consultaSQL = "INSERT INTO mensajes_pendientes (cuenta,mensaje,verificador) VALUES (?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5238,7 +5238,7 @@ object GestorSQL {
     }
 
     fun MENSAJE_PENDIENTE(idCuentaDestino: Cuenta, remitente: String, mensaje: String) {
-        val consultaSQL = "INSERT INTO `mensajes_pendientes` (`cuenta`,`mensaje`,`verificador`) VALUES (?,?,?);"
+        val consultaSQL = "INSERT INTO mensajes_pendientes (cuenta,mensaje,verificador) VALUES (?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5256,7 +5256,7 @@ object GestorSQL {
 
     fun GET_MENSAJE_PENDIENTE(p: Personaje) {
         val consultaSQL =
-            "SELECT `mensaje` FROM `mensajes_pendientes` where `cuenta`=" + p.cuentaID + " and `verificador` != 1;"
+            "SELECT mensaje FROM mensajes_pendientes where cuenta=" + p.cuentaID + " and verificador != 1;"
         try {
             try {
                 val resultado = consultaSQL(
@@ -5306,7 +5306,7 @@ object GestorSQL {
     }
 
     private fun UPDATE_MENSAJE_PENDIENTE(idcuenta: String) {
-        val consultaSQL = "UPDATE `mensajes_pendientes` SET `verificador`=1 WHERE `cuenta`=?;"
+        val consultaSQL = "UPDATE mensajes_pendientes SET verificador=1 WHERE cuenta=?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5325,7 +5325,7 @@ object GestorSQL {
         idMob: Int, idObjeto: Int, nombreMob: String,
         nombreObjeto: String
     ) {
-        val consultaSQL = "UPDATE `drops` SET `nombre_mob`=?, `nombre_objeto` =? WHERE `mob`=? AND `objeto`= ?;"
+        val consultaSQL = "UPDATE drops SET nombre_mob=?, nombre_objeto =? WHERE mob=? AND objeto= ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5344,7 +5344,7 @@ object GestorSQL {
     }
 
     fun DELETE_DROP(objeto: Int, mob: Int) {
-        val consultaSQL = "DELETE FROM `drops` WHERE `objeto` ='$objeto' AND `mob`= '$mob' ;"
+        val consultaSQL = "DELETE FROM drops WHERE objeto ='$objeto' AND mob= '$mob' ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5452,7 +5452,7 @@ object GestorSQL {
         mapa1: Int, celda1: Int, accion: Int, args: String,
         condicion: String
     ): Boolean {
-        val consultaSQL = "REPLACE INTO `celdas_accion` VALUES (?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO celdas_accion VALUES (?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5478,7 +5478,7 @@ object GestorSQL {
         nivelCore: Boolean, nivel: Short, stats: String, peso: Short, set: Short, kamas: Int,
         ogrinas: Int, magueable: Boolean, infoArma: String, condicion: String
     ): Boolean {
-        val consultaSQL = "REPLACE INTO `objetos_modelo` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'0','0');"
+        val consultaSQL = "REPLACE INTO objetos_modelo VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'0','0');"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5509,7 +5509,7 @@ object GestorSQL {
     }
 
     fun DELETE_TRIGGER(mapaID: Int, celdaID: Int): Boolean {
-        val consultaSQL = "DELETE FROM `celdas_accion` WHERE `mapa` = ? AND `celda` = ?;"
+        val consultaSQL = "DELETE FROM celdas_accion WHERE mapa = ? AND celda = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5528,7 +5528,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MAPA_POS_PELEA(mapaID: Int, pos: String): Boolean {
-        val consultaSQL = "UPDATE `mapas` SET `posPelea` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET posPelea = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5547,7 +5547,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MAPA_MAX_PELEAS(mapaID: Short, max: Byte) {
-        val consultaSQL = "UPDATE `mapas` SET `maxPeleas` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET maxPeleas = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5564,7 +5564,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MAPA_MAX_MERCANTES(mapaID: Short, max: Byte): Boolean {
-        val consultaSQL = "UPDATE `mapas` SET `maxMercantes` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET maxMercantes = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5583,7 +5583,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MAPA_MAX_GRUPO_MOBS(mapaID: Int, max: Byte): Boolean {
-        val consultaSQL = "UPDATE `mapas` SET `maxGrupoMobs` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET maxGrupoMobs = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5602,7 +5602,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MAPA_MAX_MOB_GRUPO(mapaID: Int, max: Byte): Boolean {
-        val consultaSQL = "UPDATE `mapas` SET `maxMobsPorGrupo` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET maxMobsPorGrupo = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5621,7 +5621,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MAPA_PARAMETROS(id: Int, param: Int) {
-        val consultaSQL = "UPDATE `mapas` SET `capabilities` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET capabilities = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5638,7 +5638,7 @@ object GestorSQL {
     }
 
     fun DELETE_NPC_DEL_MAPA(mapa: Int, id: Int): Boolean {
-        val consultaSQL = "DELETE FROM `npcs_ubicacion` WHERE `mapa` = ? AND `npc` = ?;"
+        val consultaSQL = "DELETE FROM npcs_ubicacion WHERE mapa = ? AND npc = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5657,7 +5657,7 @@ object GestorSQL {
     }
 
     private fun DELETE_NPC_UBICACION(id: Int) {
-        val consultaSQL = "DELETE FROM `npcs_ubicacion` WHERE `npc` = ?;"
+        val consultaSQL = "DELETE FROM npcs_ubicacion WHERE npc = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5673,7 +5673,7 @@ object GestorSQL {
     }
 
     fun DELETE_RECAUDADOR(id: Int) {
-        val consultaSQL = "DELETE FROM `recaudadores` WHERE `id` = ?;"
+        val consultaSQL = "DELETE FROM recaudadores WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5693,7 +5693,7 @@ object GestorSQL {
         mapa: Short, celda: Short, id: Int, direccion: Byte,
         nombre: String
     ): Boolean {
-        val consultaSQL = "REPLACE INTO `npcs_ubicacion` VALUES (?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO npcs_ubicacion VALUES (?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5715,7 +5715,7 @@ object GestorSQL {
     }
 
     fun REPLACE_RECAUDADOR(recaudador: Recaudador, salvarObjetos: Boolean) {
-        val consultaSQL = "REPLACE INTO `recaudadores` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO recaudadores VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5764,7 +5764,7 @@ object GestorSQL {
         mapa: Short
     ) {
         val consultaSQL =
-            "INSERT INTO `logs_aggro` (`gagnant_account`,`gagnant_perso`,`gagnant_ip`,`gagnant_ph`,`perdant_account`,`perdant_perso`,`perdant_ip`,`perdant_ph`,`duree`,`aggroBy`,`aggroTo`,`idMap`,`timestamp`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);"
+            "INSERT INTO logs_aggro (gagnant_account,gagnant_perso,gagnant_ip,gagnant_ph,perdant_account,perdant_perso,perdant_ip,perdant_ph,duree,aggroBy,aggroTo,idMap,timestamp) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5796,7 +5796,7 @@ object GestorSQL {
         args: String, condicion: String, descripcion: String
     ): Boolean {
         DELETE_FIN_ACCION_PELEA(mapaID, tipoPelea, accionID)
-        val consultaSQL = "INSERT INTO `accion_pelea` VALUES (?,?,?,?,?,?);"
+        val consultaSQL = "INSERT INTO accion_pelea VALUES (?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5819,7 +5819,7 @@ object GestorSQL {
     }
 
     private fun DELETE_FIN_ACCION_PELEA(mapaID: Int, tipoPelea: Int, accionID: Int) {
-        val consultaSQL = "DELETE FROM `accion_pelea` WHERE mapa = ? AND tipoPelea = ? AND accion = ?;"
+        val consultaSQL = "DELETE FROM accion_pelea WHERE mapa = ? AND tipoPelea = ? AND accion = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5837,7 +5837,7 @@ object GestorSQL {
     }
 
     fun INSERT_GREMIO(gremio: Gremio) {
-        val consultaSQL = "INSERT INTO `gremios` VALUES (?,?,?,1,0,0,0,?,?);"
+        val consultaSQL = "INSERT INTO gremios VALUES (?,?,?,1,0,0,0,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5857,7 +5857,7 @@ object GestorSQL {
     }
 
     fun REPLACE_GREMIO(gremio: Gremio) {
-        val consultaSQL = "REPLACE INTO `gremios` VALUES(?,?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO gremios VALUES(?,?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5881,7 +5881,7 @@ object GestorSQL {
     }
 
     fun DELETE_GREMIO(id: Int) {
-        val consultaSQL = "DELETE FROM `gremios` WHERE `id` = ?;"
+        val consultaSQL = "DELETE FROM gremios WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5897,7 +5897,7 @@ object GestorSQL {
     }
 
     fun REPLACE_MIEMBRO_GREMIO(miembro: MiembroGremio) {
-        val consultaSQL = "REPLACE INTO `miembros_gremio` VALUES(?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO miembros_gremio VALUES(?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5918,7 +5918,7 @@ object GestorSQL {
     }
 
     fun DELETE_MIEMBRO_GREMIO(id: Int) {
-        val consultaSQL = "DELETE FROM `miembros_gremio` WHERE `id` = ?;"
+        val consultaSQL = "DELETE FROM miembros_gremio WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5935,7 +5935,7 @@ object GestorSQL {
 
     fun DELETE_OTRO_INTERACTIVO(gfxID: Int, mapaID: Short, celdaID: Short, accion: Int) {
         val consultaSQL =
-            "DELETE FROM `otros_interactivos` WHERE `gfx` = ? AND `mapaID` = ? AND `celdaID` = ? AND `accion` = ?;"
+            "DELETE FROM otros_interactivos WHERE gfx = ? AND mapaID = ? AND celdaID = ? AND accion = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5957,7 +5957,7 @@ object GestorSQL {
         gfxID: Int, mapaID: Short, celdaID: Short,
         accionID: Int, args: String, condiciones: String, tiempoRecarga: Int, descripcion: String
     ) {
-        val consultaSQL = "REPLACE INTO `otros_interactivos` VALUES (?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO otros_interactivos VALUES (?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -5985,7 +5985,7 @@ object GestorSQL {
         respuestaID: Int, accion: Int, args: String,
         condicion: String
     ): Boolean {
-        var consultaSQL = "REPLACE INTO `npc_respuestas` VALUES (?,?,?,?);"
+        var consultaSQL = "REPLACE INTO npc_respuestas VALUES (?,?,?,?);"
         try {
             var declaracion = transaccionSQL(
                 consultaSQL,
@@ -5996,7 +5996,7 @@ object GestorSQL {
             declaracion.setString(3, args)
             declaracion.setString(4, condicion)
             ejecutarTransaccion(declaracion)
-            consultaSQL = "UPDATE `npc_respuestas` SET `condicion` = ? WHERE `id` = ?;"
+            consultaSQL = "UPDATE npc_respuestas SET condicion = ? WHERE id = ?;"
             declaracion = transaccionSQL(
                 consultaSQL,
                 _bdEstatica!!
@@ -6014,7 +6014,7 @@ object GestorSQL {
     }
 
     fun DELETE_ACCIONES_RESPUESTA(respuestaID: Int) {
-        val consultaSQL = "DELETE FROM `npc_respuestas` WHERE `id` = ? ;"
+        val consultaSQL = "DELETE FROM npc_respuestas WHERE id = ? ;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6030,7 +6030,7 @@ object GestorSQL {
     }
 
     fun UPDATE_NPC_PREGUNTA(id: Int, pregunta: Int): Boolean {
-        val consultaSQL = "UPDATE `npcs_modelo` SET `pregunta` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE npcs_modelo SET pregunta = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6049,7 +6049,7 @@ object GestorSQL {
     }
 
     fun REPLACE_PREGUNTA_NPC(pregunta: PreguntaNPC): Boolean {
-        val consultaSQL = "REPLACE INTO `npc_preguntas` VALUES (?,?,?,?);"
+        val consultaSQL = "REPLACE INTO npc_preguntas VALUES (?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6070,7 +6070,7 @@ object GestorSQL {
     }
 
     fun REPLACE_CASA(casa: Casa) {
-        val consultaSQL = "REPLACE INTO `casas` VALUES (?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO casas VALUES (?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6091,7 +6091,7 @@ object GestorSQL {
     }
 
     fun UPDATE_CELDA_MAPA_DENTRO_CASA(casa: Casa) {
-        val consultaSQL = "UPDATE `casas_modelo` SET `mapaDentro` = ?, `celdaDentro` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE casas_modelo SET mapaDentro = ?, celdaDentro = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6120,7 +6120,7 @@ object GestorSQL {
 
     fun REPLACE_OBJETO_MERCADILLO(objMerca: ObjetoMercadillo): Boolean {
         val consultaSQL =
-            "REPLACE INTO `mercadillo_objetos` (`objeto`,`mercadillo`,`cantidad`,`dueño`,`precio`) VALUES (?,?,?,?,?);"
+            "REPLACE INTO mercadillo_objetos (objeto,mercadillo,cantidad,dueño,precio) VALUES (?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6146,7 +6146,7 @@ object GestorSQL {
     }
 
     fun DELETE_OBJ_MERCADILLO(idObjeto: Int) {
-        val consultaSQL = "DELETE FROM `mercadillo_objetos` WHERE `objeto` = ?;"
+        val consultaSQL = "DELETE FROM mercadillo_objetos WHERE objeto = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6162,7 +6162,7 @@ object GestorSQL {
     }
 
     fun UPDATE_PRECIO_MEDIO_OBJETO_MODELO(objMod: ObjetoModelo) {
-        val consultaSQL = "UPDATE `objetos_modelo` SET vendidos = ?, precioMedio = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE objetos_modelo SET vendidos = ?, precioMedio = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6180,7 +6180,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MOB_IA_TALLA(mob: MobModelo) {
-        val consultaSQL = "UPDATE `mobs_modelo` SET `tipoIA` = ?, `talla` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE mobs_modelo SET tipoIA = ?, talla = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6198,7 +6198,7 @@ object GestorSQL {
     }
 
     fun UPDATE_STATS_MOB(id: Int, stats: String) {
-        val consultaSQL = "UPDATE `mobs_modelo` SET `stats` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE mobs_modelo SET stats = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6219,7 +6219,7 @@ object GestorSQL {
         maxKamas: String
     ) {
         val consultaSQL =
-            "UPDATE `mobs_modelo` SET `stats` = ?, `pdvs` = ?,`exps` = ? ,`minKamas` = ?,`maxKamas` = ? WHERE id = ?;"
+            "UPDATE mobs_modelo SET stats = ?, pdvs = ?,exps = ? ,minKamas = ?,maxKamas = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6240,7 +6240,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MOB_COLORES(mob: MobModelo) {
-        val consultaSQL = "UPDATE `mobs_modelo` SET `colores` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mobs_modelo SET colores = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6257,7 +6257,7 @@ object GestorSQL {
     }
 
     fun UPDATE_MOB_AGRESION(mob: MobModelo) {
-        val consultaSQL = "UPDATE `mobs_modelo` SET `agresion` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE mobs_modelo SET agresion = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6274,7 +6274,7 @@ object GestorSQL {
     }
 
     fun UPDATE_HECHIZO_AFECTADOS(id: Int, afectados: String) {
-        val consultaSQL = "UPDATE `hechizos` SET `afectados` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE hechizos SET afectados = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6291,7 +6291,7 @@ object GestorSQL {
     }
 
     fun UPDATE_HECHIZOS_VALOR_IA(id: Int, valorIA: Int) {
-        val consultaSQL = "UPDATE `hechizos` SET `valorIA` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE hechizos SET valorIA = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6308,7 +6308,7 @@ object GestorSQL {
     }
 
     fun ACTUALIZAR_CONDICIONES_HECHIZO(id: Int, condiciones: String) {
-        val consultaSQL = "UPDATE `hechizos` SET `condiciones` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE hechizos SET condiciones = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6325,7 +6325,7 @@ object GestorSQL {
     }
 
     fun UPDATE_STAT_HECHIZO(id: Int, stat: String, grado: Int) {
-        val consultaSQL = "UPDATE `hechizos` SET `nivel$grado` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE hechizos SET nivel$grado = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6342,7 +6342,7 @@ object GestorSQL {
     }
 
     fun ACTUALIZAR_SPRITE_INFO_HECHIZO(id: Int, str: String) {
-        val consultaSQL = "UPDATE `hechizos` SET `spriteInfos` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE hechizos SET spriteInfos = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6359,7 +6359,7 @@ object GestorSQL {
     }
 
     fun ACTUALIZAR_SPRITE_ID_HECHIZO(id: Int, sprite: Int) {
-        val consultaSQL = "UPDATE `hechizos` SET `sprite` = ? WHERE id = ?;"
+        val consultaSQL = "UPDATE hechizos SET sprite = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6376,7 +6376,7 @@ object GestorSQL {
     }
 
     fun DELETE_MASCOTA(id: Int) {
-        val consultaSQL = "DELETE FROM `mascotas` WHERE `objeto` = ?;"
+        val consultaSQL = "DELETE FROM mascotas WHERE objeto = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6393,7 +6393,7 @@ object GestorSQL {
 
     fun GET_NUEVA_FECHA_KEY(mapa: Short): String {
         var str = ""
-        val consultaSQL = "SELECT * FROM `mapas` WHERE `id` = '$mapa';"
+        val consultaSQL = "SELECT * FROM mapas WHERE id = '$mapa';"
         try {
             val resultado = consultaSQL(
                 consultaSQL,
@@ -6421,7 +6421,7 @@ object GestorSQL {
         mapa: Short, fecha: String, key: String,
         mapData: String
     ) {
-        val consultaSQL = "UPDATE `mapas` SET `fecha` = ?, `key`= ?, `mapData`= ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET fecha = ?, key= ?, mapData= ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6440,7 +6440,7 @@ object GestorSQL {
     }
 
     fun UPDATE_KEY_MAPA(mapa: Short, key: String) {
-        val consultaSQL = "UPDATE `mapas` SET `key` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET key = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6457,7 +6457,7 @@ object GestorSQL {
     }
 
     fun UPDATE_FECHA_MAPA(mapa: Short, fecha: String) {
-        val consultaSQL = "UPDATE `mapas` SET `fecha` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET fecha = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6474,7 +6474,7 @@ object GestorSQL {
     }
 
     fun UPDATE_SET_MOBS_MAPA(mapa: Int, mob: String) {
-        val consultaSQL = "UPDATE `mapas` SET `mobs` = ? WHERE `id` = ?;"
+        val consultaSQL = "UPDATE mapas SET mobs = ? WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6491,7 +6491,7 @@ object GestorSQL {
     }
 
     fun DELETE_MOBS_FIX_MAPA(mapa: Int) {
-        val consultaSQL = "DELETE FROM `mobs_fix` WHERE `mapa` = ?;"
+        val consultaSQL = "DELETE FROM mobs_fix WHERE mapa = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6507,7 +6507,7 @@ object GestorSQL {
     }
 
     fun DELETE_ACCION_PELEA(mapa: Int) {
-        val consultaSQL = "DELETE FROM `accion_pelea` WHERE `mapa` = ?;"
+        val consultaSQL = "DELETE FROM accion_pelea WHERE mapa = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6525,7 +6525,7 @@ object GestorSQL {
     fun CARGAR_LIVE_ACTION() {
         try {
             val resultado = consultaSQL(
-                "SELECT * FROM `live_action`;",
+                "SELECT * FROM live_action;",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -6552,7 +6552,7 @@ object GestorSQL {
     }
 
     fun VACIAR_LIVE_ACTION() {
-        val consultaSQL = "TRUNCATE `live_action`;"
+        val consultaSQL = "TRUNCATE live_action;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6567,7 +6567,7 @@ object GestorSQL {
     }
 
     fun DELETE_PRISMA(id: Int) {
-        val consultaSQL = "DELETE FROM `prismas` WHERE id = ?;"
+        val consultaSQL = "DELETE FROM prismas WHERE id = ?;"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6583,7 +6583,7 @@ object GestorSQL {
     }
 
     fun REPLACE_PRISMA(prisma: Prisma) {
-        val consultaSQL = "REPLACE INTO `prismas` VALUES(?,?,?,?,?,?,?,?,?);"
+        val consultaSQL = "REPLACE INTO prismas VALUES(?,?,?,?,?,?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6610,7 +6610,7 @@ object GestorSQL {
         if (rango.equals("Maguz", ignoreCase = true) || rango.equals("SlimeS", ignoreCase = true)) {
             return
         }
-        val consultaSQL = "INSERT INTO `comandos` (`nombre gm`,`comando`,`date`) VALUES (?,?,?);"
+        val consultaSQL = "INSERT INTO comandos (nombre gm,comando,date) VALUES (?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6628,7 +6628,7 @@ object GestorSQL {
     }
 
     fun INSERT_INTERCAMBIO(inte: String) {
-        val consultaSQL = "INSERT INTO `intercambios` (`intercambio`,`fecha`) VALUES (?,?);"
+        val consultaSQL = "INSERT INTO intercambios (intercambio,fecha) VALUES (?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6645,7 +6645,7 @@ object GestorSQL {
     }
 
     fun INSERT_REPORTE_BUG(nombre: String, tema: String, detalle: String) {
-        val consultaSQL = "INSERT INTO `reporte_bugs` (`perso`,`asunto`,`detalle`,`fecha`) VALUES (?,?,?,?);"
+        val consultaSQL = "INSERT INTO reporte_bugs (perso,asunto,detalle,fecha) VALUES (?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6664,7 +6664,7 @@ object GestorSQL {
     }
 
     fun INSERT_PROBLEMA_OGRINAS(nombre: String, tema: String, detalle: String) {
-        val consultaSQL = "INSERT INTO `problema_ogrinas` (`perso`,`asunto`,`detalle`,`fecha`) VALUES (?,?,?,?);"
+        val consultaSQL = "INSERT INTO problema_ogrinas (perso,asunto,detalle,fecha) VALUES (?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6683,7 +6683,7 @@ object GestorSQL {
     }
 
     fun INSERT_DENUNCIAS(nombre: String, tema: String, detalle: String) {
-        val consultaSQL = "INSERT INTO `denuncias` (`perso`,`asunto`,`detalle`,`fecha`) VALUES (?,?,?,?);"
+        val consultaSQL = "INSERT INTO denuncias (perso,asunto,detalle,fecha) VALUES (?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6702,7 +6702,7 @@ object GestorSQL {
     }
 
     fun INSERT_SUGERENCIAS(nombre: String, tema: String, detalle: String) {
-        val consultaSQL = "INSERT INTO `sugerencias` (`perso`,`asunto`,`detalle`,`fecha`) VALUES (?,?,?,?);"
+        val consultaSQL = "INSERT INTO sugerencias (perso,asunto,detalle,fecha) VALUES (?,?,?,?);"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6722,7 +6722,7 @@ object GestorSQL {
 
     fun DELETE_REPORTE(tipo: Byte, id: Int): Boolean {
         val tipos = arrayOf("reporte_bugs", "sugerencias", "denuncias", "problema_ogrinas")
-        val consultaSQL = "DELETE FROM `" + tipos[tipo.toInt()] + "` WHERE `id` = '" + id + "';"
+        val consultaSQL = "DELETE FROM " + tipos[tipo.toInt()] + " WHERE id = '" + id + "';"
         try {
             val declaracion = transaccionSQL(
                 consultaSQL,
@@ -6764,7 +6764,7 @@ object GestorSQL {
         try {
             val tipos = arrayOf("reporte_bugs", "sugerencias", "denuncias", "problema_ogrinas")
             val resultado = consultaSQL(
-                "SELECT * FROM `" + tipos[tipo.toInt()] + "` WHERE `id` = '" + id + "';",
+                "SELECT * FROM " + tipos[tipo.toInt()] + " WHERE id = '" + id + "';",
                 _bdDinamica!!
             )
             while (resultado.next()) {
@@ -6785,7 +6785,7 @@ object GestorSQL {
         try {
             var resultado =
                 consultaSQL(
-                    "SELECT * FROM `reporte_bugs` LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
+                    "SELECT * FROM reporte_bugs LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
                     _bdDinamica!!
                 )
             var str2 = StringBuilder()
@@ -6813,7 +6813,7 @@ object GestorSQL {
             cerrarResultado(resultado)
             resultado =
                 consultaSQL(
-                    "SELECT * FROM `sugerencias` LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
+                    "SELECT * FROM sugerencias LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
                     _bdDinamica!!
                 )
             str2 = StringBuilder()
@@ -6839,7 +6839,7 @@ object GestorSQL {
             cerrarResultado(resultado)
             resultado =
                 consultaSQL(
-                    "SELECT * FROM `denuncias` LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
+                    "SELECT * FROM denuncias LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
                     _bdDinamica!!
                 )
             str2 = StringBuilder()
@@ -6864,7 +6864,7 @@ object GestorSQL {
             str.append(str2.toString()).append("|")
             cerrarResultado(resultado)
             resultado = consultaSQL(
-                "SELECT * FROM `problema_ogrinas` LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
+                "SELECT * FROM problema_ogrinas LIMIT " + AtlantaMain.LIMITE_REPORTES + ";",
                 _bdDinamica!!
             )
             str2 = StringBuilder()
