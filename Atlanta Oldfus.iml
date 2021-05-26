@@ -1,33 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="FacetManager">
-    <facet type="IntelliGuard" name="Obfuscation">
-      <configuration>
-        <option name="yGuardJar" value="H:\Basura acumulada\Downloads\yguard-2.7.1\yguard-2.7.1\lib\yguard.jar" />
-        <option name="inFile" value="C:\Users\oxakr\IdeaProjects\Atlanta_Oldfus\jar\server.jar" />
-        <option name="outFile" value="C:\Users\oxakr\IdeaProjects\Atlanta_Oldfus\Arrendado\server.jar" />
-        <option name="mainclass" value="estaticos.AtlantaMain" />
-        <option name="conservemanifest" value="true" />
-        <option name="namingScheme" value="best" />
-        <option name="namingSafety" value="illegal" />
-        <option name="runtimevisibleannotations" value="false" />
-        <option name="runtimevisibleparameterannotations" value="false" />
-        <option name="runtimeinvisibleannotations" value="false" />
-        <option name="runtimeinvisibleparameterannotations" value="false" />
-        <option name="jarConfig">
-          <JarConfig>
-            <option name="jarEntries">
-              <list>
-                <option value="C:\Users\oxakr\IdeaProjects\Atlanta Oldfus\out\production\Atlanta Oldfus" />
-                <option value="C:\Users\oxakr\IdeaProjects\Atlanta_Oldfus\out\production\Atlanta Oldfus" />
-              </list>
-            </option>
-            <option name="linkLibraries" value="/lib" />
-          </JarConfig>
-        </option>
-      </configuration>
-    </facet>
-  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
