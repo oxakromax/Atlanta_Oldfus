@@ -22,7 +22,7 @@ receive any income from this code and I disclaim any possible use of it.
 
 - Apache Server Php 5.6 or equivalent
 - MariaDB or Mysql servers, NOT using postgresSQL
-- OpenJDK 14, or equivalent
+- JDK 8 or more, doesnt have anyproblem with the default JDK
 - IntelliJ Idea Community
 
 (EN) Note: The necessary libraries for the execution are already included in the repository.
