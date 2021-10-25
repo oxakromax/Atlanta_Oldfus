@@ -23,7 +23,6 @@ import estaticos.Mundo.getPersonaje
 import estaticos.database.GestorSQL.REPLACE_COFRE
 import variables.gremio.Gremio
 import variables.personaje.Personaje
-import java.util.*
 
 class Casa(
     val id: Int, val mapaIDFuera: Short, val celdaIDFuera: Short, var mapaIDDentro: Short,
@@ -272,7 +271,7 @@ class Casa(
             when (packet) {
                 "+" -> {
                     val gremio = dueño!!.gremio ?: return
-                    if (cantCasasGremio(gremio.id) >= Math.ceil(gremio.nivel / 10f.toDouble()).toByte()) {
+                    if (cantCasasGremio(gremio.id) >= Math.ceil(gremio.nivel / 10f.toDouble()).toInt().toByte()) {
                         ENVIAR_Im_INFORMACION(perso, "1151")
                         return
                     } else if (gremio.cantidadMiembros < 10) {

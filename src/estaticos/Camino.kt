@@ -116,7 +116,8 @@ object Camino {
                                     val valorX =
                                         (celdaCamino.valorX + unos[direccion.toInt()] + aaaa.toDouble() + if (tempCelda
                                                 .movimiento.toInt() == 1 && puedeLlegarDestino
-                                        ) -1000.0 else (if (direccion.toShort() != celdaCamino.direccion) 0.5 else 0.0) + (5 - tempCelda.movimiento) / 3).toShort()
+                                        ) -1000.0 else (if (direccion.toShort() != celdaCamino.direccion) 0.5 else 0.0) + (5 - tempCelda.movimiento) / 3).toInt()
+                                            .toShort()
                                     val cantMov = (celdaCamino.cantPM + unos[direccion.toInt()]).toShort()
                                     var tempValorX: Short = -1
                                     if (celdasCamino1[tempCeldaID] != null) {
@@ -1176,7 +1177,7 @@ object Camino {
         }
         val dirs = listaDirEntreDosCeldas(mapa, celdaInicio, celdaDestino)
         for (d in dirs) {
-            val sigCelda = getSigIDCeldaMismaDir(celdaInicio, d.toInt(), mapa, true)
+            val sigCelda = getSigIDCeldaMismaDir(celdaInicio, d.code, mapa, true)
             val celda = mapa.getCelda(sigCelda) ?: continue
             val tempDistancia = distanciaDosCeldas(mapa, celdaDestino, sigCelda).toInt()
             if (tempDistancia < distancia && celda.esCaminable(true) && (!false || celda.primerLuchador == null)

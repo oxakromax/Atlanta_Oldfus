@@ -32,6 +32,7 @@ import kotlin.system.exitProcess
 //import java.net.URLConnection;
 //import java.nio.charset.Charset;
 object AtlantaMain {
+
     val ELIMINANDO_OBJETOS = ArrayList<Thread>()
 
     @JvmField
@@ -1100,6 +1101,20 @@ object AtlantaMain {
     var ANUNCIO_NIVEL_MAX = true
     var OBJETOS_PELEA_PRISMA = ""
     var VALOR_RECAUDADOR = 1000
+    val configuracion: String
+        get() {
+            val str = StringBuilder()
+            try {
+                val config = BufferedReader(FileReader(ARCHIVO_CONFIG))
+                var linea: String?
+                while (config.readLine().also { linea = it } != null) {
+                    str.append(linea).append("\n")
+                }
+                config.close()
+            } catch (ignored: Exception) {
+            }
+            return str.toString()
+        }
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -1270,21 +1285,6 @@ object AtlantaMain {
         }
     }
 
-    val configuracion: String
-        get() {
-            val str = StringBuilder()
-            try {
-                val config = BufferedReader(FileReader(ARCHIVO_CONFIG))
-                var linea: String?
-                while (config.readLine().also { linea = it } != null) {
-                    str.append(linea).append("\n")
-                }
-                config.close()
-            } catch (ignored: Exception) {
-            }
-            return str.toString()
-        }
-
     fun cargarConfiguracion(perso: Personaje?) {
         try {
             val config = BufferedReader(FileReader(ARCHIVO_CONFIG))
@@ -1307,7 +1307,7 @@ object AtlantaMain {
                     }
                     var variable = ""
                     valor = valor.replace("\\n", "\n").replace("\\t", "\t").replace("\\r", "\r").replace("\\b", "\b")
-                    when (parametro.toUpperCase()) {
+                    when (parametro.uppercase(Locale.getDefault())) {
                         "ES_LOCALHOST" -> {
                             ES_LOCALHOST = valor.equals("true", ignoreCase = true)
                             variable = "ES_LOCALHOST"
@@ -1810,7 +1810,7 @@ object AtlantaMain {
                             variable = "PALABRA_CLAVE_CONSOLA"
                         }
                         "SISTEMA_ITEMS_TIPO_DE_PAGO", "PANEL_ITEMS_TIPO_DE_PAGO" -> {
-                            SISTEMA_ITEMS_TIPO_DE_PAGO = valor.toUpperCase()
+                            SISTEMA_ITEMS_TIPO_DE_PAGO = valor.uppercase(Locale.getDefault())
                             variable = "SISTEMA_ITEMS_TIPO_DE_PAGO"
                         }
                         "INICIO_MAPA_CELDA", "START_MAPA_CELDA", "RETURN_MAPA_CELDA" -> {
@@ -2030,7 +2030,7 @@ object AtlantaMain {
                             variable = "MAX_MISIONES_ALMANAX"
                         }
                         "COLOR_CASES_PLAYER", "COLOR_CASES_FIGHT_AGRESSOR", "COLOR_CELDAS_PELEA_AGRESOR" -> {
-                            COLOR_CELDAS_PELEA_AGRESOR = valor.toLowerCase()
+                            COLOR_CELDAS_PELEA_AGRESOR = valor.lowercase(Locale.getDefault())
                             variable = "COLOR_CELDAS_PELEA_AGRESOR"
                         }
                         "MAX_RECAUDADORES_POR_ZONA" -> {
@@ -2226,7 +2226,8 @@ object AtlantaMain {
                                 }
                                 try {
                                     val stat = s.split(",".toRegex()).toTypedArray()
-                                    PRECIOS_SERVICIOS[stat[0].toLowerCase()] = stat[1].toLowerCase()
+                                    PRECIOS_SERVICIOS[stat[0].lowercase(Locale.getDefault())] =
+                                        stat[1].lowercase(Locale.getDefault())
                                 } catch (ignored: Exception) {
                                 }
                             }
@@ -3194,7 +3195,7 @@ object AtlantaMain {
                                     continue
                                 }
                                 try {
-                                    PALABRAS_PROHIBIDAS.add(s.toLowerCase())
+                                    PALABRAS_PROHIBIDAS.add(s.lowercase(Locale.getDefault()))
                                 } catch (ignored: Exception) {
                                 }
                             }
@@ -3207,17 +3208,17 @@ object AtlantaMain {
                         if (repetidos[variable] != null) {
                             if (perso != null) {
                                 ENVIAR_BAT2_CONSOLA(
-                                    perso, "Config Exception COMMAND REPEAT " + parametro.toUpperCase()
+                                    perso, "Config Exception COMMAND REPEAT " + parametro.uppercase(Locale.getDefault())
                                             + " WITH " + repetidos[variable]
                                 )
                             }
-                            println("EL PARAMETRO " + parametro.toUpperCase() + " ES SIMILAR AL PARAMETRO " + repetidos[variable] + " POR FAVOR ELIMINA UNO")
+                            println("EL PARAMETRO " + parametro.uppercase(Locale.getDefault()) + " ES SIMILAR AL PARAMETRO " + repetidos[variable] + " POR FAVOR ELIMINA UNO")
                             if (Mundo.SERVIDOR_ESTADO == Constantes.SERVIDOR_OFFLINE) {
                                 exitProcess(1)
                             }
                             return
                         }
-                        repetidos[variable] = parametro.toUpperCase()
+                        repetidos[variable] = parametro.uppercase(Locale.getDefault())
                     }
                 } catch (ignored: Exception) {
                 }

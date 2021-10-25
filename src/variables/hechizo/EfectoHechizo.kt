@@ -68,7 +68,7 @@ open class EfectoHechizo {
             return
         }
         if (!condicion.contains("BN")) {
-            _condicionHechizo = condicion.toUpperCase().trim { it <= ' ' }
+            _condicionHechizo = condicion.uppercase(Locale.getDefault()).trim { it <= ' ' }
         }
     }
 
@@ -1954,7 +1954,7 @@ open class EfectoHechizo {
             redactarLogServidorln("El Mob ID esta reparandose: $mobID")
             return
         }
-        val invocacion = Luchador(pelea, mob, false)
+        val invocacion = Luchador(pelea, mob!!, false)
         invocacion.equipoBin = lanzador.equipoBin
         invocacion.invocador = lanzador
         invocacion.celdaPelea = celdaObjetivo
@@ -2027,7 +2027,7 @@ open class EfectoHechizo {
             redactarLogServidorln("El Mob ID esta mal configurado: $mobID")
             return
         }
-        val invocacion = Luchador(pelea, mob, false)
+        val invocacion = Luchador(pelea, mob!!, false)
         val equipoLanz = lanzador.equipoBin
         invocacion.equipoBin = equipoLanz
         invocacion.invocador = lanzador

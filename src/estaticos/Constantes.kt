@@ -2840,7 +2840,7 @@ object Constantes {
                 return "Directorio '$dir'  bug $e"
             }
             val s = StringBuilder()
-            val ficheros = directorio.listFiles()
+            val ficheros = directorio!!.listFiles()
             for (fichero in ficheros) {
                 try {
                     s.append("\n")
