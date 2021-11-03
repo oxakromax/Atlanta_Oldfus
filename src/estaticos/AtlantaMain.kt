@@ -1567,19 +1567,19 @@ object AtlantaMain {
                             DEFECTO_DROP = RATE_DROP_NORMAL
                         }
                         "RATE_XP_PVM_ABONADOS" -> {
-                            RATE_XP_PVM_ABONADOS = valor.toInt().toFloat()
+                            RATE_XP_PVM_ABONADOS = valor.toFloat()
                             variable = "RATE_XP_PVM_ABONADOS"
                         }
                         "RATE_DROP_ABONADOS" -> {
-                            RATE_DROP_ABONADOS = valor.toInt().toFloat()
+                            RATE_DROP_ABONADOS = valor.toFloat()
                             variable = "RATE_DROP_ABONADOS"
                         }
                         "RATE_KAMAS_ABONADOS" -> {
-                            RATE_KAMAS_ABONADOS = valor.toInt().toFloat()
+                            RATE_KAMAS_ABONADOS = valor.toFloat()
                             variable = "RATE_KAMAS_ABONADOS"
                         }
                         "RATE_XP_OFICIO_ABONADOS" -> {
-                            RATE_XP_OFICIO_ABONADOS = valor.toInt().toFloat()
+                            RATE_XP_OFICIO_ABONADOS = valor.toFloat()
                             variable = "RATE_XP_OFICIO_ABONADOS"
                         }
                         "RATE_PODS" -> {
